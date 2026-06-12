@@ -200,6 +200,40 @@ MIT
 
 ---
 
+---
+
+## CPU / VM Testing
+
+If you do not have a compatible NVIDIA GPU — for example, when running GEIVS inside a virtual machine or on a CPU-only server — use the CPU compose file.
+
+### Quick start (no GPU)
+
+```bash
+# Start the stack (no GPU required)
+docker compose -f docker-compose.cpu.yml up -d
+
+# Pull lightweight models suited for CPU inference
+chmod +x pull-models-cpu.sh
+./pull-models-cpu.sh
+```
+
+### Differences from the GPU (Pro) config
+
+| | `docker-compose.pro.yml` | `docker-compose.cpu.yml` |
+|---|---|---|
+| GPU required | Yes (24GB VRAM) | No |
+| Default model | llama3.3:70b | gemma3:4b |
+| ComfyUI image | `latest-cuda` | `latest-cpu` |
+| Ollama runtime | CUDA | CPU only |
+| Recommended RAM | 32GB | 16GB minimum |
+
+### Notes
+
+- CPU inference is much slower than GPU. `gemma3:4b` and `qwen2.5:7b` are the recommended models — small enough to run at usable speed.
+- All other services (n8n, Open WebUI, Qdrant, Postiz, etc.) are identical in both configs.
+- To switch back to GPU: `docker compose -f docker-compose.cpu.yml down && docker compose -f docker-compose.pro.yml up -d`
+
+
 ## VM Install Notes
 
 If running GEIVS inside a VM (for testing or development), the LVM volume may not use all available disk space by default. Expand it with:
