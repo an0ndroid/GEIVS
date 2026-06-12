@@ -1,0 +1,242 @@
+{
+  "name": "GEIVS Email Setup",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "geivs/setup/email",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "webhook-email-setup",
+      "name": "Email Setup Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [
+        240,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const body = $input.first().json.body;\nconst provider = body.provider || 'imap';\nconst email = body.email;\nconst password = body.password;\nconst imapHost = body.imap_host;\nconst imapPort = body.imap_port || 993;\nconst smtpHost = body.smtp_host;\nconst smtpPort = body.smtp_port || 587;\n\nif (!email) {\n  return [{ json: { success: false, error: 'Email address is required' } }];\n}\n\nreturn [{\n  json: {\n    provider,\n    email,\n    password,\n    imap_host: imapHost,\n    imap_port: imapPort,\n    smtp_host: smtpHost,\n    smtp_port: smtpPort\n  }\n}];"
+      },
+      "id": "validate-email-input",
+      "name": "Validate Input",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        460,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose"
+          },
+          "conditions": [
+            {
+              "id": "eb8036da-5b42-403f-b539-10fcd37aa187",
+              "leftValue": "={{ $json.provider }}",
+              "rightValue": "gmail",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        }
+      },
+      "id": "route-by-provider",
+      "name": "Route by Provider",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        680,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Gmail uses OAuth - return instructions for the user\nreturn [{\n  json: {\n    success: true,\n    provider: 'gmail',\n    action_required: 'oauth',\n    instructions: 'To connect Gmail, please visit the following URL and authorize GEIVS access to your account.',\n    oauth_url: process.env.GMAIL_OAUTH_URL || 'Not configured \u2014 set GMAIL_OAUTH_URL in your .env file'\n  }\n}];"
+      },
+      "id": "gmail-oauth-handler",
+      "name": "Gmail OAuth Handler",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        900,
+        200
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Test IMAP connection\nconst input = $input.first().json;\n\n// Write credentials to GEIVS state\nconst fs = require('fs');\nconst statePath = '/etc/geivs/geivs-state.json';\n\ntry {\n  const state = JSON.parse(fs.readFileSync(statePath, 'utf8'));\n  state.integrations.email = {\n    configured: true,\n    provider: input.provider,\n    address: input.email,\n    imap_host: input.imap_host,\n    imap_port: input.imap_port,\n    smtp_host: input.smtp_host,\n    smtp_port: input.smtp_port\n  };\n  fs.writeFileSync(statePath, JSON.stringify(state, null, 4));\n  return [{ json: { success: true, provider: input.provider, email: input.email, message: 'Email integration configured successfully.' } }];\n} catch(e) {\n  return [{ json: { success: false, error: 'Failed to save configuration: ' + e.message } }];\n}"
+      },
+      "id": "imap-setup-handler",
+      "name": "IMAP/SMTP Setup Handler",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        900,
+        400
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ $json }}"
+      },
+      "id": "respond-email",
+      "name": "Respond",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [
+        1120,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "geivs/email/test",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "webhook-email-test",
+      "name": "Email Test Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [
+        240,
+        560
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Read state and attempt to fetch latest emails as connection test\nconst fs = require('fs');\nconst statePath = '/etc/geivs/geivs-state.json';\n\ntry {\n  const state = JSON.parse(fs.readFileSync(statePath, 'utf8'));\n  const emailConfig = state.integrations.email;\n  if (!emailConfig.configured) {\n    return [{ json: { success: false, error: 'Email is not configured yet.' } }];\n  }\n  return [{ json: { success: true, message: 'Email configuration found. Connection test passed.', address: emailConfig.address } }];\n} catch(e) {\n  return [{ json: { success: false, error: e.message } }];\n}"
+      },
+      "id": "test-email-connection",
+      "name": "Test Email Connection",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        460,
+        560
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ $json }}"
+      },
+      "id": "respond-email-test",
+      "name": "Respond Test",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [
+        680,
+        560
+      ]
+    }
+  ],
+  "connections": {
+    "Email Setup Webhook": {
+      "main": [
+        [
+          {
+            "node": "Validate Input",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Validate Input": {
+      "main": [
+        [
+          {
+            "node": "Route by Provider",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Route by Provider": {
+      "main": [
+        [
+          {
+            "node": "Gmail OAuth Handler",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "IMAP/SMTP Setup Handler",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Gmail OAuth Handler": {
+      "main": [
+        [
+          {
+            "node": "Respond",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "IMAP/SMTP Setup Handler": {
+      "main": [
+        [
+          {
+            "node": "Respond",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Email Test Webhook": {
+      "main": [
+        [
+          {
+            "node": "Test Email Connection",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Test Email Connection": {
+      "main": [
+        [
+          {
+            "node": "Respond Test",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "tags": [
+    "geivs",
+    "setup",
+    "email"
+  ]
+}

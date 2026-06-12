@@ -1,0 +1,242 @@
+{
+  "name": "GEIVS Calendar Setup",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "geivs/setup/calendar",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "webhook-calendar-setup",
+      "name": "Calendar Setup Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [
+        240,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const body = $input.first().json.body;\nconst provider = body.provider;\n\nif (!provider || !['google', 'outlook'].includes(provider)) {\n  return [{ json: { success: false, error: 'Provider must be google or outlook' } }];\n}\n\nreturn [{ json: { provider } }];"
+      },
+      "id": "validate-calendar-input",
+      "name": "Validate Input",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        460,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose"
+          },
+          "conditions": [
+            {
+              "id": "35e44cb9-65a0-492d-83ce-740ad7d426bb",
+              "leftValue": "={{ $json.provider }}",
+              "rightValue": "google",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        }
+      },
+      "id": "route-calendar-provider",
+      "name": "Route by Provider",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        680,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "return [{\n  json: {\n    success: true,\n    provider: 'google',\n    action_required: 'oauth',\n    instructions: 'To connect Google Calendar:\\n1. Go to console.cloud.google.com\\n2. Create a new project or select existing\\n3. Enable the Google Calendar API\\n4. Create OAuth 2.0 credentials\\n5. Add your GEIVS server to authorized redirect URIs\\n6. Paste your Client ID and Client Secret below',\n    next_action: 'POST to /geivs/setup/calendar/google/credentials with client_id and client_secret'\n  }\n}];"
+      },
+      "id": "google-calendar-instructions",
+      "name": "Google Calendar Instructions",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        900,
+        200
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "return [{\n  json: {\n    success: true,\n    provider: 'outlook',\n    action_required: 'oauth',\n    instructions: 'To connect Outlook Calendar:\\n1. Go to portal.azure.com\\n2. Register a new application\\n3. Add Calendar.ReadWrite permissions\\n4. Create a client secret\\n5. Paste your Application ID and Client Secret below',\n    next_action: 'POST to /geivs/setup/calendar/outlook/credentials with client_id and client_secret'\n  }\n}];"
+      },
+      "id": "outlook-calendar-instructions",
+      "name": "Outlook Calendar Instructions",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        900,
+        400
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ $json }}"
+      },
+      "id": "respond-calendar",
+      "name": "Respond",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [
+        1120,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "geivs/setup/calendar/credentials",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "webhook-calendar-credentials",
+      "name": "Calendar Credentials Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [
+        240,
+        560
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const body = $input.first().json.body;\nconst fs = require('fs');\nconst statePath = '/etc/geivs/geivs-state.json';\n\nif (!body.client_id || !body.client_secret || !body.provider) {\n  return [{ json: { success: false, error: 'client_id, client_secret and provider are required' } }];\n}\n\ntry {\n  const state = JSON.parse(fs.readFileSync(statePath, 'utf8'));\n  const key = body.provider === 'google' ? 'google_calendar' : 'outlook_calendar';\n  state.integrations[key] = {\n    configured: true,\n    provider: body.provider,\n    client_id: body.client_id,\n    client_secret: body.client_secret\n  };\n  fs.writeFileSync(statePath, JSON.stringify(state, null, 4));\n  return [{ json: { success: true, message: body.provider + ' Calendar credentials saved. OAuth flow will complete on first use.' } }];\n} catch(e) {\n  return [{ json: { success: false, error: e.message } }];\n}"
+      },
+      "id": "save-calendar-credentials",
+      "name": "Save Calendar Credentials",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        460,
+        560
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ $json }}"
+      },
+      "id": "respond-calendar-credentials",
+      "name": "Respond Credentials",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [
+        680,
+        560
+      ]
+    }
+  ],
+  "connections": {
+    "Calendar Setup Webhook": {
+      "main": [
+        [
+          {
+            "node": "Validate Input",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Validate Input": {
+      "main": [
+        [
+          {
+            "node": "Route by Provider",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Route by Provider": {
+      "main": [
+        [
+          {
+            "node": "Google Calendar Instructions",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Outlook Calendar Instructions",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Calendar Instructions": {
+      "main": [
+        [
+          {
+            "node": "Respond",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Outlook Calendar Instructions": {
+      "main": [
+        [
+          {
+            "node": "Respond",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Calendar Credentials Webhook": {
+      "main": [
+        [
+          {
+            "node": "Save Calendar Credentials",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Save Calendar Credentials": {
+      "main": [
+        [
+          {
+            "node": "Respond Credentials",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "tags": [
+    "geivs",
+    "setup",
+    "calendar"
+  ]
+}

@@ -1,0 +1,73 @@
+{
+    "geivs_version": "1.0.0",
+    "onboarding_complete": false,
+    "persona": {
+        "name": "GEIVS",
+        "gender": "male",
+        "voice": "en_GB-alan-medium"
+    },
+    "integrations": {
+        "email": {
+            "configured": false,
+            "provider": null,
+            "address": null,
+            "imap_host": null,
+            "imap_port": 993,
+            "smtp_host": null,
+            "smtp_port": 587
+        },
+        "signal": {
+            "configured": false,
+            "phone_number": null
+        },
+        "telegram": {
+            "configured": false,
+            "bot_token": null,
+            "bot_name": null,
+            "bot_id": null
+        },
+        "whatsapp": {
+            "configured": false
+        },
+        "discord": {
+            "configured": false,
+            "bot_token": null
+        },
+        "google_calendar": {
+            "configured": false,
+            "client_id": null,
+            "client_secret": null
+        },
+        "outlook_calendar": {
+            "configured": false,
+            "client_id": null,
+            "client_secret": null
+        },
+        "google_drive": {
+            "configured": false,
+            "client_id": null,
+            "client_secret": null
+        },
+        "nextcloud": {
+            "configured": false,
+            "url": null,
+            "username": null,
+            "password": null
+        },
+        "local_storage": {
+            "configured": false,
+            "path": "/geivs/storage"
+        },
+        "postiz": {
+            "configured": false,
+            "platforms": []
+        }
+    },
+    "models": {
+        "primary": "llama3.3:70b",
+        "fast": "qwen2.5:9b",
+        "pulled": []
+    },
+    "first_boot_at": null,
+    "last_seen": null
+}

@@ -1,0 +1,210 @@
+{
+  "name": "GEIVS Dashboard Status",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "GET",
+        "path": "geivs/dashboard",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "webhook-dashboard",
+      "name": "Dashboard Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [
+        240,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const fs = require('fs');\nconst statePath = '/etc/geivs/geivs-state.json';\n\ntry {\n  const state = JSON.parse(fs.readFileSync(statePath, 'utf8'));\n  const integrations = state.integrations;\n\n  // Build clean status summary\n  const status = {\n    geivs_version: state.geivs_version,\n    persona: state.persona,\n    onboarding_complete: state.onboarding_complete,\n    first_boot_at: state.first_boot_at,\n    integrations: {}\n  };\n\n  // Summarize each integration\n  for (const [key, value] of Object.entries(integrations)) {\n    status.integrations[key] = {\n      configured: value.configured,\n      details: value.configured ? getSummary(key, value) : 'Not configured'\n    };\n  }\n\n  return [{ json: { success: true, dashboard: status } }];\n} catch(e) {\n  return [{ json: { success: false, error: 'Could not read GEIVS state: ' + e.message } }];\n}\n\nfunction getSummary(key, value) {\n  switch(key) {\n    case 'email': return value.address || value.provider;\n    case 'signal': return value.phone_number;\n    case 'telegram': return '@' + (value.bot_name || 'configured');\n    case 'google_calendar': return 'Google Calendar connected';\n    case 'outlook_calendar': return 'Outlook Calendar connected';\n    case 'google_drive': return 'Google Drive connected';\n    case 'nextcloud': return value.url;\n    case 'postiz': return (value.platforms || []).join(', ') || 'configured';\n    default: return 'configured';\n  }\n}"
+      },
+      "id": "build-dashboard",
+      "name": "Build Dashboard",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        460,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ $json }}"
+      },
+      "id": "respond-dashboard",
+      "name": "Respond",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [
+        680,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "geivs/setup/complete",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "webhook-complete",
+      "name": "Complete Onboarding Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [
+        240,
+        560
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const fs = require('fs');\nconst statePath = '/etc/geivs/geivs-state.json';\n\ntry {\n  const state = JSON.parse(fs.readFileSync(statePath, 'utf8'));\n  state.onboarding_complete = true;\n  state.last_seen = new Date().toISOString();\n  fs.writeFileSync(statePath, JSON.stringify(state, null, 4));\n  return [{ json: { success: true, message: 'Onboarding marked as complete. Welcome to GEIVS.' } }];\n} catch(e) {\n  return [{ json: { success: false, error: e.message } }];\n}"
+      },
+      "id": "mark-onboarding-complete",
+      "name": "Mark Onboarding Complete",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        460,
+        560
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ $json }}"
+      },
+      "id": "respond-complete",
+      "name": "Respond Complete",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [
+        680,
+        560
+      ]
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "geivs/setup/persona",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "webhook-persona",
+      "name": "Persona Setup Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [
+        240,
+        820
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const body = $input.first().json.body;\nconst fs = require('fs');\nconst statePath = '/etc/geivs/geivs-state.json';\n\nconst name = body.name;\nconst gender = body.gender || 'male';\nconst voice = gender === 'female' ? 'en_GB-alba-medium' : 'en_GB-alan-medium';\n\nif (!name) {\n  return [{ json: { success: false, error: 'Name is required' } }];\n}\n\ntry {\n  const state = JSON.parse(fs.readFileSync(statePath, 'utf8'));\n  state.persona = { name, gender, voice };\n  fs.writeFileSync(statePath, JSON.stringify(state, null, 4));\n  return [{ json: { \n    success: true, \n    message: 'Very good. I shall answer to ' + name + ' from this point forward.',\n    persona: state.persona\n  } }];\n} catch(e) {\n  return [{ json: { success: false, error: e.message } }];\n}"
+      },
+      "id": "save-persona",
+      "name": "Save Persona",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        460,
+        820
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ $json }}"
+      },
+      "id": "respond-persona",
+      "name": "Respond Persona",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [
+        680,
+        820
+      ]
+    }
+  ],
+  "connections": {
+    "Dashboard Webhook": {
+      "main": [
+        [
+          {
+            "node": "Build Dashboard",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Dashboard": {
+      "main": [
+        [
+          {
+            "node": "Respond",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Complete Onboarding Webhook": {
+      "main": [
+        [
+          {
+            "node": "Mark Onboarding Complete",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Mark Onboarding Complete": {
+      "main": [
+        [
+          {
+            "node": "Respond Complete",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Persona Setup Webhook": {
+      "main": [
+        [
+          {
+            "node": "Save Persona",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Save Persona": {
+      "main": [
+        [
+          {
+            "node": "Respond Persona",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "tags": [
+    "geivs",
+    "dashboard",
+    "onboarding"
+  ]
+}

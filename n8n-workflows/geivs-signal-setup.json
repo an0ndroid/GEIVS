@@ -1,0 +1,297 @@
+{
+  "name": "GEIVS Signal Setup",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "geivs/setup/signal",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "webhook-signal-setup",
+      "name": "Signal Setup Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [
+        240,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const body = $input.first().json.body;\nconst action = body.action;\nconst phoneNumber = body.phone_number;\nconst verificationCode = body.verification_code;\n\nif (!action) {\n  return [{ json: { success: false, error: 'Action is required: register, verify, or status' } }];\n}\n\nreturn [{ json: { action, phone_number: phoneNumber, verification_code: verificationCode } }];"
+      },
+      "id": "validate-signal-input",
+      "name": "Validate Input",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        460,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose"
+          },
+          "conditions": [
+            {
+              "id": "83cb1160-a1ce-4de9-93d0-68fdbea9c6fd",
+              "leftValue": "={{ $json.action }}",
+              "rightValue": "register",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        }
+      },
+      "id": "route-signal-action",
+      "name": "Route Action",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        680,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "url": "http://signal-cli:8080/v1/register/{{ $json.phone_number }}",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "use_voice",
+              "value": false
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "signal-register",
+      "name": "Register Phone Number",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [
+        900,
+        200
+      ]
+    },
+    {
+      "parameters": {
+        "url": "http://signal-cli:8080/v1/register/{{ $json.phone_number }}/verify/{{ $json.verification_code }}",
+        "method": "POST",
+        "options": {}
+      },
+      "id": "signal-verify",
+      "name": "Verify Code",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [
+        900,
+        400
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Save Signal config to state file\nconst fs = require('fs');\nconst statePath = '/etc/geivs/geivs-state.json';\nconst input = $input.first().json;\n\ntry {\n  const state = JSON.parse(fs.readFileSync(statePath, 'utf8'));\n  state.integrations.signal = {\n    configured: true,\n    phone_number: input.phone_number\n  };\n  fs.writeFileSync(statePath, JSON.stringify(state, null, 4));\n  return [{ json: { success: true, message: 'Signal registered successfully. You can now message GEIVS on Signal at ' + input.phone_number } }];\n} catch(e) {\n  return [{ json: { success: false, error: 'Failed to save Signal config: ' + e.message } }];\n}"
+      },
+      "id": "save-signal-config",
+      "name": "Save Signal Config",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1120,
+        400
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ $json }}"
+      },
+      "id": "respond-signal",
+      "name": "Respond",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [
+        1340,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "geivs/signal/send",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "webhook-signal-send",
+      "name": "Signal Send Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [
+        240,
+        560
+      ]
+    },
+    {
+      "parameters": {
+        "url": "http://signal-cli:8080/v2/send",
+        "method": "POST",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "message",
+              "value": "={{ $json.body.message }}"
+            },
+            {
+              "name": "number",
+              "value": "={{ $json.body.from }}"
+            },
+            {
+              "name": "recipients",
+              "value": "={{ [$json.body.to] }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "signal-send-message",
+      "name": "Send Signal Message",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [
+        460,
+        560
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ $json }}"
+      },
+      "id": "respond-signal-send",
+      "name": "Respond Send",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [
+        680,
+        560
+      ]
+    }
+  ],
+  "connections": {
+    "Signal Setup Webhook": {
+      "main": [
+        [
+          {
+            "node": "Validate Input",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Validate Input": {
+      "main": [
+        [
+          {
+            "node": "Route Action",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Route Action": {
+      "main": [
+        [
+          {
+            "node": "Register Phone Number",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Verify Code",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Register Phone Number": {
+      "main": [
+        [
+          {
+            "node": "Respond",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Verify Code": {
+      "main": [
+        [
+          {
+            "node": "Save Signal Config",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Save Signal Config": {
+      "main": [
+        [
+          {
+            "node": "Respond",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Signal Send Webhook": {
+      "main": [
+        [
+          {
+            "node": "Send Signal Message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send Signal Message": {
+      "main": [
+        [
+          {
+            "node": "Respond Send",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "tags": [
+    "geivs",
+    "setup",
+    "signal"
+  ]
+}

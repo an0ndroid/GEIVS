@@ -1,0 +1,331 @@
+# =============================================================
+# GEIVS Pro - docker-compose.pro.yml
+# Targets: 24GB VRAM GPU (e.g. RTX 4090, RTX Pro 4500)
+# Requirements: Docker, Docker Compose, NVIDIA Container Toolkit
+# Usage: docker compose -f docker-compose.pro.yml up -d
+# =============================================================
+
+networks:
+  geivs-net:
+    driver: bridge
+
+volumes:
+  ollama_data:
+  openwebui_data:
+  qdrant_data:
+  n8n_data:
+  searxng_data:
+  postiz_data:
+  comfyui_models:
+  comfyui_output:
+  signal_data:
+  nginx_certs:
+  portainer_data:
+  geivs_state:
+
+services:
+
+  # -----------------------------------------------------------
+  # GEIVS ONBOARDING — Runs once on first boot
+  # Configures Open WebUI with butler persona and seeds welcome
+  # -----------------------------------------------------------
+  geivs-init:
+    image: ubuntu:24.04
+    container_name: geivs_init
+    restart: "no"
+    depends_on:
+      - ollama
+      - openwebui
+    volumes:
+      - geivs_state:/etc/geivs
+      - ./onboarding-init.sh:/onboarding-init.sh:ro
+      - ./geivs-system-prompt.md:/etc/geivs/geivs-system-prompt.md:ro
+      - ./geivs-state.json:/etc/geivs/geivs-state.json.default:ro
+      - ./pull-models.sh:/pull-models.sh:ro
+    networks:
+      - geivs-net
+    environment:
+      - OPENWEBUI_URL=http://openwebui:8080
+      - OLLAMA_URL=http://ollama:11434
+      - STATE_FILE=/etc/geivs/geivs-state.json
+      - SYSTEM_PROMPT_FILE=/etc/geivs/geivs-system-prompt.md
+      - ADMIN_EMAIL=${ADMIN_EMAIL:-admin@geivs.local}
+      - ADMIN_PASSWORD=${ADMIN_PASSWORD:-changeme}
+      - ADMIN_NAME=${ADMIN_NAME:-Admin}
+      - GEIVS_STATE_FILE=/etc/geivs/geivs-state.json
+    command: >
+      bash -c "
+        apt-get update -qq && apt-get install -y -qq curl python3 &&
+        if [ ! -f /etc/geivs/geivs-state.json ]; then
+          cp /etc/geivs/geivs-state.json.default /etc/geivs/geivs-state.json;
+        fi &&
+        bash /onboarding-init.sh
+      "
+
+  # -----------------------------------------------------------
+  # OLLAMA — Local LLM inference engine (GPU accelerated)
+  # Models recommended for 24GB VRAM:
+  #   ollama pull llama3.3:70b
+  #   ollama pull gemma3:27b
+  #   ollama pull deepseek-r1:32b
+  #   ollama pull qwen2.5:9b  (fast/lightweight tasks)
+  # -----------------------------------------------------------
+  ollama:
+    image: ollama/ollama:latest
+    container_name: geivs_ollama
+    restart: unless-stopped
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
+    volumes:
+      - ollama_data:/root/.ollama
+    ports:
+      - "11434:11434"
+    networks:
+      - geivs-net
+    environment:
+      - OLLAMA_KEEP_ALIVE=24h
+      - OLLAMA_NUM_PARALLEL=2
+      - OLLAMA_MAX_LOADED_MODELS=2
+
+  # -----------------------------------------------------------
+  # OPEN WEBUI — Primary chat interface
+  # Access: http://localhost:3000
+  # -----------------------------------------------------------
+  openwebui:
+    image: ghcr.io/open-webui/open-webui:main
+    container_name: geivs_openwebui
+    restart: unless-stopped
+    depends_on:
+      - ollama
+      - qdrant
+    volumes:
+      - openwebui_data:/app/backend/data
+    ports:
+      - "3000:8080"
+    networks:
+      - geivs-net
+    environment:
+      - OLLAMA_BASE_URL=http://ollama:11434
+      - WEBUI_SECRET_KEY=${WEBUI_SECRET_KEY:-changeme_generate_a_real_secret}
+      - ENABLE_RAG_WEB_SEARCH=true
+      - RAG_WEB_SEARCH_ENGINE=searxng
+      - SEARXNG_QUERY_URL=http://searxng:8080/search?q=<query>&format=json
+      - VECTOR_DB=qdrant
+      - QDRANT_URI=http://qdrant:6333
+      - ENABLE_IMAGE_GENERATION=true
+      - COMFYUI_BASE_URL=http://comfyui:8188
+      - AUDIO_TTS_ENGINE=openai
+      - AUDIO_TTS_OPENAI_API_BASE_URL=http://piper:5000/v1
+      - AUDIO_TTS_OPENAI_API_KEY=skip
+      - DEFAULT_MODELS=llama3.3:70b
+
+  # -----------------------------------------------------------
+  # QDRANT — Vector database for RAG / memory
+  # -----------------------------------------------------------
+  qdrant:
+    image: qdrant/qdrant:latest
+    container_name: geivs_qdrant
+    restart: unless-stopped
+    volumes:
+      - qdrant_data:/qdrant/storage
+    ports:
+      - "6333:6333"
+    networks:
+      - geivs-net
+
+  # -----------------------------------------------------------
+  # SEARXNG — Self-hosted meta search
+  # Note: On first run, fix permissions if it fails to start:
+  #   docker run --rm -v user_searxng_data:/etc/searxng busybox chmod 777 /etc/searxng
+  # -----------------------------------------------------------
+  searxng:
+    image: searxng/searxng:latest
+    container_name: geivs_searxng
+    restart: unless-stopped
+    volumes:
+      - searxng_data:/etc/searxng
+    ports:
+      - "8080:8080"
+    networks:
+      - geivs-net
+    environment:
+      - SEARXNG_BASE_URL=http://localhost:8080
+    cap_drop:
+      - ALL
+    cap_add:
+      - CHOWN
+      - SETGID
+      - SETUID
+
+  # -----------------------------------------------------------
+  # N8N — Automation engine
+  # Access: http://localhost:5678
+  # Import workflows from ./n8n-workflows/ after first boot
+  # -----------------------------------------------------------
+  n8n:
+    image: n8nio/n8n:latest
+    container_name: geivs_n8n
+    restart: unless-stopped
+    depends_on:
+      - ollama
+    volumes:
+      - n8n_data:/home/node/.n8n
+      - geivs_state:/etc/geivs
+    ports:
+      - "5678:5678"
+    networks:
+      - geivs-net
+    environment:
+      - N8N_HOST=${N8N_HOST:-localhost}
+      - N8N_PORT=5678
+      - N8N_PROTOCOL=http
+      - WEBHOOK_URL=http://localhost:5678
+      - N8N_ENCRYPTION_KEY=${N8N_ENCRYPTION_KEY:-changeme_generate_a_real_key}
+      - N8N_SECURE_COOKIE=false
+      - OLLAMA_HOST=http://ollama:11434
+      - GEIVS_STATE_FILE=/etc/geivs/geivs-state.json
+
+  # -----------------------------------------------------------
+  # COMFYUI — Local image generation (GPU accelerated)
+  # Access: http://localhost:8188
+  # -----------------------------------------------------------
+  comfyui:
+    image: ghcr.io/ai-dock/comfyui:latest-cuda
+    container_name: geivs_comfyui
+    restart: unless-stopped
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
+    volumes:
+      - comfyui_models:/opt/ComfyUI/models
+      - comfyui_output:/opt/ComfyUI/output
+    ports:
+      - "8188:8188"
+    networks:
+      - geivs-net
+    environment:
+      - DIRECT_ADDRESS=0.0.0.0
+      - DIRECT_ADDRESS_GET_WAN=false
+
+  # -----------------------------------------------------------
+  # PIPER TTS — Local text-to-speech
+  # British male (GEIVS) and female (Amelia) voices
+  # -----------------------------------------------------------
+  piper:
+    image: rhasspy/wyoming-piper:latest
+    container_name: geivs_piper
+    restart: unless-stopped
+    ports:
+      - "10200:10200"
+      - "5000:5000"
+    networks:
+      - geivs-net
+    command: >
+      --voice en_GB-alan-medium
+      --voice en_GB-alba-medium
+
+  # -----------------------------------------------------------
+  # SIGNAL-CLI — Signal messenger integration
+  # Requires phone number registration during onboarding
+  # -----------------------------------------------------------
+  signal-cli:
+    image: bbernhard/signal-cli-rest-api:latest
+    container_name: geivs_signal
+    restart: unless-stopped
+    volumes:
+      - signal_data:/home/.local/share/signal-cli
+    ports:
+      - "8090:8080"
+    networks:
+      - geivs-net
+    environment:
+      - MODE=json-rpc
+
+  # -----------------------------------------------------------
+  # POSTIZ — Social media scheduler
+  # Access: http://localhost:5100
+  # Supports: Twitter/X, LinkedIn, Facebook, Instagram, Discord
+  # -----------------------------------------------------------
+  postiz:
+    image: ghcr.io/gitroomhq/postiz-app:latest
+    container_name: geivs_postiz
+    restart: unless-stopped
+    depends_on:
+      - postiz_db
+      - postiz_redis
+    volumes:
+      - postiz_data:/uploads
+    ports:
+      - "5100:5000"
+    networks:
+      - geivs-net
+    environment:
+      - MAIN_URL=http://localhost:5100
+      - FRONTEND_URL=http://localhost:5100
+      - NEXT_PUBLIC_BACKEND_URL=http://localhost:5100/api
+      - JWT_SECRET=${JWT_SECRET:-changeme_generate_a_real_secret}
+      - DATABASE_URL=postgresql://geivs:${DB_PASSWORD:-geivs}@postiz_db:5432/postiz
+      - REDIS_URL=redis://postiz_redis:6379
+
+  postiz_db:
+    image: postgres:16-alpine
+    container_name: geivs_postiz_db
+    restart: unless-stopped
+    volumes:
+      - postiz_data:/var/lib/postgresql/data
+    networks:
+      - geivs-net
+    environment:
+      - POSTGRES_USER=geivs
+      - POSTGRES_PASSWORD=${DB_PASSWORD:-geivs}
+      - POSTGRES_DB=postiz
+
+  postiz_redis:
+    image: redis:7-alpine
+    container_name: geivs_postiz_redis
+    restart: unless-stopped
+    networks:
+      - geivs-net
+
+  # -----------------------------------------------------------
+  # PORTAINER — Container management UI
+  # Access: http://localhost:9000
+  # -----------------------------------------------------------
+  portainer:
+    image: portainer/portainer-ce:latest
+    container_name: geivs_portainer
+    restart: unless-stopped
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - portainer_data:/data
+    ports:
+      - "9000:9000"
+    networks:
+      - geivs-net
+
+  # -----------------------------------------------------------
+  # NGINX — Reverse proxy
+  # -----------------------------------------------------------
+  nginx:
+    image: nginx:alpine
+    container_name: geivs_nginx
+    restart: unless-stopped
+    depends_on:
+      - openwebui
+    volumes:
+      - ./nginx/geivs.conf:/etc/nginx/conf.d/default.conf:ro
+      - nginx_certs:/etc/nginx/certs
+    ports:
+      - "80:80"
+      - "443:443"
+    networks:
+      - geivs-net

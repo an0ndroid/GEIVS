@@ -1,0 +1,204 @@
+{
+  "name": "GEIVS Storage Setup",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "geivs/setup/storage",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "webhook-storage-setup",
+      "name": "Storage Setup Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [
+        240,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const body = $input.first().json.body;\nconst provider = body.provider;\n\nif (!provider || !['google_drive', 'nextcloud', 'local'].includes(provider)) {\n  return [{ json: { success: false, error: 'Provider must be google_drive, nextcloud, or local' } }];\n}\n\nreturn [{ json: { provider, url: body.url, username: body.username, password: body.password, client_id: body.client_id, client_secret: body.client_secret } }];"
+      },
+      "id": "validate-storage-input",
+      "name": "Validate Input",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        460,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "rules": {
+          "rules": [
+            {
+              "value2": "google_drive"
+            },
+            {
+              "value2": "nextcloud"
+            },
+            {
+              "value2": "local"
+            }
+          ]
+        },
+        "dataType": "string",
+        "value1": "={{ $json.provider }}"
+      },
+      "id": "route-storage-provider",
+      "name": "Route by Provider",
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 1,
+      "position": [
+        680,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "return [{\n  json: {\n    success: true,\n    provider: 'google_drive',\n    action_required: 'oauth',\n    instructions: 'To connect Google Drive:\\n1. Go to console.cloud.google.com\\n2. Enable the Google Drive API\\n3. Create OAuth 2.0 credentials (Desktop app type)\\n4. Download the credentials JSON\\n5. POST to /geivs/setup/storage with provider=google_drive, client_id and client_secret'\n  }\n}];"
+      },
+      "id": "google-drive-instructions",
+      "name": "Google Drive Instructions",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        900,
+        160
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const input = $input.first().json;\nconst fs = require('fs');\nconst statePath = '/etc/geivs/geivs-state.json';\n\nif (!input.url || !input.username || !input.password) {\n  return [{ json: { success: false, error: 'Nextcloud requires url, username, and password' } }];\n}\n\ntry {\n  const state = JSON.parse(fs.readFileSync(statePath, 'utf8'));\n  state.integrations.nextcloud = {\n    configured: true,\n    url: input.url,\n    username: input.username,\n    password: input.password\n  };\n  fs.writeFileSync(statePath, JSON.stringify(state, null, 4));\n  return [{ json: { success: true, message: 'Nextcloud configured at ' + input.url } }];\n} catch(e) {\n  return [{ json: { success: false, error: e.message } }];\n}"
+      },
+      "id": "nextcloud-setup",
+      "name": "Nextcloud Setup",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        900,
+        320
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const fs = require('fs');\nconst statePath = '/etc/geivs/geivs-state.json';\n\ntry {\n  const state = JSON.parse(fs.readFileSync(statePath, 'utf8'));\n  state.integrations.local_storage = {\n    configured: true,\n    path: '/geivs/storage'\n  };\n  fs.writeFileSync(statePath, JSON.stringify(state, null, 4));\n  return [{ json: { success: true, message: 'Local storage configured at /geivs/storage. You may place files there for GEIVS to access.' } }];\n} catch(e) {\n  return [{ json: { success: false, error: e.message } }];\n}"
+      },
+      "id": "local-storage-setup",
+      "name": "Local Storage Setup",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        900,
+        480
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ $json }}"
+      },
+      "id": "respond-storage",
+      "name": "Respond",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [
+        1120,
+        300
+      ]
+    }
+  ],
+  "connections": {
+    "Storage Setup Webhook": {
+      "main": [
+        [
+          {
+            "node": "Validate Input",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Validate Input": {
+      "main": [
+        [
+          {
+            "node": "Route by Provider",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Route by Provider": {
+      "main": [
+        [
+          {
+            "node": "Google Drive Instructions",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Nextcloud Setup",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Local Storage Setup",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Drive Instructions": {
+      "main": [
+        [
+          {
+            "node": "Respond",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Nextcloud Setup": {
+      "main": [
+        [
+          {
+            "node": "Respond",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Local Storage Setup": {
+      "main": [
+        [
+          {
+            "node": "Respond",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "tags": [
+    "geivs",
+    "setup",
+    "storage"
+  ]
+}

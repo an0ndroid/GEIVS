@@ -1,0 +1,261 @@
+{
+  "name": "GEIVS Telegram Setup",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "geivs/setup/telegram",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "webhook-telegram-setup",
+      "name": "Telegram Setup Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [
+        240,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const body = $input.first().json.body;\nconst botToken = body.bot_token;\n\nif (!botToken) {\n  return [{ json: { success: false, error: 'Bot token is required. Create a bot via @BotFather on Telegram to get one.' } }];\n}\n\nreturn [{ json: { bot_token: botToken } }];"
+      },
+      "id": "validate-telegram-input",
+      "name": "Validate Input",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        460,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "url": "https://api.telegram.org/bot{{ $json.bot_token }}/getMe",
+        "options": {}
+      },
+      "id": "verify-telegram-token",
+      "name": "Verify Bot Token",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [
+        680,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const input = $input.first().json;\n\nif (!input.ok) {\n  return [{ json: { success: false, error: 'Invalid bot token. Please check the token from @BotFather and try again.' } }];\n}\n\nreturn [{ json: { \n  verified: true, \n  bot_token: $('Validate Input').first().json.bot_token,\n  bot_name: input.result.username,\n  bot_id: input.result.id\n} }];"
+      },
+      "id": "check-telegram-response",
+      "name": "Check Response",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        900,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const input = $input.first().json;\nconst fs = require('fs');\nconst statePath = '/etc/geivs/geivs-state.json';\n\nif (!input.verified) {\n  return [{ json: input }];\n}\n\ntry {\n  const state = JSON.parse(fs.readFileSync(statePath, 'utf8'));\n  state.integrations.telegram = {\n    configured: true,\n    bot_token: input.bot_token,\n    bot_name: input.bot_name,\n    bot_id: input.bot_id\n  };\n  fs.writeFileSync(statePath, JSON.stringify(state, null, 4));\n  return [{ json: { \n    success: true, \n    message: 'Telegram bot configured successfully. You can now message GEIVS via @' + input.bot_name,\n    bot_name: input.bot_name\n  } }];\n} catch(e) {\n  return [{ json: { success: false, error: 'Failed to save Telegram config: ' + e.message } }];\n}"
+      },
+      "id": "save-telegram-config",
+      "name": "Save Telegram Config",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1120,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ $json }}"
+      },
+      "id": "respond-telegram",
+      "name": "Respond",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [
+        1340,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "geivs/telegram/send",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "webhook-telegram-send",
+      "name": "Telegram Send Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [
+        240,
+        560
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const fs = require('fs');\nconst statePath = '/etc/geivs/geivs-state.json';\nconst body = $input.first().json.body;\n\ntry {\n  const state = JSON.parse(fs.readFileSync(statePath, 'utf8'));\n  const token = state.integrations.telegram.bot_token;\n  return [{ json: { bot_token: token, chat_id: body.chat_id, message: body.message } }];\n} catch(e) {\n  return [{ json: { success: false, error: 'Telegram not configured: ' + e.message } }];\n}"
+      },
+      "id": "load-telegram-config",
+      "name": "Load Config",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        460,
+        560
+      ]
+    },
+    {
+      "parameters": {
+        "url": "https://api.telegram.org/bot{{ $json.bot_token }}/sendMessage",
+        "method": "POST",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "chat_id",
+              "value": "={{ $json.chat_id }}"
+            },
+            {
+              "name": "text",
+              "value": "={{ $json.message }}"
+            },
+            {
+              "name": "parse_mode",
+              "value": "Markdown"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "telegram-send-message",
+      "name": "Send Telegram Message",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [
+        680,
+        560
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ $json }}"
+      },
+      "id": "respond-telegram-send",
+      "name": "Respond Send",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [
+        900,
+        560
+      ]
+    }
+  ],
+  "connections": {
+    "Telegram Setup Webhook": {
+      "main": [
+        [
+          {
+            "node": "Validate Input",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Validate Input": {
+      "main": [
+        [
+          {
+            "node": "Verify Bot Token",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Verify Bot Token": {
+      "main": [
+        [
+          {
+            "node": "Check Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check Response": {
+      "main": [
+        [
+          {
+            "node": "Save Telegram Config",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Save Telegram Config": {
+      "main": [
+        [
+          {
+            "node": "Respond",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Telegram Send Webhook": {
+      "main": [
+        [
+          {
+            "node": "Load Config",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Load Config": {
+      "main": [
+        [
+          {
+            "node": "Send Telegram Message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send Telegram Message": {
+      "main": [
+        [
+          {
+            "node": "Respond Send",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "tags": [
+    "geivs",
+    "setup",
+    "telegram"
+  ]
+}
