@@ -250,9 +250,11 @@ content = re.sub(
     r'\s*deploy:\s*\n\s*resources:\s*\n\s*reservations:\s*\n\s*devices:\s*\n(?:\s*-[^\n]*\n)+',
     '\n', content)
 content = content.replace('latest-cuda', 'latest-cpu')
+content = content.replace('WHISPER__MODEL=medium', 'WHISPER__MODEL=tiny')
+content = content.replace('WHISPER__DEVICE=cuda', 'WHISPER__DEVICE=cpu')
 open(sys.argv[1], 'w').write(content)
 PYEOF
-  ok "GPU blocks stripped (CPU-only mode)"
+  ok "GPU blocks stripped, Whisper set to CPU/tiny (CPU-only mode)"
 fi
 
 # ── Step 8: Download nginx Config ────────────────────────────
@@ -318,16 +320,33 @@ fi
 # ── Step 9: Download Workflows ────────────────────────────────
 step "Downloading n8n workflows"
 
-for wf in geivs-signal-bot geivs-email-bot geivs-daily-briefing geivs-email-draft geivs-calendar-integration geivs-dashboard geivs-email-transcription geivs-signal-transcription; do
+for wf in \
+  geivs-signal-bot geivs-email-bot geivs-daily-briefing geivs-email-draft \
+  geivs-calendar-integration geivs-dashboard \
+  geivs-email-transcription geivs-signal-transcription \
+  geivs-calendar-setup geivs-email-setup geivs-signal-setup \
+  geivs-storage-setup geivs-telegram-setup; do
   download_or_warn "$REPO_RAW/n8n-workflows/${wf}.json" "$GEIVS_DIR/n8n-workflows/${wf}.json" || true
 done
 
 # ── Step 10: Download Onboarding Files ───────────────────────
-step "Downloading onboarding files"
+step "Downloading onboarding and support files"
 
 download_or_warn "$REPO_RAW/onboarding-init.sh" "$GEIVS_DIR/onboarding-init.sh" || true
 download_or_warn "$REPO_RAW/geivs-system-prompt.md" "$GEIVS_DIR/geivs-system-prompt.md" || true
-[ "$DRY_RUN" = false ] && chmod +x "$GEIVS_DIR/onboarding-init.sh" 2>/dev/null || true
+# geivs-state.json is bind-mounted into geivs-init container — must exist before compose up
+download_or_warn "$REPO_RAW/geivs-state.json" "$GEIVS_DIR/geivs-state.json" || true
+# Model pull scripts — bind-mounted and available for manual use
+download_or_warn "$REPO_RAW/pull-models.sh" "$GEIVS_DIR/pull-models.sh" || true
+download_or_warn "$REPO_RAW/pull-models-cpu.sh" "$GEIVS_DIR/pull-models-cpu.sh" || true
+# Update script
+download_or_warn "$REPO_RAW/update-geivs.sh" "$GEIVS_DIR/update-geivs.sh" || true
+if [ "$DRY_RUN" = false ]; then
+  chmod +x "$GEIVS_DIR/onboarding-init.sh" 2>/dev/null || true
+  chmod +x "$GEIVS_DIR/pull-models.sh" 2>/dev/null || true
+  chmod +x "$GEIVS_DIR/pull-models-cpu.sh" 2>/dev/null || true
+  chmod +x "$GEIVS_DIR/update-geivs.sh" 2>/dev/null || true
+fi
 
 # ── Step 11: Start the Stack ──────────────────────────────────
 step "Starting GEIVS stack"
@@ -337,8 +356,33 @@ if [ "$DRY_RUN" = false ]; then
   docker compose -f docker-compose.pro.yml --env-file .env up -d 2>&1 | \
     grep -E "(Started|Created|Pulled|Error|error)" || true
   ok "Stack started"
+
+  # Enable JSON format in SearXNG (required for Open WebUI web search)
+  echo -e "  ${BLUE}Patching SearXNG to enable JSON format...${NC}"
+  sleep 8
+  if docker exec geivs_searxng python3 -c "
+import re, sys
+f = '/etc/searxng/settings.yml'
+try:
+    c = open(f).read()
+    if '- json' not in c:
+        c = re.sub(r'(  formats:\n    - html)', r'\1\n    - json', c)
+        open(f, 'w').write(c)
+        print('patched')
+    else:
+        print('already patched')
+except Exception as e:
+    print('error: ' + str(e))
+    sys.exit(1)
+" 2>/dev/null | grep -q "patched"; then
+    docker restart geivs_searxng >/dev/null 2>&1 || true
+    ok "SearXNG JSON format enabled (Open WebUI web search will work)"
+  else
+    warn "SearXNG JSON patch failed — add '- json' under search.formats in /etc/searxng/settings.yml"
+  fi
 else
   echo -e "${BLUE}  [dry-run] docker compose up -d${NC}"
+  echo -e "${BLUE}  [dry-run] patch SearXNG JSON format${NC}"
 fi
 
 # ── Step 12: Wait for Open WebUI ──────────────────────────────
