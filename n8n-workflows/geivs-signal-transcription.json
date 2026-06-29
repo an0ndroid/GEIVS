@@ -1,0 +1,160 @@
+{
+  "name": "GEIVS Signal Transcription",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [{ "field": "minutes", "minutesInterval": 1 }]
+        }
+      },
+      "id": "node-sched",
+      "name": "Every Minute",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [0, 200]
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "=http://signal-cli:8080/v1/receive/{{ $env.SIGNAL_NUMBER }}",
+        "options": { "timeout": 10000 }
+      },
+      "id": "node-receive",
+      "name": "Poll Signal Messages",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [220, 200]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": { "caseSensitive": false },
+          "conditions": [
+            {
+              "leftValue": "={{ $json.length }}",
+              "rightValue": 0,
+              "operator": { "type": "number", "operation": "gt" }
+            }
+          ]
+        }
+      },
+      "id": "node-hasmsgs",
+      "name": "Has Messages?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [440, 200]
+    },
+    {
+      "parameters": { "fieldToSplitOut": "=" },
+      "id": "node-split",
+      "name": "Split Messages",
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [660, 100]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Check if this Signal message has an audio attachment.\n// Signal CLI returns attachments with contentType and an id to download separately.\nconst envelope = $input.first().json.envelope || {};\nconst dataMsg = envelope.dataMessage || {};\nconst attachments = dataMsg.attachments || [];\n\nconst AUDIO_MIME = ['audio/', 'video/mp4', 'video/ogg', 'video/webm'];\nconst AUDIO_EXT = /\\.(mp3|wav|m4a|ogg|webm|opus|aac|flac|wma)$/i;\n\nconst audioAtt = attachments.find(att =>\n  AUDIO_MIME.some(t => (att.contentType || '').startsWith(t)) ||\n  AUDIO_EXT.test(att.filename || '')\n);\n\nif (!audioAtt) return []; // Skip — no audio attachment\n\nreturn [{\n  json: {\n    sender: envelope.source || envelope.sourceNumber,\n    senderName: envelope.sourceName || envelope.source,\n    attachmentId: audioAtt.id,\n    contentType: audioAtt.contentType || 'audio/ogg',\n    filename: audioAtt.filename || 'voice-note.ogg'\n  }\n}];"
+      },
+      "id": "node-filter",
+      "name": "Find Audio Attachment",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [880, 100]
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "=http://signal-cli:8080/v1/attachments/{{ $json.attachmentId }}",
+        "options": {
+          "response": {
+            "response": { "responseFormat": "file", "outputPropertyName": "data" }
+          }
+        }
+      },
+      "id": "node-download",
+      "name": "Download Attachment",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1100, 100]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://whisper:8000/v1/audio/transcriptions",
+        "sendBody": true,
+        "contentType": "multipart-form-data",
+        "bodyParameters": {
+          "parameters": [
+            {
+              "parameterType": "formBinaryData",
+              "name": "file",
+              "inputDataFieldName": "data"
+            },
+            {
+              "parameterType": "formData",
+              "name": "model",
+              "value": "whisper-1"
+            },
+            {
+              "parameterType": "formData",
+              "name": "response_format",
+              "value": "json"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "node-whisper",
+      "name": "Transcribe with Whisper",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1320, 100]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://signal-cli:8080/v2/send",
+        "sendBody": true,
+        "contentType": "json",
+        "body": "={\n  \"message\": \"📝 *Transcript*\\n\\n{{ $json.text }}\\n\\n_Transcribed by Jeeves — GEIVS AI Butler_\",\n  \"number\": \"{{ $env.SIGNAL_NUMBER }}\",\n  \"recipients\": [\"{{ $('Find Audio Attachment').item.json.sender }}\"]\n}",
+        "options": {}
+      },
+      "id": "node-reply",
+      "name": "Reply via Signal",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1540, 100]
+    }
+  ],
+  "connections": {
+    "Every Minute": {
+      "main": [[{ "node": "Poll Signal Messages", "type": "main", "index": 0 }]]
+    },
+    "Poll Signal Messages": {
+      "main": [[{ "node": "Has Messages?", "type": "main", "index": 0 }]]
+    },
+    "Has Messages?": {
+      "main": [
+        [{ "node": "Split Messages", "type": "main", "index": 0 }],
+        []
+      ]
+    },
+    "Split Messages": {
+      "main": [[{ "node": "Find Audio Attachment", "type": "main", "index": 0 }]]
+    },
+    "Find Audio Attachment": {
+      "main": [[{ "node": "Download Attachment", "type": "main", "index": 0 }]]
+    },
+    "Download Attachment": {
+      "main": [[{ "node": "Transcribe with Whisper", "type": "main", "index": 0 }]]
+    },
+    "Transcribe with Whisper": {
+      "main": [[{ "node": "Reply via Signal", "type": "main", "index": 0 }]]
+    }
+  },
+  "active": false,
+  "settings": {},
+  "versionId": "geivs-signal-transcription-v1",
+  "meta": { "instanceId": "geivs" }
+}

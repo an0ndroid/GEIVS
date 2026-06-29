@@ -1,0 +1,118 @@
+{
+  "name": "GEIVS Email Transcription",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [{ "field": "minutes", "minutesInterval": 5 }]
+        }
+      },
+      "id": "node-sched",
+      "name": "Every 5 Minutes",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [0, 200]
+    },
+    {
+      "parameters": {
+        "host": "={{ $env.IMAP_HOST || 'imap.gmail.com' }}",
+        "port": 993,
+        "user": "={{ $env.IMAP_USER }}",
+        "password": "={{ $env.IMAP_PASSWORD }}",
+        "mailbox": "INBOX",
+        "action": "read",
+        "limit": 10,
+        "downloadAttachments": true,
+        "options": {
+          "allowUnauthorizedCerts": false
+        }
+      },
+      "id": "node-imap",
+      "name": "Read Email (IMAP)",
+      "type": "n8n-nodes-base.emailReadImap",
+      "typeVersion": 2,
+      "position": [220, 200],
+      "credentials": {
+        "imap": { "id": "imap-placeholder", "name": "GEIVS IMAP" }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Filter emails that have audio attachments and return one item per audio file.\n// Supports: mp3, wav, m4a, ogg, webm, opus, aac, flac, wma\nconst AUDIO_EXTENSIONS = /\\.(mp3|wav|m4a|ogg|webm|opus|aac|flac|wma)$/i;\nconst AUDIO_MIME = ['audio/', 'video/mp4', 'video/webm', 'video/ogg'];\n\nconst result = [];\n\nfor (const item of $input.all()) {\n  const attachments = item.json.attachments || [];\n\n  for (let i = 0; i < attachments.length; i++) {\n    const att = attachments[i];\n    const isAudio =\n      AUDIO_MIME.some(t => (att.mimeType || '').startsWith(t)) ||\n      AUDIO_EXTENSIONS.test(att.filename || '');\n\n    if (!isAudio) continue;\n\n    result.push({\n      json: {\n        replyTo: item.json.from,\n        subject: item.json.subject || '(no subject)',\n        date: item.json.date,\n        audioFilename: att.filename || `recording_${i}.audio`,\n        audioMimeType: att.mimeType || 'audio/mpeg',\n        binaryKey: `attachment_${i}`\n      },\n      binary: item.binary\n    });\n\n    break; // One audio file per email — process first one found\n  }\n}\n\nif (result.length === 0) {\n  // No audio attachments — nothing to do\n  return [];\n}\n\nreturn result;"
+      },
+      "id": "node-filter",
+      "name": "Find Audio Attachment",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [440, 200]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://whisper:8000/v1/audio/transcriptions",
+        "sendBody": true,
+        "contentType": "multipart-form-data",
+        "bodyParameters": {
+          "parameters": [
+            {
+              "parameterType": "formBinaryData",
+              "name": "file",
+              "inputDataFieldName": "={{ $json.binaryKey }}"
+            },
+            {
+              "parameterType": "formData",
+              "name": "model",
+              "value": "whisper-1"
+            },
+            {
+              "parameterType": "formData",
+              "name": "response_format",
+              "value": "json"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "node-whisper",
+      "name": "Transcribe with Whisper",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [660, 200]
+    },
+    {
+      "parameters": {
+        "fromEmail": "={{ $env.SMTP_FROM || $env.IMAP_USER }}",
+        "toEmail": "={{ $('Find Audio Attachment').item.json.replyTo }}",
+        "subject": "=📝 Transcript: {{ $('Find Audio Attachment').item.json.subject }}",
+        "text": "=Good day,\n\nHere is the transcript of \"{{ $('Find Audio Attachment').item.json.audioFilename }}\":\n\n────────────────────────────────\n{{ $json.text }}\n────────────────────────────────\n\nKind regards,\nJeeves — GEIVS AI Butler",
+        "options": {}
+      },
+      "id": "node-reply",
+      "name": "Reply with Transcript",
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 2.1,
+      "position": [880, 200],
+      "credentials": {
+        "smtp": { "id": "smtp-placeholder", "name": "GEIVS SMTP" }
+      }
+    }
+  ],
+  "connections": {
+    "Every 5 Minutes": {
+      "main": [[{ "node": "Read Email (IMAP)", "type": "main", "index": 0 }]]
+    },
+    "Read Email (IMAP)": {
+      "main": [[{ "node": "Find Audio Attachment", "type": "main", "index": 0 }]]
+    },
+    "Find Audio Attachment": {
+      "main": [[{ "node": "Transcribe with Whisper", "type": "main", "index": 0 }]]
+    },
+    "Transcribe with Whisper": {
+      "main": [[{ "node": "Reply with Transcript", "type": "main", "index": 0 }]]
+    }
+  },
+  "active": false,
+  "settings": {},
+  "versionId": "geivs-email-transcription-v1",
+  "meta": { "instanceId": "geivs" }
+}
