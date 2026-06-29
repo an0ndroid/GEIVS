@@ -358,9 +358,11 @@ if [ "$DRY_RUN" = false ]; then
   ok "Stack started"
 
   # Enable JSON format in SearXNG (required for Open WebUI web search)
-  echo -e "  ${BLUE}Patching SearXNG to enable JSON format...${NC}"
-  sleep 8
-  if docker exec geivs_searxng python3 -c "
+  # Retry loop: SearXNG generates settings.yml on first boot which can take 30-60s
+  echo -e "  ${BLUE}Waiting for SearXNG to initialise...${NC}"
+  SEARXNG_PATCHED=false
+  for attempt in $(seq 1 15); do
+    PATCH_RESULT=$(docker exec geivs_searxng python3 -c "
 import re, sys
 f = '/etc/searxng/settings.yml'
 try:
@@ -370,16 +372,25 @@ try:
         open(f, 'w').write(c)
         print('patched')
     else:
-        print('already patched')
+        print('already_patched')
 except Exception as e:
-    print('error: ' + str(e))
+    print('not_ready')
     sys.exit(1)
-" 2>/dev/null | grep -q "patched"; then
-    docker restart geivs_searxng >/dev/null 2>&1 || true
-    ok "SearXNG JSON format enabled (Open WebUI web search will work)"
-  else
+" 2>/dev/null || true)
+    if [ "$PATCH_RESULT" = "patched" ]; then
+      docker restart geivs_searxng >/dev/null 2>&1 || true
+      ok "SearXNG JSON format enabled (Open WebUI web search will work)"
+      SEARXNG_PATCHED=true
+      break
+    elif [ "$PATCH_RESULT" = "already_patched" ]; then
+      ok "SearXNG JSON format already enabled"
+      SEARXNG_PATCHED=true
+      break
+    fi
+    sleep 4
+  done
+  [ "$SEARXNG_PATCHED" = false ] && \
     warn "SearXNG JSON patch failed — add '- json' under search.formats in /etc/searxng/settings.yml"
-  fi
 else
   echo -e "${BLUE}  [dry-run] docker compose up -d${NC}"
   echo -e "${BLUE}  [dry-run] patch SearXNG JSON format${NC}"
