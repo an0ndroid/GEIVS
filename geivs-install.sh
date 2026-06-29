@@ -318,7 +318,7 @@ fi
 # ── Step 9: Download Workflows ────────────────────────────────
 step "Downloading n8n workflows"
 
-for wf in geivs-signal-bot geivs-email-bot geivs-daily-briefing geivs-email-draft geivs-calendar-integration geivs-dashboard; do
+for wf in geivs-signal-bot geivs-email-bot geivs-daily-briefing geivs-email-draft geivs-calendar-integration geivs-dashboard geivs-email-transcription geivs-signal-transcription; do
   download_or_warn "$REPO_RAW/n8n-workflows/${wf}.json" "$GEIVS_DIR/n8n-workflows/${wf}.json" || true
 done
 
