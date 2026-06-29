@@ -1,0 +1,211 @@
+{
+  "name": "GEIVS Signal Bot",
+  "nodes": [
+    {
+      "id": "4335f008-93c7-4393-929d-c1ea550921be",
+      "name": "Every Minute",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        0,
+        0
+      ],
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "minutes",
+              "minutesInterval": 1
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "43a9e7bd-7426-4254-bbd1-c8a6befc64f4",
+      "name": "Poll Signal",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        220,
+        0
+      ],
+      "parameters": {
+        "method": "GET",
+        "url": "=http://signal:8080/v1/receive/{{ .SIGNAL_NUMBER }}",
+        "options": {}
+      }
+    },
+    {
+      "id": "79f69338-6ece-44b8-96c5-1418ab444c8e",
+      "name": "Has Messages",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        440,
+        0
+      ],
+      "parameters": {
+        "conditions": {
+          "conditions": [
+            {
+              "leftValue": "={{ Array.isArray() && .length > 0 }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "equals"
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "065cf83f-3318-43c8-ba99-6fe85c616c43",
+      "name": "Loop Messages",
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        660,
+        -80
+      ],
+      "parameters": {
+        "batchSize": 1,
+        "options": {}
+      }
+    },
+    {
+      "id": "f2078885-6ea7-4fb3-94b8-bbb9be442e63",
+      "name": "Parse Envelope",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        880,
+        -80
+      ],
+      "parameters": {
+        "jsCode": "const msg = .first().json;\nconst env = msg.envelope || msg;\nconst dm = env.dataMessage || {};\nreturn [{ json: {\n  sender: env.source || env.sourceNumber || unknown,\n  message: dm.message || ,\n  timestamp: env.timestamp || Date.now()\n}}];"
+      }
+    },
+    {
+      "id": "4d363ef3-ee69-452a-80ae-48b3647a4a80",
+      "name": "Ask Ollama",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1100,
+        -80
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "http://ollama:11434/api/generate",
+        "sendBody": true,
+        "contentType": "json",
+        "body": {
+          "model": "qwen2.5:7b",
+          "system": "You are GEIVS, a professional AI butler assistant serving a small business. You are knowledgeable, concise, and helpful. Respond in a warm but professional tone. Keep replies brief and actionable.",
+          "prompt": "={{ .message }}",
+          "stream": false
+        }
+      }
+    },
+    {
+      "id": "c5a09f97-c366-4863-b152-a30adb95c18a",
+      "name": "Send Reply",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1320,
+        -80
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "http://signal:8080/v2/send",
+        "sendBody": true,
+        "contentType": "json",
+        "body": {
+          "message": "={{ .response }}",
+          "number": "={{ .SIGNAL_NUMBER }}",
+          "recipients": [
+            "={{ [\"Parse Envelope\"].json.sender }}"
+          ]
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Every Minute": {
+      "main": [
+        [
+          {
+            "node": "Poll Signal",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Poll Signal": {
+      "main": [
+        [
+          {
+            "node": "Has Messages",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Has Messages": {
+      "main": [
+        [
+          {
+            "node": "Loop Messages",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        []
+      ]
+    },
+    "Loop Messages": {
+      "main": [
+        [
+          {
+            "node": "Parse Envelope",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse Envelope": {
+      "main": [
+        [
+          {
+            "node": "Ask Ollama",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Ask Ollama": {
+      "main": [
+        [
+          {
+            "node": "Send Reply",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {},
+  "versionId": "7f5d8c6f-03a7-4bba-8502-429625a285ae",
+  "meta": {
+    "templateCredsSetupCompleted": true
+  }
+}

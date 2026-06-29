@@ -283,6 +283,9 @@ nohup ./pull-models.sh > /var/log/geivs-model-pull.log 2>&1 &
 echo -e "${GREEN}✓ Model pull started (check /var/log/geivs-model-pull.log for progress)${NC}"
 
 echo ""
+# Mark onboarding complete
+python3 -c "import json,datetime; f=open("","r+"); d=json.load(f); d["onboarding_complete"]=True; d["last_seen"]=datetime.datetime.utcnow().isoformat(); f.seek(0); json.dump(d,f,indent=4); f.truncate()"
+echo -e "${GREEN}✓ Onboarding state marked complete${NC}"
 echo -e "${CYAN}╔══════════════════════════════════════════════════╗${NC}"
 echo -e "${CYAN}║     GEIVS first boot init complete               ║${NC}"
 echo -e "${CYAN}║     Open your browser to http://localhost         ║${NC}"

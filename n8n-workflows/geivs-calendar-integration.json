@@ -1,0 +1,472 @@
+{
+  "name": "GEIVS Calendar Integration",
+  "nodes": [
+    {
+      "id": "18183c03-f62b-4e3d-8553-11dc20d74406",
+      "name": "Today Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        0,
+        0
+      ],
+      "parameters": {
+        "httpMethod": "GET",
+        "path": "calendar/today",
+        "responseMode": "responseNode",
+        "options": {}
+      }
+    },
+    {
+      "id": "75ecc48a-9513-4314-8634-5079d31e0a60",
+      "name": "Fetch Today Events",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        220,
+        0
+      ],
+      "parameters": {
+        "method": "GET",
+        "url": "https://www.googleapis.com/calendar/v3/calendars/primary/events",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleCalendarOAuth2Api",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "timeMin",
+              "value": "={{ DateTime.now().startOf('day').toISO() }}"
+            },
+            {
+              "name": "timeMax",
+              "value": "={{ DateTime.now().endOf('day').toISO() }}"
+            },
+            {
+              "name": "singleEvents",
+              "value": "true"
+            },
+            {
+              "name": "orderBy",
+              "value": "startTime"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "credentials": {
+        "googleCalendarOAuth2Api": {
+          "id": "gcal-oauth-placeholder",
+          "name": "Google Calendar OAuth2 (configure in credentials)"
+        }
+      }
+    },
+    {
+      "id": "491bd978-480a-4bf3-ae9e-e8b8a006a1ec",
+      "name": "Format Today",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        440,
+        0
+      ],
+      "parameters": {
+        "jsCode": "const items = $input.first().json.items || [];\nconst events = items.map(e => ({\n  id: e.id,\n  title: e.summary || '(No title)',\n  start: e.start.dateTime || e.start.date,\n  end: e.end.dateTime || e.end.date,\n  location: e.location || null\n}));\nreturn [{ json: { date: new Date().toISOString().split('T')[0], count: events.length, events } }];"
+      }
+    },
+    {
+      "id": "d0a9c56d-5946-42ff-8946-36cb8e980ecc",
+      "name": "Return Today",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [
+        660,
+        0
+      ],
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ JSON.stringify($json) }}"
+      }
+    },
+    {
+      "id": "ab2be321-6818-4ce1-8544-8af4e80a82db",
+      "name": "Upcoming Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        0,
+        200
+      ],
+      "parameters": {
+        "httpMethod": "GET",
+        "path": "calendar/upcoming",
+        "responseMode": "responseNode",
+        "options": {}
+      }
+    },
+    {
+      "id": "ae33bff1-05a9-468f-8508-76c7ec970db6",
+      "name": "Fetch Upcoming Events",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        220,
+        200
+      ],
+      "parameters": {
+        "method": "GET",
+        "url": "https://www.googleapis.com/calendar/v3/calendars/primary/events",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleCalendarOAuth2Api",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "timeMin",
+              "value": "={{ DateTime.now().startOf('day').toISO() }}"
+            },
+            {
+              "name": "timeMax",
+              "value": "={{ DateTime.now().plus({days:7}).endOf('day').toISO() }}"
+            },
+            {
+              "name": "singleEvents",
+              "value": "true"
+            },
+            {
+              "name": "orderBy",
+              "value": "startTime"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "credentials": {
+        "googleCalendarOAuth2Api": {
+          "id": "gcal-oauth-placeholder",
+          "name": "Google Calendar OAuth2 (configure in credentials)"
+        }
+      }
+    },
+    {
+      "id": "54e60165-856d-4d1d-9aee-df9e15400351",
+      "name": "Format Upcoming",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        440,
+        200
+      ],
+      "parameters": {
+        "jsCode": "const items = $input.first().json.items || [];\nconst events = items.map(e => ({\n  id: e.id,\n  title: e.summary || '(No title)',\n  start: e.start.dateTime || e.start.date,\n  end: e.end.dateTime || e.end.date,\n  location: e.location || null\n}));\nreturn [{ json: { range: '7 days', count: events.length, events } }];"
+      }
+    },
+    {
+      "id": "be6acd66-5156-433d-8138-89ced3ce49b9",
+      "name": "Return Upcoming",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [
+        660,
+        200
+      ],
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ JSON.stringify($json) }}"
+      }
+    },
+    {
+      "id": "6e4e77bf-04f1-42dc-842d-0c39c8030a84",
+      "name": "Create Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        0,
+        400
+      ],
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "calendar/create",
+        "responseMode": "responseNode",
+        "options": {}
+      }
+    },
+    {
+      "id": "a4fd5580-5103-4f5c-ae18-99db3b07580e",
+      "name": "Create Event",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        220,
+        400
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "https://www.googleapis.com/calendar/v3/calendars/primary/events",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleCalendarOAuth2Api",
+        "sendBody": true,
+        "contentType": "json",
+        "body": {
+          "summary": "={{ $json.body.title }}",
+          "start": {
+            "dateTime": "={{ $json.body.start }}",
+            "timeZone": "America/Chicago"
+          },
+          "end": {
+            "dateTime": "={{ $json.body.end }}",
+            "timeZone": "America/Chicago"
+          },
+          "description": "={{ $json.body.description || '' }}"
+        },
+        "options": {}
+      },
+      "credentials": {
+        "googleCalendarOAuth2Api": {
+          "id": "gcal-oauth-placeholder",
+          "name": "Google Calendar OAuth2 (configure in credentials)"
+        }
+      }
+    },
+    {
+      "id": "cf8990f2-e6a9-455e-82b8-fe19beb832d7",
+      "name": "Return Created",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [
+        440,
+        400
+      ],
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ JSON.stringify({success:true,id:$json.id,title:$json.summary,start:$json.start.dateTime}) }}"
+      }
+    },
+    {
+      "id": "8e12adf9-9683-498a-a1c7-a071a9cccd3a",
+      "name": "Brief Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        0,
+        600
+      ],
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "calendar/brief",
+        "responseMode": "responseNode",
+        "options": {}
+      }
+    },
+    {
+      "id": "a3db7e80-60e9-409b-bba3-9f155204f82c",
+      "name": "Get Today for Brief",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        220,
+        600
+      ],
+      "parameters": {
+        "method": "GET",
+        "url": "https://www.googleapis.com/calendar/v3/calendars/primary/events",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleCalendarOAuth2Api",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "timeMin",
+              "value": "={{ DateTime.now().startOf('day').toISO() }}"
+            },
+            {
+              "name": "timeMax",
+              "value": "={{ DateTime.now().endOf('day').toISO() }}"
+            },
+            {
+              "name": "singleEvents",
+              "value": "true"
+            },
+            {
+              "name": "orderBy",
+              "value": "startTime"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "credentials": {
+        "googleCalendarOAuth2Api": {
+          "id": "gcal-oauth-placeholder",
+          "name": "Google Calendar OAuth2 (configure in credentials)"
+        }
+      }
+    },
+    {
+      "id": "214ab553-e94a-4982-9cab-458427057d9d",
+      "name": "Generate Schedule Brief",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        440,
+        600
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "http://ollama:11434/api/generate",
+        "sendBody": true,
+        "contentType": "json",
+        "body": {
+          "model": "qwen2.5:7b",
+          "system": "You are GEIVS, a professional AI butler assistant. Be concise, warm, and professional.",
+          "prompt": "={{ \"Please give a brief butler-style summary of today's schedule:\\n\\n\" + ($json.items||[]).map(e => '- ' + (e.summary||'(untitled)') + ' at ' + (e.start.dateTime||e.start.date)).join('\\n') }}",
+          "stream": false
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "c7151579-e443-4604-a466-2fa04ae218ca",
+      "name": "Return Brief",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [
+        660,
+        600
+      ],
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ JSON.stringify({success:true,brief:$json.response}) }}"
+      }
+    }
+  ],
+  "connections": {
+    "Today Webhook": {
+      "main": [
+        [
+          {
+            "node": "Fetch Today Events",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch Today Events": {
+      "main": [
+        [
+          {
+            "node": "Format Today",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Format Today": {
+      "main": [
+        [
+          {
+            "node": "Return Today",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Upcoming Webhook": {
+      "main": [
+        [
+          {
+            "node": "Fetch Upcoming Events",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch Upcoming Events": {
+      "main": [
+        [
+          {
+            "node": "Format Upcoming",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Format Upcoming": {
+      "main": [
+        [
+          {
+            "node": "Return Upcoming",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create Webhook": {
+      "main": [
+        [
+          {
+            "node": "Create Event",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create Event": {
+      "main": [
+        [
+          {
+            "node": "Return Created",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Brief Webhook": {
+      "main": [
+        [
+          {
+            "node": "Get Today for Brief",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Today for Brief": {
+      "main": [
+        [
+          {
+            "node": "Generate Schedule Brief",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Generate Schedule Brief": {
+      "main": [
+        [
+          {
+            "node": "Return Brief",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {},
+  "versionId": "f1c5a043-b3f5-4ba5-843e-687adc1df997",
+  "meta": {
+    "templateCredsSetupCompleted": true
+  }
+}

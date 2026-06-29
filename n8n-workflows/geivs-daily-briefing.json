@@ -1,0 +1,143 @@
+{
+  "name": "GEIVS Daily Briefing",
+  "nodes": [
+    {
+      "id": "35677d5e-72de-461d-9c37-d574e180cb6e",
+      "name": "8AM Daily",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        0,
+        0
+      ],
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "0 8 * * *"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "3af3833c-de33-4fc4-8075-a5defd675aa6",
+      "name": "Fetch News",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        220,
+        0
+      ],
+      "parameters": {
+        "method": "GET",
+        "url": "http://searxng:8080/search",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "q",
+              "value": "small business news today"
+            },
+            {
+              "name": "format",
+              "value": "json"
+            },
+            {
+              "name": "categories",
+              "value": "news"
+            }
+          ]
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "a9e84fee-0515-4cb1-8709-609b7ea94df6",
+      "name": "Generate Briefing",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        440,
+        0
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "http://ollama:11434/api/generate",
+        "sendBody": true,
+        "contentType": "json",
+        "body": {
+          "model": "qwen2.5:7b",
+          "system": "You are GEIVS, a professional AI butler. Write concise morning briefings in a warm, professional butler tone.",
+          "prompt": "={{ Good morning! Please prepare a morning briefing for today. Here are the top headlines:\n\n + (.results || []).slice(0,5).map(r => -  + r.title).join(\n) + \n\nSummarize the key points and wish the team a productive day. }}",
+          "stream": false
+        }
+      }
+    },
+    {
+      "id": "d52e2436-d9a5-43cd-bab3-cc282d37dcaf",
+      "name": "Email Briefing",
+      "type": "n8n-nodes-base.sendEmail",
+      "typeVersion": 2,
+      "position": [
+        660,
+        0
+      ],
+      "parameters": {
+        "fromEmail": "={{ .SMTP_FROM || geivs@example.com }}",
+        "toEmail": "={{ .OWNER_EMAIL || owner@example.com }}",
+        "subject": "={{ GEIVS Morning Briefing \u2014  + new Date().toLocaleDateString(en-US, {weekday:long,year:numeric,month:long,day:numeric}) }}",
+        "text": "={{ .response }}",
+        "options": {}
+      },
+      "credentials": {
+        "smtp": {
+          "id": "smtp-placeholder",
+          "name": "SMTP (configure in credentials)"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "8AM Daily": {
+      "main": [
+        [
+          {
+            "node": "Fetch News",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch News": {
+      "main": [
+        [
+          {
+            "node": "Generate Briefing",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Generate Briefing": {
+      "main": [
+        [
+          {
+            "node": "Email Briefing",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {},
+  "versionId": "f1d51791-3dd8-4c1e-a66c-bc71044be168",
+  "meta": {
+    "templateCredsSetupCompleted": true
+  }
+}

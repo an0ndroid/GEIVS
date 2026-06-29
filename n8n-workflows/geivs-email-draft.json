@@ -1,0 +1,87 @@
+{
+  "name": "GEIVS Email Draft Assistant",
+  "nodes": [
+    {
+      "id": "38bc0371-b317-4861-85a9-fc7c0cebd882",
+      "name": "Draft Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        0,
+        0
+      ],
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "draft-email",
+        "responseMode": "responseNode",
+        "options": {}
+      }
+    },
+    {
+      "id": "e2f8b3d6-2478-4538-8139-77fecef8a84a",
+      "name": "Generate Draft",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        220,
+        0
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "http://ollama:11434/api/generate",
+        "sendBody": true,
+        "contentType": "json",
+        "body": {
+          "model": "qwen2.5:7b",
+          "system": "You are GEIVS, a professional AI butler assistant serving a small business. You are knowledgeable, concise, and helpful. Respond in a warm but professional tone. Keep replies brief and actionable. Draft only the email body \u2014 no subject line, no extra metadata.",
+          "prompt": "={{ Draft a  + (.body.tone || professional) +  email to  + .body.to +  regarding:  + .body.subject + \n\nContext:  + (.body.context || No additional context.) + \n\nDraft the email body: }}",
+          "stream": false
+        }
+      }
+    },
+    {
+      "id": "13f6765b-3a7e-43e4-ab2f-e6cf7180f1ff",
+      "name": "Return Draft",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [
+        440,
+        0
+      ],
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ JSON.stringify({success: true, draft: .response, model: .model || qwen2.5:7b}) }}"
+      }
+    }
+  ],
+  "connections": {
+    "Draft Webhook": {
+      "main": [
+        [
+          {
+            "node": "Generate Draft",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Generate Draft": {
+      "main": [
+        [
+          {
+            "node": "Return Draft",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {},
+  "versionId": "2fd1ec42-cb77-4d04-9c19-ae11736eb993",
+  "meta": {
+    "templateCredsSetupCompleted": true
+  }
+}

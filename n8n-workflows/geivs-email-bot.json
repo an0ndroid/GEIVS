@@ -1,0 +1,134 @@
+{
+  "name": "GEIVS Email Bot",
+  "nodes": [
+    {
+      "id": "71414257-0396-4a46-afcb-2a8d322db805",
+      "name": "Every 5 Minutes",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        0,
+        0
+      ],
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "minutes",
+              "minutesInterval": 5
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "059af5ff-132d-4966-b55f-5cf0a12cac8d",
+      "name": "Read IMAP",
+      "type": "n8n-nodes-base.emailReadImap",
+      "typeVersion": 2,
+      "position": [
+        220,
+        0
+      ],
+      "parameters": {
+        "mailbox": "INBOX",
+        "action": "read",
+        "markSeen": true,
+        "downloadAttachments": false,
+        "options": {}
+      },
+      "credentials": {
+        "imap": {
+          "id": "imap-placeholder",
+          "name": "IMAP (configure host/user/pass in credentials)"
+        }
+      }
+    },
+    {
+      "id": "468e4c15-564e-4af1-b5b9-30068fa740e6",
+      "name": "Draft Reply",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        440,
+        0
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "http://ollama:11434/api/generate",
+        "sendBody": true,
+        "contentType": "json",
+        "body": {
+          "model": "qwen2.5:7b",
+          "system": "You are GEIVS, a professional AI butler assistant serving a small business. You are knowledgeable, concise, and helpful. Respond in a warm but professional tone. Keep replies brief and actionable. You are drafting a professional email reply.",
+          "prompt": "={{ Draft a professional reply to this email:\nFrom:  + .from + \nSubject:  + .subject + \n\n + (.text || ) }}",
+          "stream": false
+        }
+      }
+    },
+    {
+      "id": "061058ed-c495-4a55-b7b2-ddd3d85f0fe5",
+      "name": "Send Reply",
+      "type": "n8n-nodes-base.sendEmail",
+      "typeVersion": 2,
+      "position": [
+        660,
+        0
+      ],
+      "parameters": {
+        "fromEmail": "={{ .SMTP_FROM || geivs@example.com }}",
+        "toEmail": "={{ [\"Read IMAP\"].json.from }}",
+        "subject": "={{ Re:  + [\"Read IMAP\"].json.subject }}",
+        "text": "={{ .response }}",
+        "options": {}
+      },
+      "credentials": {
+        "smtp": {
+          "id": "smtp-placeholder",
+          "name": "SMTP (configure host/user/pass in credentials)"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Every 5 Minutes": {
+      "main": [
+        [
+          {
+            "node": "Read IMAP",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read IMAP": {
+      "main": [
+        [
+          {
+            "node": "Draft Reply",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Draft Reply": {
+      "main": [
+        [
+          {
+            "node": "Send Reply",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {},
+  "versionId": "06d7813c-cf72-4683-932b-01d72d001939",
+  "meta": {
+    "templateCredsSetupCompleted": true
+  }
+}

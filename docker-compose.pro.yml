@@ -22,6 +22,7 @@ volumes:
   nginx_certs:
   portainer_data:
   geivs_state:
+  uptime_kuma_data:
 
 services:
 
@@ -74,13 +75,6 @@ services:
     image: ollama/ollama:latest
     container_name: geivs_ollama
     restart: unless-stopped
-    deploy:
-      resources:
-        reservations:
-          devices:
-            - driver: nvidia
-              count: 1
-              capabilities: [gpu]
     volumes:
       - ollama_data:/root/.ollama
     ports:
@@ -195,16 +189,9 @@ services:
   # Access: http://localhost:8188
   # -----------------------------------------------------------
   comfyui:
-    image: ghcr.io/ai-dock/comfyui:latest-cuda
+    image: ghcr.io/ai-dock/comfyui:latest-cpu
     container_name: geivs_comfyui
     restart: unless-stopped
-    deploy:
-      resources:
-        reservations:
-          devices:
-            - driver: nvidia
-              count: 1
-              capabilities: [gpu]
     volumes:
       - comfyui_models:/opt/ComfyUI/models
       - comfyui_output:/opt/ComfyUI/output
@@ -327,5 +314,34 @@ services:
     ports:
       - "80:80"
       - "443:443"
+    networks:
+      - geivs-net
+
+  # -----------------------------------------------------------
+  # CRAWL4AI — Bulk web crawling to markdown
+  # Async multi-page crawler for document ingestion pipelines
+  # Used by n8n workflows for bulk site ingestion
+  # -----------------------------------------------------------
+  crawl4ai:
+    image: unclecode/crawl4ai:latest
+    container_name: geivs_crawl4ai
+    restart: unless-stopped
+    environment:
+      - CRAWL4AI_API_TOKEN=changeme
+    networks:
+      - geivs-net
+
+  # -----------------------------------------------------------
+  # UPTIME KUMA — Self-hosted monitoring dashboard
+  # Monitors all GEIVS services with status page
+  # -----------------------------------------------------------
+  uptime-kuma:
+    image: louislam/uptime-kuma:1
+    container_name: geivs_uptime_kuma
+    restart: unless-stopped
+    volumes:
+      - uptime_kuma_data:/app/data
+    ports:
+      - "3001:3001"
     networks:
       - geivs-net
