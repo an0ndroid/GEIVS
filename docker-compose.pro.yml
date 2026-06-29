@@ -16,6 +16,7 @@ volumes:
   n8n_data:
   searxng_data:
   postiz_data:
+  postiz_db_data:
   comfyui_models:
   comfyui_output:
   signal_data:
@@ -148,7 +149,7 @@ services:
     networks:
       - geivs-net
     environment:
-      - SEARXNG_BASE_URL=http://localhost:8080
+      - SEARXNG_BASE_URL=http://searxng:8080
     cap_drop:
       - ALL
     cap_add:
@@ -178,7 +179,7 @@ services:
       - N8N_HOST=${N8N_HOST:-localhost}
       - N8N_PORT=5678
       - N8N_PROTOCOL=http
-      - WEBHOOK_URL=http://localhost:5678
+      - WEBHOOK_URL=http://${GEIVS_HOST:-localhost}/automation/
       - N8N_ENCRYPTION_KEY=${N8N_ENCRYPTION_KEY:-changeme_generate_a_real_key}
       - N8N_SECURE_COOKIE=false
       - OLLAMA_HOST=http://ollama:11434
@@ -256,9 +257,9 @@ services:
     networks:
       - geivs-net
     environment:
-      - MAIN_URL=http://localhost:5100
-      - FRONTEND_URL=http://localhost:5100
-      - NEXT_PUBLIC_BACKEND_URL=http://localhost:5100/api
+      - MAIN_URL=http://${GEIVS_HOST:-localhost}/social
+      - FRONTEND_URL=http://${GEIVS_HOST:-localhost}/social
+      - NEXT_PUBLIC_BACKEND_URL=http://${GEIVS_HOST:-localhost}/social/api
       - JWT_SECRET=${JWT_SECRET:-changeme_generate_a_real_secret}
       - DATABASE_URL=postgresql://geivs:${DB_PASSWORD:-geivs}@postiz_db:5432/postiz
       - REDIS_URL=redis://postiz_redis:6379
@@ -268,7 +269,7 @@ services:
     container_name: geivs_postiz_db
     restart: unless-stopped
     volumes:
-      - postiz_data:/var/lib/postgresql/data
+      - postiz_db_data:/var/lib/postgresql/data
     networks:
       - geivs-net
     environment:
@@ -327,7 +328,7 @@ services:
     container_name: geivs_crawl4ai
     restart: unless-stopped
     environment:
-      - CRAWL4AI_API_TOKEN=changeme
+      - CRAWL4AI_API_TOKEN=${CRAWL4AI_TOKEN:-changeme}
     networks:
       - geivs-net
 
