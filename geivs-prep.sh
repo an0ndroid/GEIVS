@@ -32,7 +32,7 @@ fi
 # Detect the real user (the one who ran sudo)
 REAL_USER="${SUDO_USER:-$(logname 2>/dev/null || echo '')}"
 if [ -z "$REAL_USER" ] || [ "$REAL_USER" = "root" ]; then
-  read -rp "  Username that will run GEIVS: " REAL_USER
+  read -rp "  Username that will run GEIVS: " REAL_USER < /dev/tty
 fi
 REAL_HOME=$(getent passwd "$REAL_USER" | cut -d: -f6)
 
@@ -113,7 +113,7 @@ ok "Prerequisites installed (${#PACKAGES[@]} packages)"
 step "Configuring timezone and NTP"
 
 DEFAULT_TZ="America/Chicago"
-read -rp "  Timezone [${DEFAULT_TZ}]: " TZ_INPUT
+read -rp "  Timezone [${DEFAULT_TZ}]: " TZ_INPUT < /dev/tty
 TZ_INPUT=${TZ_INPUT:-$DEFAULT_TZ}
 timedatectl set-timezone "$TZ_INPUT"
 ok "Timezone set to $TZ_INPUT"
@@ -259,7 +259,7 @@ if [ "$CURRENT_SWAP" -gt 0 ]; then
   ok "Swap already configured ($SWAP_SIZE)"
 else
   # Default: 32 GB swap for large AI models
-  read -rp "  Swap file size in GB [32]: " SWAP_GB
+  read -rp "  Swap file size in GB [32]: " SWAP_GB < /dev/tty
   SWAP_GB=${SWAP_GB:-32}
   SWAPFILE=/swapfile
 
