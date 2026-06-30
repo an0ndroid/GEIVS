@@ -374,34 +374,30 @@ if [ "$DRY_RUN" = false ]; then
   ok "Stack started"
 
   # Enable JSON format in SearXNG (required for Open WebUI web search)
-  # Retry loop: SearXNG generates settings.yml on first boot which can take 30-60s
+  # Wait for SearXNG to write settings.yml on first boot, then patch via docker cp
   echo -e "  ${BLUE}Waiting for SearXNG to initialise...${NC}"
   SEARXNG_PATCHED=false
-  for attempt in $(seq 1 60); do
-    PATCH_RESULT=$(docker exec geivs_searxng python3 -c "
-import re, sys
-f = '/etc/searxng/settings.yml'
-try:
-    c = open(f).read()
-    if '- json' not in c:
-        c = re.sub(r'(  formats:\n    - html)', r'\1\n    - json', c)
-        open(f, 'w').write(c)
-        print('patched')
-    else:
-        print('already_patched')
-except Exception as e:
-    print('not_ready')
-    sys.exit(1)
-" 2>/dev/null || true)
-    if [ "$PATCH_RESULT" = "patched" ]; then
-      docker restart geivs_searxng >/dev/null 2>&1 || true
-      ok "SearXNG JSON format enabled (Open WebUI web search will work)"
-      SEARXNG_PATCHED=true
-      break
-    elif [ "$PATCH_RESULT" = "already_patched" ]; then
-      ok "SearXNG JSON format already enabled"
-      SEARXNG_PATCHED=true
-      break
+  for attempt in $(seq 1 90); do
+    if docker exec geivs_searxng test -f /etc/searxng/settings.yml 2>/dev/null; then
+      # Pull file out, patch on host, push back — avoids python3-in-container dependency
+      docker cp geivs_searxng:/etc/searxng/settings.yml /tmp/searxng-settings-$$.yml 2>/dev/null || true
+      if [ -f /tmp/searxng-settings-$$.yml ]; then
+        if grep -q '\- json' /tmp/searxng-settings-$$.yml; then
+          rm -f /tmp/searxng-settings-$$.yml
+          ok "SearXNG JSON format already enabled"
+          SEARXNG_PATCHED=true
+          break
+        fi
+        # Insert '    - json' after the '    - html' line under formats:
+        sed -i '/^  formats:/,/^  [^ ]/{s/^    - html$/    - html\n    - json/}' \
+          /tmp/searxng-settings-$$.yml
+        docker cp /tmp/searxng-settings-$$.yml geivs_searxng:/etc/searxng/settings.yml 2>/dev/null || true
+        rm -f /tmp/searxng-settings-$$.yml
+        docker restart geivs_searxng >/dev/null 2>&1 || true
+        ok "SearXNG JSON format enabled (Open WebUI web search will work)"
+        SEARXNG_PATCHED=true
+        break
+      fi
     fi
     sleep 4
   done
@@ -467,11 +463,26 @@ if [ "$DRY_RUN" = false ]; then
   sleep 5
   N8N_WF_DIR="$GEIVS_DIR/n8n-workflows"
   if docker exec geivs_n8n test -d /home/node/.n8n &>/dev/null; then
-    # Copy workflows into container and import
+    # Copy workflows into container, stripping tags to avoid SQLITE_CONSTRAINT on fresh install
     for wf in "$N8N_WF_DIR"/*.json; do
       [ -f "$wf" ] || continue
       fname=$(basename "$wf")
-      docker cp "$wf" "geivs_n8n:/tmp/$fname" 2>/dev/null || true
+      tmp_wf="/tmp/geivs-wf-$$-$fname"
+      python3 -c "
+import json, sys
+with open('$wf') as f:
+    d = json.load(f)
+if isinstance(d, list):
+    for w in d:
+        w.pop('tags', None)
+        w.pop('tagIds', None)
+else:
+    d.pop('tags', None)
+    d.pop('tagIds', None)
+json.dump(d, sys.stdout)
+" > "$tmp_wf" 2>/dev/null || cp "$wf" "$tmp_wf"
+      docker cp "$tmp_wf" "geivs_n8n:/tmp/$fname" 2>/dev/null || true
+      rm -f "$tmp_wf"
     done
     docker exec geivs_n8n n8n import:workflow --separate --input=/tmp/ 2>/dev/null && \
       ok "Workflows imported" || warn "Workflow import failed — import manually via n8n UI"
@@ -531,7 +542,7 @@ if [[ "$DO_EMAIL" =~ ^[Yy] ]] && [ "$DRY_RUN" = false ]; then
   # Wait for n8n API (may still be starting)
   echo -e "  ${BLUE}Waiting for n8n API...${NC}"
   N8N_READY=false
-  for i in $(seq 1 30); do
+  for i in $(seq 1 60); do
     if curl -sf -H "X-N8N-API-KEY: $N8N_API_KEY" \
         "http://localhost/automation/api/v1/workflows?limit=1" &>/dev/null; then
       N8N_READY=true
@@ -607,21 +618,21 @@ if [[ "$DO_SIGNAL" =~ ^[Yy] ]] && [ "$DRY_RUN" = false ]; then
   read -rp "  Signal phone number (with country code, e.g. +12125551234): " SIGNAL_PHONE < /dev/tty
 
   echo -e "  ${BLUE}Sending registration SMS to $SIGNAL_PHONE...${NC}"
-  REG_RESULT=$(docker exec geivs_signal-cli \
+  REG_RESULT=$(docker exec geivs_signal \
     signal-cli -a "$SIGNAL_PHONE" register 2>&1 || true)
 
   if echo "$REG_RESULT" | grep -qi "error\|failed\|invalid"; then
     warn "Registration issue: $REG_RESULT"
-    warn "Try manually: docker exec geivs_signal-cli signal-cli -a $SIGNAL_PHONE register"
+    warn "Try manually: docker exec geivs_signal signal-cli -a $SIGNAL_PHONE register"
   else
     ok "SMS sent — check your phone"
     read -rp "  Enter the verification code from the SMS: " SIGNAL_CODE < /dev/tty
-    VERIFY_RESULT=$(docker exec geivs_signal-cli \
+    VERIFY_RESULT=$(docker exec geivs_signal \
       signal-cli -a "$SIGNAL_PHONE" verify "$SIGNAL_CODE" 2>&1 || true)
 
     if echo "$VERIFY_RESULT" | grep -qi "error\|failed\|invalid"; then
       warn "Verification failed: $VERIFY_RESULT"
-      warn "Try: docker exec geivs_signal-cli signal-cli -a $SIGNAL_PHONE verify <code>"
+      warn "Try: docker exec geivs_signal signal-cli -a $SIGNAL_PHONE verify <code>"
     else
       ok "Signal number verified: $SIGNAL_PHONE"
       # Persist to .env
@@ -655,7 +666,7 @@ elif [[ "$DO_SIGNAL" =~ ^[Yy] ]] && [ "$DRY_RUN" = true ]; then
   echo -e "${BLUE}  [dry-run] register Signal number and activate signal workflows${NC}"
   SIGNAL_CONFIGURED=true
 else
-  warn "Skipping Signal — register later: docker exec geivs_signal-cli signal-cli -a +1NXXNXXXXXX register"
+  warn "Skipping Signal — register later: docker exec geivs_signal signal-cli -a +1NXXNXXXXXX register"
 fi
 
 # ── Step 19: Google Calendar ──────────────────────────────────
@@ -761,7 +772,7 @@ echo -e "${CYAN}║${NC}  ${GREEN}✓${NC} Email (IMAP/SMTP)                    
 echo -e "${CYAN}║${NC}  ${YELLOW}○${NC} Email       → http://${GEIVS_HOST}/automation/          ${CYAN}║${NC}"
 [ "$SIGNAL_CONFIGURED" = true ] && \
 echo -e "${CYAN}║${NC}  ${GREEN}✓${NC} Signal                                               ${CYAN}║${NC}" || \
-echo -e "${CYAN}║${NC}  ${YELLOW}○${NC} Signal      → docker exec geivs_signal-cli ...       ${CYAN}║${NC}"
+echo -e "${CYAN}║${NC}  ${YELLOW}○${NC} Signal      → docker exec geivs_signal ...       ${CYAN}║${NC}"
 [ "$GCAL_CONFIGURED"   = true ] && \
 echo -e "${CYAN}║${NC}  ${GREEN}✓${NC} Google Calendar                                      ${CYAN}║${NC}" || \
 echo -e "${CYAN}║${NC}  ${YELLOW}○${NC} Google Cal  → OAuth in n8n credentials               ${CYAN}║${NC}"

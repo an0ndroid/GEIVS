@@ -279,12 +279,24 @@ seed_welcome_message "$TOKEN"
 
 # Kick off model pull in background
 echo -e "${BLUE}Starting model downloads in background...${NC}"
-nohup ./pull-models.sh > /var/log/geivs-model-pull.log 2>&1 &
-echo -e "${GREEN}✓ Model pull started (check /var/log/geivs-model-pull.log for progress)${NC}"
+LOG_DIR="$(dirname "$STATE_FILE")/logs"
+mkdir -p "$LOG_DIR"
+nohup ./pull-models.sh > "$LOG_DIR/model-pull.log" 2>&1 &
+echo -e "${GREEN}✓ Model pull started (check $LOG_DIR/model-pull.log for progress)${NC}"
 
 echo ""
 # Mark onboarding complete
-python3 -c "import json,datetime; f=open("","r+"); d=json.load(f); d["onboarding_complete"]=True; d["last_seen"]=datetime.datetime.utcnow().isoformat(); f.seek(0); json.dump(d,f,indent=4); f.truncate()"
+python3 - "$STATE_FILE" << 'PYEOF'
+import json, datetime, sys
+path = sys.argv[1]
+with open(path, 'r+') as f:
+    d = json.load(f)
+    d['onboarding_complete'] = True
+    d['last_seen'] = datetime.datetime.now(datetime.timezone.utc).isoformat()
+    f.seek(0)
+    json.dump(d, f, indent=4)
+    f.truncate()
+PYEOF
 echo -e "${GREEN}✓ Onboarding state marked complete${NC}"
 echo -e "${CYAN}╔══════════════════════════════════════════════════╗${NC}"
 echo -e "${CYAN}║     GEIVS first boot init complete               ║${NC}"
