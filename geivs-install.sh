@@ -376,11 +376,12 @@ if [ "$DRY_RUN" = false ]; then
   # Enable JSON format in SearXNG (required for Open WebUI web search)
   # Wait for SearXNG to write settings.yml on first boot, then patch via docker cp
   echo -e "  ${BLUE}Waiting for SearXNG to initialise...${NC}"
+  sleep 8  # let containerd finish wiring container stdio before docker cp
   SEARXNG_PATCHED=false
   for attempt in $(seq 1 90); do
     if docker exec geivs_searxng test -f /etc/searxng/settings.yml 2>/dev/null; then
       # Pull file out, patch on host, push back — avoids python3-in-container dependency
-      docker cp geivs_searxng:/etc/searxng/settings.yml /tmp/searxng-settings-$$.yml 2>/dev/null || true
+      docker cp geivs_searxng:/etc/searxng/settings.yml /tmp/searxng-settings-$$.yml >/dev/null 2>&1 || true
       if [ -f /tmp/searxng-settings-$$.yml ]; then
         if grep -q '\- json' /tmp/searxng-settings-$$.yml; then
           rm -f /tmp/searxng-settings-$$.yml
@@ -391,7 +392,7 @@ if [ "$DRY_RUN" = false ]; then
         # Insert '    - json' after the '    - html' line under formats:
         sed -i '/^  formats:/,/^  [^ ]/{s/^    - html$/    - html\n    - json/}' \
           /tmp/searxng-settings-$$.yml
-        docker cp /tmp/searxng-settings-$$.yml geivs_searxng:/etc/searxng/settings.yml 2>/dev/null || true
+        docker cp /tmp/searxng-settings-$$.yml geivs_searxng:/etc/searxng/settings.yml >/dev/null 2>&1 || true
         rm -f /tmp/searxng-settings-$$.yml
         docker restart geivs_searxng >/dev/null 2>&1 || true
         ok "SearXNG JSON format enabled (Open WebUI web search will work)"
