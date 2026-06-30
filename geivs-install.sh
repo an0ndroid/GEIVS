@@ -116,33 +116,33 @@ else
 fi
 
 echo ""
-read -rp "  Server IP or hostname [$DEFAULT_IP]: " GEIVS_HOST
+read -rp "  Server IP or hostname [$DEFAULT_IP]: " GEIVS_HOST < /dev/tty
 GEIVS_HOST=${GEIVS_HOST:-$DEFAULT_IP}
 
-read -rp "  Admin email [admin@geivs.local]: " ADMIN_EMAIL
+read -rp "  Admin email [admin@geivs.local]: " ADMIN_EMAIL < /dev/tty
 ADMIN_EMAIL=${ADMIN_EMAIL:-admin@geivs.local}
 
 while true; do
-  read -rsp "  Admin password: " ADMIN_PASSWORD; echo ""
-  read -rsp "  Confirm password: " ADMIN_PASSWORD2; echo ""
+  read -rsp "  Admin password: " ADMIN_PASSWORD < /dev/tty; echo ""
+  read -rsp "  Confirm password: " ADMIN_PASSWORD2 < /dev/tty; echo ""
   [ "$ADMIN_PASSWORD" = "$ADMIN_PASSWORD2" ] && break
   err "Passwords do not match, try again."
 done
 
-read -rp "  Business name [My Business]: " BUSINESS_NAME
+read -rp "  Business name [My Business]: " BUSINESS_NAME < /dev/tty
 BUSINESS_NAME=${BUSINESS_NAME:-My Business}
 
-read -rp "  Butler persona name [GEIVS]: " PERSONA_NAME
+read -rp "  Butler persona name [GEIVS]: " PERSONA_NAME < /dev/tty
 PERSONA_NAME=${PERSONA_NAME:-GEIVS}
 
-read -rp "  Timezone [$DEFAULT_TZ]: " TZ
+read -rp "  Timezone [$DEFAULT_TZ]: " TZ < /dev/tty
 TZ=${TZ:-$DEFAULT_TZ}
 
 echo "  Primary AI model options:"
 echo "    1) qwen2.5:7b   (fast, 4.7GB)"
 echo "    2) gemma3:12b   (balanced, 8.1GB)"
 echo "    3) llama3.3:70b (powerful, 42GB — needs lots of RAM)"
-read -rp "  Choose [default: $DEFAULT_MODEL]: " MODEL_CHOICE
+read -rp "  Choose [default: $DEFAULT_MODEL]: " MODEL_CHOICE < /dev/tty
 case $MODEL_CHOICE in
   1) PRIMARY_MODEL="qwen2.5:7b" ;;
   2) PRIMARY_MODEL="gemma3:12b" ;;
@@ -150,8 +150,8 @@ case $MODEL_CHOICE in
   *) PRIMARY_MODEL="$DEFAULT_MODEL" ;;
 esac
 
-read -rp "  Tailscale auth key (leave blank to skip): " TAILSCALE_KEY
-read -rp "  Timezone [$DEFAULT_TZ]: " TZ_CONFIRM
+read -rp "  Tailscale auth key (leave blank to skip): " TAILSCALE_KEY < /dev/tty
+read -rp "  Timezone [$DEFAULT_TZ]: " TZ_CONFIRM < /dev/tty
 [ -n "$TZ_CONFIRM" ] && TZ="$TZ_CONFIRM"
 
 ok "Configuration collected"
@@ -509,23 +509,23 @@ EMAIL_CONFIGURED=false
 
 echo ""
 echo -e "  ${BOLD}Email integration lets Jeeves send/receive email on your behalf.${NC}"
-read -rp "  Configure email now? [Y/n]: " DO_EMAIL
+read -rp "  Configure email now? [Y/n]: " DO_EMAIL < /dev/tty
 DO_EMAIL=${DO_EMAIL:-Y}
 
 if [[ "$DO_EMAIL" =~ ^[Yy] ]] && [ "$DRY_RUN" = false ]; then
   echo ""
   echo -e "  ${CYAN}── IMAP (incoming mail) ──${NC}"
-  read -rp "  IMAP server (e.g. imap.gmail.com): " EMAIL_IMAP_HOST
-  read -rp "  IMAP port [993]: " EMAIL_IMAP_PORT
+  read -rp "  IMAP server (e.g. imap.gmail.com): " EMAIL_IMAP_HOST < /dev/tty
+  read -rp "  IMAP port [993]: " EMAIL_IMAP_PORT < /dev/tty
   EMAIL_IMAP_PORT=${EMAIL_IMAP_PORT:-993}
-  read -rp "  Email username: " EMAIL_USER
-  read -rsp "  Email password / app password: " EMAIL_PASS; echo ""
+  read -rp "  Email username: " EMAIL_USER < /dev/tty
+  read -rsp "  Email password / app password: " EMAIL_PASS < /dev/tty; echo ""
 
   echo ""
   echo -e "  ${CYAN}── SMTP (outgoing mail) ──${NC}"
-  read -rp "  SMTP server [${EMAIL_IMAP_HOST}]: " EMAIL_SMTP_HOST
+  read -rp "  SMTP server [${EMAIL_IMAP_HOST}]: " EMAIL_SMTP_HOST < /dev/tty
   EMAIL_SMTP_HOST=${EMAIL_SMTP_HOST:-$EMAIL_IMAP_HOST}
-  read -rp "  SMTP port [587]: " EMAIL_SMTP_PORT
+  read -rp "  SMTP port [587]: " EMAIL_SMTP_PORT < /dev/tty
   EMAIL_SMTP_PORT=${EMAIL_SMTP_PORT:-587}
 
   # Wait for n8n API (may still be starting)
@@ -600,11 +600,11 @@ SIGNAL_CONFIGURED=false
 echo ""
 echo -e "  ${BOLD}Signal integration lets Jeeves send/receive Signal messages.${NC}"
 echo -e "  ${YELLOW}You need a phone number dedicated to Jeeves (not your personal number).${NC}"
-read -rp "  Configure Signal now? [Y/n]: " DO_SIGNAL
+read -rp "  Configure Signal now? [Y/n]: " DO_SIGNAL < /dev/tty
 DO_SIGNAL=${DO_SIGNAL:-Y}
 
 if [[ "$DO_SIGNAL" =~ ^[Yy] ]] && [ "$DRY_RUN" = false ]; then
-  read -rp "  Signal phone number (with country code, e.g. +12125551234): " SIGNAL_PHONE
+  read -rp "  Signal phone number (with country code, e.g. +12125551234): " SIGNAL_PHONE < /dev/tty
 
   echo -e "  ${BLUE}Sending registration SMS to $SIGNAL_PHONE...${NC}"
   REG_RESULT=$(docker exec geivs_signal-cli \
@@ -615,7 +615,7 @@ if [[ "$DO_SIGNAL" =~ ^[Yy] ]] && [ "$DRY_RUN" = false ]; then
     warn "Try manually: docker exec geivs_signal-cli signal-cli -a $SIGNAL_PHONE register"
   else
     ok "SMS sent — check your phone"
-    read -rp "  Enter the verification code from the SMS: " SIGNAL_CODE
+    read -rp "  Enter the verification code from the SMS: " SIGNAL_CODE < /dev/tty
     VERIFY_RESULT=$(docker exec geivs_signal-cli \
       signal-cli -a "$SIGNAL_PHONE" verify "$SIGNAL_CODE" 2>&1 || true)
 
@@ -665,7 +665,7 @@ GCAL_CONFIGURED=false
 
 echo ""
 echo -e "  ${BOLD}Google Calendar requires manual OAuth setup (browser-based, cannot be automated).${NC}"
-read -rp "  Show setup instructions now? [Y/n]: " DO_GCAL
+read -rp "  Show setup instructions now? [Y/n]: " DO_GCAL < /dev/tty
 DO_GCAL=${DO_GCAL:-Y}
 
 if [[ "$DO_GCAL" =~ ^[Yy] ]]; then
@@ -683,7 +683,7 @@ if [[ "$DO_GCAL" =~ ^[Yy] ]]; then
   echo -e "  ${BOLD}5.${NC} Click 'Connect my account' and authorise"
   echo -e "  ${BOLD}6.${NC} Open ${BOLD}geivs-calendar-integration${NC} workflow and activate it"
   echo ""
-  read -rp "  Press Enter when done, or type S to skip: " GCAL_DONE
+  read -rp "  Press Enter when done, or type S to skip: " GCAL_DONE < /dev/tty
   if [[ ! "$GCAL_DONE" =~ ^[Ss] ]]; then
     GCAL_CONFIGURED=true
     ok "Google Calendar marked as configured"
@@ -702,7 +702,7 @@ POSTIZ_CONFIGURED=false
 echo ""
 echo -e "  ${BOLD}Postiz handles social media scheduling — Twitter/X, LinkedIn, Facebook, Instagram, Discord.${NC}"
 echo -e "  ${CYAN}Postiz UI: http://${GEIVS_HOST}/social/${NC}"
-read -rp "  Show account connection instructions now? [Y/n]: " DO_POSTIZ
+read -rp "  Show account connection instructions now? [Y/n]: " DO_POSTIZ < /dev/tty
 DO_POSTIZ=${DO_POSTIZ:-Y}
 
 if [[ "$DO_POSTIZ" =~ ^[Yy] ]]; then
@@ -719,7 +719,7 @@ if [[ "$DO_POSTIZ" =~ ^[Yy] ]]; then
   echo -e "       • Discord    — Bot token from discord.com/developers"
   echo -e "  ${BOLD}5.${NC} Each platform requires an app/developer account on that platform"
   echo ""
-  read -rp "  Press Enter when done connecting platforms, or type S to skip: " POSTIZ_DONE
+  read -rp "  Press Enter when done connecting platforms, or type S to skip: " POSTIZ_DONE < /dev/tty
   if [[ ! "$POSTIZ_DONE" =~ ^[Ss] ]]; then
     POSTIZ_CONFIGURED=true
     ok "Social media integration marked as configured"
