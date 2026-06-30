@@ -15,6 +15,7 @@ BLUE='\033[0;34m'; CYAN='\033[0;36m'; BOLD='\033[1m'; NC='\033[0m'
 STEP=0
 TOTAL_STEPS=14
 REBOOT_REQUIRED=false
+HAS_NVIDIA_HW=false
 
 step() { STEP=$((STEP+1)); echo ""; echo -e "${CYAN}── Step ${STEP}/${TOTAL_STEPS}: $1 ${NC}"; }
 ok()   { echo -e "${GREEN}  ✓ $1${NC}"; }
@@ -58,6 +59,15 @@ ok "Ubuntu ${OS_VERSION}"
 
 if [[ "$OS_VERSION" != "22.04" && "$OS_VERSION" != "24.04" ]]; then
   warn "Tested on 22.04 and 24.04 — proceeding anyway on ${OS_VERSION}"
+fi
+
+# Detect NVIDIA GPU hardware (used to gate driver + toolkit steps)
+if lspci 2>/dev/null | grep -qi nvidia; then
+  HAS_NVIDIA_HW=true
+  ok "NVIDIA GPU hardware detected"
+else
+  warn "No NVIDIA GPU hardware detected — driver and toolkit steps will be skipped"
+  warn "If this is a VM, run geivs-install.sh directly after this script (CPU mode auto-detected)"
 fi
 
 # ── Step 2: System Updates ────────────────────────────────────
@@ -116,29 +126,28 @@ ok "Chrony NTP enabled"
 # ── Step 5: NVIDIA Driver ─────────────────────────────────────
 step "Installing NVIDIA drivers"
 
-if command -v nvidia-smi &>/dev/null && nvidia-smi &>/dev/null 2>&1; then
+if [ "$HAS_NVIDIA_HW" = false ]; then
+  warn "No NVIDIA GPU — skipping driver install (CPU mode)"
+elif command -v nvidia-smi &>/dev/null && nvidia-smi &>/dev/null 2>&1; then
   DRIVER_VER=$(nvidia-smi --query-gpu=driver_version --format=csv,noheader 2>/dev/null | head -1)
   ok "NVIDIA driver already installed (version $DRIVER_VER)"
 else
   info "Installing ubuntu-drivers and recommended NVIDIA driver..."
   apt-get install -y -qq ubuntu-drivers-common
 
-  # Detect recommended driver
   RECOMMENDED=$(ubuntu-drivers devices 2>/dev/null | grep recommended | awk '{print $3}' | head -1 || true)
   if [ -n "$RECOMMENDED" ]; then
     info "Recommended driver: $RECOMMENDED"
     apt-get install -y "$RECOMMENDED"
     ok "NVIDIA driver installed: $RECOMMENDED"
   else
-    # Fallback: install metapackage
-    apt-get install -y nvidia-driver-535
-    ok "NVIDIA driver 535 installed (fallback)"
+    warn "No recommended driver found via ubuntu-drivers — install manually with: ubuntu-drivers autoinstall"
   fi
   REBOOT_REQUIRED=true
 fi
 
 # Enable NVIDIA persistence daemon (reduces model load latency)
-if systemctl list-units --all | grep -q nvidia-persistenced; then
+if systemctl list-units --all | grep -q nvidia-persistenced 2>/dev/null; then
   systemctl enable nvidia-persistenced >/dev/null 2>&1 || true
   ok "NVIDIA persistence daemon enabled"
 fi
@@ -171,27 +180,43 @@ ok "Docker daemon running"
 # ── Step 7: NVIDIA Container Toolkit ─────────────────────────
 step "Installing NVIDIA Container Toolkit"
 
-if dpkg -l | grep -q nvidia-container-toolkit 2>/dev/null; then
-  ok "nvidia-container-toolkit already installed"
+if [ "$HAS_NVIDIA_HW" = false ]; then
+  warn "No NVIDIA GPU — skipping Container Toolkit (CPU mode)"
+  # Write basic Docker daemon config (log limits only, no nvidia runtime)
+  cat > /etc/docker/daemon.json << 'DAEMONEOF'
+{
+  "log-driver": "json-file",
+  "log-opts": {
+    "max-size": "20m",
+    "max-file": "5"
+  },
+  "storage-driver": "overlay2"
+}
+DAEMONEOF
+  systemctl restart docker
+  ok "Docker configured with log limits (CPU mode)"
 else
-  info "Adding NVIDIA Container Toolkit repository..."
-  curl -fsSL https://nvidia.github.io/libnvidia-container/gpgkey \
-    | gpg --dearmor -o /usr/share/keyrings/nvidia-container-toolkit-keyring.gpg
+  if dpkg -l | grep -q nvidia-container-toolkit 2>/dev/null; then
+    ok "nvidia-container-toolkit already installed"
+  else
+    info "Adding NVIDIA Container Toolkit repository..."
+    curl -fsSL https://nvidia.github.io/libnvidia-container/gpgkey \
+      | gpg --dearmor -o /usr/share/keyrings/nvidia-container-toolkit-keyring.gpg
 
-  curl -s -L https://nvidia.github.io/libnvidia-container/stable/deb/nvidia-container-toolkit.list \
-    | sed 's#deb https://#deb [signed-by=/usr/share/keyrings/nvidia-container-toolkit-keyring.gpg] https://#g' \
-    | tee /etc/apt/sources.list.d/nvidia-container-toolkit.list >/dev/null
+    curl -s -L https://nvidia.github.io/libnvidia-container/stable/deb/nvidia-container-toolkit.list \
+      | sed 's#deb https://#deb [signed-by=/usr/share/keyrings/nvidia-container-toolkit-keyring.gpg] https://#g' \
+      | tee /etc/apt/sources.list.d/nvidia-container-toolkit.list >/dev/null
 
-  apt-get update -qq
-  apt-get install -y -qq nvidia-container-toolkit
-  ok "nvidia-container-toolkit installed"
-fi
+    apt-get update -qq
+    apt-get install -y -qq nvidia-container-toolkit
+    ok "nvidia-container-toolkit installed"
+  fi
 
-# Configure Docker to use NVIDIA runtime by default
-nvidia-ctk runtime configure --runtime=docker >/dev/null 2>&1
+  # Configure Docker to use NVIDIA runtime by default
+  nvidia-ctk runtime configure --runtime=docker >/dev/null 2>&1
 
-# Write Docker daemon config: NVIDIA as default runtime + log limits
-cat > /etc/docker/daemon.json << 'DAEMONEOF'
+  # Write Docker daemon config: NVIDIA as default runtime + log limits
+  cat > /etc/docker/daemon.json << 'DAEMONEOF'
 {
   "default-runtime": "nvidia",
   "runtimes": {
@@ -209,19 +234,20 @@ cat > /etc/docker/daemon.json << 'DAEMONEOF'
 }
 DAEMONEOF
 
-systemctl restart docker
-ok "Docker configured with NVIDIA runtime as default"
+  systemctl restart docker
+  ok "Docker configured with NVIDIA runtime as default"
 
-# Verify nvidia-ctk works (only if driver is present and no reboot needed)
-if [ "$REBOOT_REQUIRED" = false ]; then
-  if docker run --rm --runtime=nvidia --gpus all \
-      nvidia/cuda:12.2.0-base-ubuntu22.04 nvidia-smi &>/dev/null; then
-    ok "GPU passthrough to Docker verified"
+  # Verify GPU passthrough (skip if reboot still required for new driver)
+  if [ "$REBOOT_REQUIRED" = false ]; then
+    if docker run --rm --runtime=nvidia --gpus all \
+        nvidia/cuda:12.2.0-base-ubuntu22.04 nvidia-smi &>/dev/null; then
+      ok "GPU passthrough to Docker verified"
+    else
+      warn "GPU passthrough test failed — reboot may be required"
+    fi
   else
-    warn "GPU passthrough test failed — may need reboot after driver install"
+    warn "GPU passthrough will be verified after reboot"
   fi
-else
-  warn "GPU passthrough will be verified after reboot"
 fi
 
 # ── Step 8: Swap File ─────────────────────────────────────────
@@ -471,9 +497,14 @@ echo -e "${CYAN}╔════════════════════�
 echo -e "${CYAN}║          GEIVS Server Preparation Complete               ║${NC}"
 echo -e "${CYAN}╠══════════════════════════════════════════════════════════╣${NC}"
 echo -e "${CYAN}║${NC}  ${GREEN}✓${NC} System updated & prerequisites installed              ${CYAN}║${NC}"
+if [ "$HAS_NVIDIA_HW" = true ]; then
 echo -e "${CYAN}║${NC}  ${GREEN}✓${NC} NVIDIA driver installed                              ${CYAN}║${NC}"
 echo -e "${CYAN}║${NC}  ${GREEN}✓${NC} Docker Engine + NVIDIA Container Toolkit             ${CYAN}║${NC}"
 echo -e "${CYAN}║${NC}  ${GREEN}✓${NC} Docker default runtime → nvidia                      ${CYAN}║${NC}"
+else
+echo -e "${CYAN}║${NC}  ${GREEN}✓${NC} Docker Engine installed (CPU mode)                   ${CYAN}║${NC}"
+echo -e "${CYAN}║${NC}  ${YELLOW}○${NC} No NVIDIA GPU detected — CPU mode                    ${CYAN}║${NC}"
+fi
 echo -e "${CYAN}║${NC}  ${GREEN}✓${NC} Swap file configured                                 ${CYAN}║${NC}"
 echo -e "${CYAN}║${NC}  ${GREEN}✓${NC} Kernel hardening + performance tuning                ${CYAN}║${NC}"
 echo -e "${CYAN}║${NC}  ${GREEN}✓${NC} SSH hardened (root login disabled)                   ${CYAN}║${NC}"
