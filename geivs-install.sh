@@ -369,6 +369,9 @@ step "Starting GEIVS stack"
 
 if [ "$DRY_RUN" = false ]; then
   cd "$GEIVS_DIR"
+  # Pre-create SearXNG volume with correct permissions (searxng runs as non-root)
+  docker volume create geivs_searxng_data >/dev/null 2>&1 || true
+  docker run --rm -v geivs_searxng_data:/etc/searxng busybox chmod 777 /etc/searxng >/dev/null 2>&1 || true
   docker compose -f docker-compose.pro.yml --env-file .env up -d 2>&1 | \
     grep -E "(Started|Created|Pulled|Error|error)" || true
   ok "Stack started"
