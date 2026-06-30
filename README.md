@@ -2,13 +2,13 @@
 
 **General Encrypted Intelligent Valet Software — Pro Edition**
 
-A fully self-hosted personal AI platform targeting 24GB VRAM GPU hardware. Private, local, no subscriptions, no cloud dependency.
+A fully self-hosted personal AI butler platform. Private, local, no subscriptions, no cloud dependency.
 
 ---
 
 ## What is GEIVS?
 
-GEIVS is a personal AI assistant that runs entirely on your own hardware. It combines a capable local language model with a suite of integrated services — email, messaging, calendar, social media, image generation, and more — all managed through a single conversational interface.
+GEIVS is a personal AI butler that runs entirely on your own hardware. It combines a capable local language model with a suite of integrated services — email, messaging, calendar, social media, image generation, web search, and more — all managed through a single conversational interface with a British butler persona.
 
 Your data stays on your machine. Always.
 
@@ -16,96 +16,176 @@ Your data stays on your machine. Always.
 
 ## Requirements
 
-- **OS:** Ubuntu 24.04 LTS (recommended)
-- **GPU:** NVIDIA GPU with 24GB VRAM (RTX 4090, RTX Pro 4500, or equivalent)
-- **RAM:** 32GB recommended
-- **Storage:** 200GB+ free space (models are large)
-- **Software:** Docker, Docker Compose, NVIDIA Container Toolkit
+| | Minimum | Recommended |
+|---|---|---|
+| OS | Ubuntu 22.04 LTS | Ubuntu 24.04 LTS |
+| GPU | NVIDIA 8GB VRAM | NVIDIA 24GB VRAM (RTX 4090 / RTX Pro 4500) |
+| RAM | 16GB | 32GB+ |
+| Storage | 100GB free | 200GB+ free |
+
+> No GPU? See [CPU / VM Mode](#cpu--vm-mode) below.
+
+All software dependencies (Docker, NVIDIA drivers, Container Toolkit, etc.) are installed automatically by `geivs-prep.sh`.
 
 ---
 
-## Quick Start
+## Installation
 
-### 1. Clone the repo
+Two scripts, run in order. Both are idempotent — safe to re-run.
 
-```bash
-git clone https://github.com/an0ndroid/GEIVS.git
-cd GEIVS
-```
+### Step 1 — Prepare and harden the server
 
-### 2. Configure environment
+Run as root on a **fresh Ubuntu install**. Installs NVIDIA drivers, Docker, NVIDIA Container Toolkit, UFW firewall, fail2ban, swap, and kernel tuning.
 
 ```bash
-cp .env.example .env
-nano .env
+curl -fsSL https://raw.githubusercontent.com/an0ndroid/GEIVS/main/geivs-prep.sh | sudo bash
 ```
 
-Generate secure keys:
-```bash
-openssl rand -hex 32  # for WEBUI_SECRET_KEY
-openssl rand -hex 32  # for N8N_ENCRYPTION_KEY
-openssl rand -hex 32  # for JWT_SECRET
-```
-
-### 3. Install NVIDIA Container Toolkit
+If NVIDIA drivers were newly installed, reboot before continuing:
 
 ```bash
-curl -fsSL https://nvidia.github.io/libnvidia-container/gpgkey | sudo gpg --dearmor -o /usr/share/keyrings/nvidia-container-toolkit-keyring.gpg
-curl -s -L https://nvidia.github.io/libnvidia-container/stable/deb/nvidia-container-toolkit.list | \
-  sed 's#deb https://#deb [signed-by=/usr/share/keyrings/nvidia-container-toolkit-keyring.gpg] https://#g' | \
-  sudo tee /etc/apt/sources.list.d/nvidia-container-toolkit.list
-sudo apt update && sudo apt install -y nvidia-container-toolkit
-sudo nvidia-ctk runtime configure --runtime=docker
-sudo systemctl restart docker
+sudo reboot
 ```
 
-### 4. Start the stack
+### Step 2 — Install GEIVS
+
+Run as your normal user (not root). Downloads the stack, generates all secrets, starts all services, imports n8n workflows, and walks you through connecting email, Signal, Google Calendar, and social media.
 
 ```bash
-docker compose -f docker-compose.pro.yml up -d
+curl -fsSL https://raw.githubusercontent.com/an0ndroid/GEIVS/main/geivs-install.sh | bash
 ```
 
-### 5. Pull models
-
-```bash
-chmod +x pull-models.sh
-./pull-models.sh
-```
-
-### 6. Run first boot init
-
-```bash
-chmod +x onboarding-init.sh
-./onboarding-init.sh
-```
-
-### 7. Open your browser
-
-```
-http://your-server-ip
-```
-
-GEIVS will greet you and walk you through setup.
+Once complete, open `http://your-server-ip` — Jeeves will greet you.
 
 ---
 
-## Services & Ports
+## What Each Script Does
 
-| Service | Port | Description |
-|---------|------|-------------|
-| Open WebUI | 3000 | Primary chat interface |
-| Ollama | 11434 | Local LLM inference |
-| n8n | 5678 | Automation workflows |
-| ComfyUI | 8188 | Image generation |
-| Postiz | 5100 | Social media scheduler |
-| Portainer | 9000 | Container management |
-| SearXNG | 8080 | Self-hosted search |
-| Qdrant | 6333 | Vector database |
-| Signal CLI | 8090 | Signal messenger API |
-| Piper TTS | 5000 | Text-to-speech |
-| Nginx | 80/443 | Reverse proxy |
+### geivs-prep.sh
 
-All services accessible via Nginx at `http://your-server-ip` with clean URL paths.
+| Step | Action |
+|------|--------|
+| System update | Full apt upgrade |
+| Prerequisites | curl, git, python3, jq, htop, chrony, build-essential, and more |
+| Timezone & NTP | Sets timezone, enables chrony (accurate time for automation workflows) |
+| NVIDIA drivers | Auto-detects and installs recommended driver |
+| Docker Engine | Official Docker install |
+| NVIDIA Container Toolkit | Installs toolkit, sets nvidia as Docker default runtime |
+| Swap | Creates 32GB swap file (configurable) for model memory overflow |
+| Kernel tuning | SYN flood protection, inotify limits, TCP buffers, vm.swappiness=10 |
+| System limits | 1M file handles, 64K processes for Docker/Ollama/n8n |
+| SSH hardening | Disables root login, tightens auth timeouts |
+| UFW firewall | Allows 22/tcp, 80/tcp, 443/tcp, 41641/udp (Tailscale) |
+| fail2ban | 4 failed SSH attempts = 2h ban |
+| Auto security updates | Unattended security patches, no auto-reboot |
+
+### geivs-install.sh
+
+| Step | Action |
+|------|--------|
+| GPU detection | Identifies NVIDIA / AMD / CPU-only and configures accordingly |
+| Configuration | Prompts for hostname, admin email/password, timezone, AI model |
+| Secrets | Generates all keys (WebUI, n8n encryption, JWT, API key, etc.) |
+| .env | Writes fully populated environment file (chmod 600) |
+| Compose file | Downloads and patches docker-compose.pro.yml |
+| nginx config | Downloads reverse proxy config (or generates fallback) |
+| Workflows | Downloads all 13 n8n automation workflows |
+| Support files | Downloads onboarding script, system prompt, model pull scripts |
+| Stack start | `docker compose up -d` |
+| SearXNG patch | Enables JSON format required for Open WebUI web search |
+| Onboarding | Runs first-boot Open WebUI configuration |
+| Model download | Pulls primary AI model in background |
+| Workflow import | Imports all n8n workflows |
+| Tailscale | Configures remote access (if key provided) |
+| Email setup | Collects IMAP/SMTP credentials, creates n8n credentials, activates email workflows |
+| Signal setup | Registers phone number, verifies SMS code, activates Signal workflows |
+| Google Calendar | Guided OAuth setup instructions (browser-based) |
+| Social media | Guided Postiz account setup |
+| Summary | Prints all URLs, credentials, and integration status |
+
+---
+
+## Access URLs
+
+All services route through nginx on port 80.
+
+| URL | Service |
+|-----|---------|
+| `http://your-ip/` | Open WebUI — chat with Jeeves |
+| `http://your-ip/automation/` | n8n workflow automation |
+| `http://your-ip/monitor/` | Uptime Kuma monitoring |
+| `http://your-ip/imagine/` | ComfyUI image generation |
+| `http://your-ip/search/` | SearXNG private search |
+| `http://your-ip/social/` | Postiz social media scheduler |
+| `http://your-ip/portainer/` | Portainer container management |
+
+---
+
+## Services
+
+| Container | Purpose |
+|-----------|---------|
+| ollama | Local LLM inference |
+| openwebui | Primary chat interface |
+| n8n | Automation workflows |
+| comfyui | Stable Diffusion image generation |
+| piper | Text-to-speech |
+| faster-whisper | Speech-to-text transcription |
+| searxng | Self-hosted web search |
+| qdrant | Vector database for memory |
+| signal-cli | Signal messenger integration |
+| postiz | Social media scheduling |
+| crawl4ai | Web scraping for AI research |
+| uptime-kuma | Service health monitoring |
+| portainer | Container management UI |
+| nginx | Reverse proxy |
+
+---
+
+## n8n Workflows
+
+| Workflow | Function |
+|----------|---------|
+| geivs-email-bot | Reads and replies to email via Jeeves |
+| geivs-signal-bot | Sends and receives Signal messages |
+| geivs-daily-briefing | Morning summary: weather, calendar, email digest |
+| geivs-email-draft | Drafts email responses for review |
+| geivs-calendar-integration | Google Calendar read/write |
+| geivs-dashboard | Status overview |
+| geivs-email-transcription | Transcribes voice email attachments |
+| geivs-signal-transcription | Transcribes Signal voice messages |
+| geivs-email-setup | Email credential setup helper |
+| geivs-signal-setup | Signal registration helper |
+| geivs-calendar-setup | Calendar OAuth setup helper |
+| geivs-storage-setup | Storage configuration helper |
+| geivs-telegram-setup | Telegram bot setup helper |
+
+---
+
+## Models
+
+| Model | Size | Best for |
+|-------|------|---------|
+| llama3.3:70b | ~42GB | Best quality (quantized automatically by Ollama) |
+| gemma3:12b | ~8GB | Balanced quality and speed |
+| qwen2.5:7b | ~4.7GB | Fast, efficient, good reasoning |
+| gemma3:4b | ~3GB | CPU mode / low RAM systems |
+
+The installer prompts you to choose. Ollama handles quantization automatically.
+
+---
+
+## Integrations
+
+| Integration | Provider |
+|-------------|---------|
+| Email | Gmail, Outlook, any IMAP/SMTP |
+| Messaging | Signal, Telegram, Discord |
+| Calendar | Google Calendar |
+| Social Media | Twitter/X, LinkedIn, Facebook, Instagram (via Postiz) |
+| Image Generation | Stable Diffusion via ComfyUI (local, no API key needed) |
+| Speech-to-Text | faster-whisper (local, no API key needed) |
+| Web Search | SearXNG (local, private) |
 
 ---
 
@@ -113,80 +193,121 @@ All services accessible via Nginx at `http://your-server-ip` with clean URL path
 
 ```
 GEIVS/
-├── docker-compose.pro.yml      # Main stack definition
-├── .env.example                # Environment variables template
-├── pull-models.sh              # Model download script
-├── update-geivs.sh             # Full stack update script
-├── onboarding-init.sh          # First boot configuration
-├── geivs-state.json            # Default state template
-├── geivs-system-prompt.md      # Butler personality prompt
+├── geivs-prep.sh               # Step 1: server hardening and prerequisites
+├── geivs-install.sh            # Step 2: full GEIVS stack installer
+├── docker-compose.pro.yml      # GPU stack definition
+├── docker-compose.cpu.yml      # CPU-only stack definition
+├── update-geivs.sh             # Update all images and models
+├── onboarding-init.sh          # First-boot Open WebUI configuration
+├── geivs-state.json            # Default butler state template
+├── geivs-system-prompt.md      # Butler persona and instructions
+├── pull-models.sh              # GPU model download script
+├── pull-models-cpu.sh          # CPU model download script
 ├── nginx/
-│   └── geivs.conf              # Nginx reverse proxy config
+│   └── geivs.conf              # Nginx reverse proxy configuration
 └── n8n-workflows/
+    ├── geivs-email-bot.json
+    ├── geivs-signal-bot.json
+    ├── geivs-daily-briefing.json
+    ├── geivs-email-draft.json
+    ├── geivs-calendar-integration.json
+    ├── geivs-dashboard.json
+    ├── geivs-email-transcription.json
+    ├── geivs-signal-transcription.json
     ├── geivs-email-setup.json
     ├── geivs-signal-setup.json
-    ├── geivs-telegram-setup.json
     ├── geivs-calendar-setup.json
     ├── geivs-storage-setup.json
-    └── geivs-dashboard.json
+    └── geivs-telegram-setup.json
 ```
-
----
-
-## Models (24GB VRAM)
-
-| Model | Purpose | VRAM |
-|-------|---------|------|
-| llama3.3:70b | Primary conversational model | ~40GB* |
-| qwen2.5:72b | Reasoning and multilingual | ~40GB* |
-| gemma3:27b | Natural conversation | ~16GB |
-| qwen2.5:9b | Fast lightweight tasks | ~6GB |
-
-*70B models require quantization to fit in 24GB. Ollama handles this automatically.
 
 ---
 
 ## Updating GEIVS
 
 ```bash
-./update-geivs.sh
+cd ~/geivs && bash update-geivs.sh
 ```
 
-This updates all Docker images and refreshes Ollama models.
+Pulls latest Docker images and refreshes Ollama models.
 
 ---
 
-## Integrations
+## CPU / VM Mode
 
-GEIVS supports the following integrations, configured during onboarding:
+No NVIDIA GPU? The installer detects this automatically and configures the CPU stack. To run manually:
 
-- **Email:** Gmail, Outlook, any IMAP/SMTP provider
-- **Messaging:** Signal, Telegram, WhatsApp, Discord
-- **Calendar:** Google Calendar, Outlook Calendar
-- **Storage:** Local files, Nextcloud, Google Drive
-- **Social Media:** Twitter/X, LinkedIn, Facebook, Instagram (via Postiz)
-- **Image Generation:** Stable Diffusion via ComfyUI (local, no API key)
+```bash
+docker compose -f docker-compose.cpu.yml up -d
+bash pull-models-cpu.sh
+```
+
+| | GPU (Pro) | CPU |
+|---|---|---|
+| GPU required | Yes | No |
+| Default model | gemma3:12b | qwen2.5:7b |
+| ComfyUI image | latest-cuda | latest-cpu |
+| Whisper mode | cuda / medium | cpu / tiny |
+| Recommended RAM | 32GB | 16GB minimum |
+
+To switch back to GPU:
+```bash
+docker compose -f docker-compose.cpu.yml down
+docker compose -f docker-compose.pro.yml up -d
+```
+
+---
+
+## VM Notes
+
+If running in a VM, LVM may not use all available disk by default. Expand it:
+
+```bash
+sudo lvextend -l +100%FREE /dev/mapper/ubuntu--vg-ubuntu--lv
+sudo resize2fs /dev/mapper/ubuntu--vg-ubuntu--lv
+df -h
+```
+
+GPU passthrough is not available in most VM configurations — use `docker-compose.cpu.yml`.
 
 ---
 
 ## Troubleshooting
 
-**GPU not detected:**
-Ensure NVIDIA Container Toolkit is installed and `sudo nvidia-ctk runtime configure --runtime=docker` has been run.
-
-**SearXNG won't start:**
+**GPU not detected after install:**
 ```bash
-docker run --rm -v user_searxng_data:/etc/searxng busybox chmod 777 /etc/searxng
-docker restart geivs_searxng
+nvidia-smi          # verify driver is loaded — if this fails, reboot
+```
+
+**SearXNG web search not working in Open WebUI:**
+```bash
+docker exec geivs_searxng grep -A5 'formats:' /etc/searxng/settings.yml
+# should show both: - html and - json
+# re-run geivs-install.sh to re-apply the patch (idempotent)
+```
+
+**n8n workflows not imported:**
+```bash
+for f in ~/geivs/n8n-workflows/*.json; do
+  docker cp "$f" geivs_n8n:/tmp/
+done
+docker exec geivs_n8n n8n import:workflow --separate --input=/tmp/
+```
+
+**View any container's logs:**
+```bash
+docker logs geivs_<service> --tail 50 -f
+# service names: ollama, openwebui, n8n, searxng, signal-cli, comfyui, portainer
 ```
 
 **Out of disk space:**
-Models are large. Ensure 200GB+ is available. Check with `df -h`.
-
-**Container logs:**
 ```bash
-docker logs geivs_<service_name> --tail 50
+df -h
+docker system prune -f
 ```
+
+**Re-run credential setup:**
+`geivs-install.sh` is idempotent — re-running it skips completed steps and re-prompts for any credentials.
 
 ---
 
@@ -197,52 +318,3 @@ MIT
 ---
 
 *GEIVS Pro — Your data. Your hardware. Your terms.*
-
----
-
----
-
-## CPU / VM Testing
-
-If you do not have a compatible NVIDIA GPU — for example, when running GEIVS inside a virtual machine or on a CPU-only server — use the CPU compose file.
-
-### Quick start (no GPU)
-
-```bash
-# Start the stack (no GPU required)
-docker compose -f docker-compose.cpu.yml up -d
-
-# Pull lightweight models suited for CPU inference
-chmod +x pull-models-cpu.sh
-./pull-models-cpu.sh
-```
-
-### Differences from the GPU (Pro) config
-
-| | `docker-compose.pro.yml` | `docker-compose.cpu.yml` |
-|---|---|---|
-| GPU required | Yes (24GB VRAM) | No |
-| Default model | llama3.3:70b | gemma3:4b |
-| ComfyUI image | `latest-cuda` | `latest-cpu` |
-| Ollama runtime | CUDA | CPU only |
-| Recommended RAM | 32GB | 16GB minimum |
-
-### Notes
-
-- CPU inference is much slower than GPU. `gemma3:4b` and `qwen2.5:7b` are the recommended models — small enough to run at usable speed.
-- All other services (n8n, Open WebUI, Qdrant, Postiz, etc.) are identical in both configs.
-- To switch back to GPU: `docker compose -f docker-compose.cpu.yml down && docker compose -f docker-compose.pro.yml up -d`
-
-
-## VM Install Notes
-
-If running GEIVS inside a VM (for testing or development), the LVM volume may not use all available disk space by default. Expand it with:
-
-```bash
-sudo lvextend -l +100%FREE /dev/mapper/ubuntu--vg-ubuntu--lv
-sudo resize2fs /dev/mapper/ubuntu--vg-ubuntu--lv
-```
-
-Verify with `df -h` — the root partition should now reflect the full disk size.
-
-Also note that GPU passthrough is not available in most VM configurations. Remove the `deploy` blocks from the `ollama` and `comfyui` services in `docker-compose.pro.yml` when running in a VM, and use smaller models that fit in RAM for testing.
