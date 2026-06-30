@@ -13,7 +13,7 @@ BLUE='\033[0;34m'; CYAN='\033[0;36m'; BOLD='\033[1m'; NC='\033[0m'
 
 DRY_RUN=false
 STEP=0
-TOTAL_STEPS=17
+TOTAL_STEPS=21
 
 # ── Flags ─────────────────────────────────────────────────────
 for arg in "$@"; do
@@ -161,6 +161,7 @@ step "Generating secrets"
 
 WEBUI_SECRET_KEY=$(openssl rand -hex 32)
 N8N_ENCRYPTION_KEY=$(openssl rand -hex 32)
+N8N_API_KEY=$(openssl rand -hex 32)
 JWT_SECRET=$(openssl rand -hex 32)
 CRAWL4AI_TOKEN=$(openssl rand -hex 16)
 DB_PASSWORD=$(openssl rand -hex 16)
@@ -204,6 +205,7 @@ N8N_HOST=${GEIVS_HOST}
 N8N_PORT=5678
 N8N_PROTOCOL=http
 WEBHOOK_URL=http://${GEIVS_HOST}/automation/
+N8N_PUBLIC_API_KEY=${N8N_API_KEY}
 
 # Open WebUI
 OPENWEBUI_API_KEY=$(openssl rand -hex 24)
@@ -239,6 +241,20 @@ if ! download_or_warn "$REPO_RAW/docker-compose.pro.yml" "$GEIVS_DIR/docker-comp
   echo "    Place it manually at: $GEIVS_DIR/docker-compose.pro.yml"
   echo "    Then re-run: bash $0"
   exit 1
+fi
+
+# Inject N8N_PUBLIC_API_KEY into n8n service environment (enables REST API access)
+if [ "$DRY_RUN" = false ]; then
+  python3 - "$GEIVS_DIR/docker-compose.pro.yml" << 'PYEOF'
+import sys, re
+content = open(sys.argv[1]).read()
+if 'N8N_PUBLIC_API_KEY' not in content:
+    content = content.replace(
+        '      - N8N_ENCRYPTION_KEY=${N8N_ENCRYPTION_KEY:-changeme_generate_a_real_key}',
+        '      - N8N_ENCRYPTION_KEY=${N8N_ENCRYPTION_KEY:-changeme_generate_a_real_key}\n      - N8N_PUBLIC_API_KEY=${N8N_PUBLIC_API_KEY}'
+    )
+    open(sys.argv[1], 'w').write(content)
+PYEOF
 fi
 
 # Strip GPU blocks if CPU-only mode
@@ -486,7 +502,235 @@ else
   warn "No Tailscale key provided — skipping (add later with: sudo tailscale up)"
 fi
 
-# ── Step 17: Final Summary ────────────────────────────────────
+# ── Step 17: Email Setup ──────────────────────────────────────
+step "Configuring email integration (IMAP/SMTP)"
+
+EMAIL_CONFIGURED=false
+
+echo ""
+echo -e "  ${BOLD}Email integration lets Jeeves send/receive email on your behalf.${NC}"
+read -rp "  Configure email now? [Y/n]: " DO_EMAIL
+DO_EMAIL=${DO_EMAIL:-Y}
+
+if [[ "$DO_EMAIL" =~ ^[Yy] ]] && [ "$DRY_RUN" = false ]; then
+  echo ""
+  echo -e "  ${CYAN}── IMAP (incoming mail) ──${NC}"
+  read -rp "  IMAP server (e.g. imap.gmail.com): " EMAIL_IMAP_HOST
+  read -rp "  IMAP port [993]: " EMAIL_IMAP_PORT
+  EMAIL_IMAP_PORT=${EMAIL_IMAP_PORT:-993}
+  read -rp "  Email username: " EMAIL_USER
+  read -rsp "  Email password / app password: " EMAIL_PASS; echo ""
+
+  echo ""
+  echo -e "  ${CYAN}── SMTP (outgoing mail) ──${NC}"
+  read -rp "  SMTP server [${EMAIL_IMAP_HOST}]: " EMAIL_SMTP_HOST
+  EMAIL_SMTP_HOST=${EMAIL_SMTP_HOST:-$EMAIL_IMAP_HOST}
+  read -rp "  SMTP port [587]: " EMAIL_SMTP_PORT
+  EMAIL_SMTP_PORT=${EMAIL_SMTP_PORT:-587}
+
+  # Wait for n8n API (may still be starting)
+  echo -e "  ${BLUE}Waiting for n8n API...${NC}"
+  N8N_READY=false
+  for i in $(seq 1 30); do
+    if curl -sf -H "X-N8N-API-KEY: $N8N_API_KEY" \
+        "http://localhost/automation/api/v1/workflows?limit=1" &>/dev/null; then
+      N8N_READY=true
+      break
+    fi
+    sleep 4
+  done
+
+  if [ "$N8N_READY" = false ]; then
+    warn "n8n API not ready — add email credentials manually in n8n UI"
+  else
+    # Create IMAP credential
+    IMAP_RESULT=$(curl -sf -X POST \
+      -H "X-N8N-API-KEY: $N8N_API_KEY" \
+      -H "Content-Type: application/json" \
+      -d "{\"name\":\"GEIVS Email IMAP\",\"type\":\"imap\",\"data\":{\"host\":\"${EMAIL_IMAP_HOST}\",\"port\":${EMAIL_IMAP_PORT},\"user\":\"${EMAIL_USER}\",\"password\":\"${EMAIL_PASS}\",\"secure\":true,\"allowUnauthorizedCerts\":false}}" \
+      "http://localhost/automation/api/v1/credentials" 2>/dev/null || true)
+
+    # Create SMTP credential
+    SMTP_RESULT=$(curl -sf -X POST \
+      -H "X-N8N-API-KEY: $N8N_API_KEY" \
+      -H "Content-Type: application/json" \
+      -d "{\"name\":\"GEIVS Email SMTP\",\"type\":\"smtp\",\"data\":{\"host\":\"${EMAIL_SMTP_HOST}\",\"port\":${EMAIL_SMTP_PORT},\"user\":\"${EMAIL_USER}\",\"password\":\"${EMAIL_PASS}\",\"secure\":false,\"allowUnauthorizedCerts\":false}}" \
+      "http://localhost/automation/api/v1/credentials" 2>/dev/null || true)
+
+    if echo "$IMAP_RESULT" | grep -q '"id"' && echo "$SMTP_RESULT" | grep -q '"id"'; then
+      ok "IMAP and SMTP credentials created in n8n"
+      # Activate email workflows
+      WF_LIST=$(curl -sf -H "X-N8N-API-KEY: $N8N_API_KEY" \
+        "http://localhost/automation/api/v1/workflows?limit=100" 2>/dev/null || echo "{}")
+      for wf_name in "geivs-email-bot" "geivs-email-transcription"; do
+        WF_ID=$(echo "$WF_LIST" | python3 -c "
+import sys,json
+try:
+  d=json.load(sys.stdin); wfs=d.get('data',[])
+  print(next((w['id'] for w in wfs if w['name']=='${wf_name}'),''))
+except: print('')
+" 2>/dev/null || true)
+        if [ -n "$WF_ID" ]; then
+          curl -sf -X PATCH \
+            -H "X-N8N-API-KEY: $N8N_API_KEY" -H "Content-Type: application/json" \
+            -d '{"active":true}' \
+            "http://localhost/automation/api/v1/workflows/$WF_ID" >/dev/null 2>&1 || true
+          ok "Activated: $wf_name"
+        else
+          warn "Workflow not found: $wf_name — activate manually in n8n UI"
+        fi
+      done
+      EMAIL_CONFIGURED=true
+    else
+      warn "Failed to create email credentials — configure manually in n8n UI"
+    fi
+  fi
+elif [[ "$DO_EMAIL" =~ ^[Yy] ]] && [ "$DRY_RUN" = true ]; then
+  echo -e "${BLUE}  [dry-run] collect IMAP/SMTP creds and create n8n credentials${NC}"
+  EMAIL_CONFIGURED=true
+else
+  warn "Skipping email — configure later via n8n UI at http://$GEIVS_HOST/automation/"
+fi
+
+# ── Step 18: Signal Setup ─────────────────────────────────────
+step "Configuring Signal integration"
+
+SIGNAL_CONFIGURED=false
+
+echo ""
+echo -e "  ${BOLD}Signal integration lets Jeeves send/receive Signal messages.${NC}"
+echo -e "  ${YELLOW}You need a phone number dedicated to Jeeves (not your personal number).${NC}"
+read -rp "  Configure Signal now? [Y/n]: " DO_SIGNAL
+DO_SIGNAL=${DO_SIGNAL:-Y}
+
+if [[ "$DO_SIGNAL" =~ ^[Yy] ]] && [ "$DRY_RUN" = false ]; then
+  read -rp "  Signal phone number (with country code, e.g. +12125551234): " SIGNAL_PHONE
+
+  echo -e "  ${BLUE}Sending registration SMS to $SIGNAL_PHONE...${NC}"
+  REG_RESULT=$(docker exec geivs_signal-cli \
+    signal-cli -a "$SIGNAL_PHONE" register 2>&1 || true)
+
+  if echo "$REG_RESULT" | grep -qi "error\|failed\|invalid"; then
+    warn "Registration issue: $REG_RESULT"
+    warn "Try manually: docker exec geivs_signal-cli signal-cli -a $SIGNAL_PHONE register"
+  else
+    ok "SMS sent — check your phone"
+    read -rp "  Enter the verification code from the SMS: " SIGNAL_CODE
+    VERIFY_RESULT=$(docker exec geivs_signal-cli \
+      signal-cli -a "$SIGNAL_PHONE" verify "$SIGNAL_CODE" 2>&1 || true)
+
+    if echo "$VERIFY_RESULT" | grep -qi "error\|failed\|invalid"; then
+      warn "Verification failed: $VERIFY_RESULT"
+      warn "Try: docker exec geivs_signal-cli signal-cli -a $SIGNAL_PHONE verify <code>"
+    else
+      ok "Signal number verified: $SIGNAL_PHONE"
+      # Persist to .env
+      printf '\n# Signal\nSIGNAL_PHONE=%s\n' "$SIGNAL_PHONE" >> "$GEIVS_DIR/.env"
+
+      # Activate Signal workflows
+      WF_LIST=$(curl -sf -H "X-N8N-API-KEY: $N8N_API_KEY" \
+        "http://localhost/automation/api/v1/workflows?limit=100" 2>/dev/null || echo "{}")
+      for wf_name in "geivs-signal-bot" "geivs-signal-transcription"; do
+        WF_ID=$(echo "$WF_LIST" | python3 -c "
+import sys,json
+try:
+  d=json.load(sys.stdin); wfs=d.get('data',[])
+  print(next((w['id'] for w in wfs if w['name']=='${wf_name}'),''))
+except: print('')
+" 2>/dev/null || true)
+        if [ -n "$WF_ID" ]; then
+          curl -sf -X PATCH \
+            -H "X-N8N-API-KEY: $N8N_API_KEY" -H "Content-Type: application/json" \
+            -d '{"active":true}' \
+            "http://localhost/automation/api/v1/workflows/$WF_ID" >/dev/null 2>&1 || true
+          ok "Activated: $wf_name"
+        else
+          warn "Workflow not found: $wf_name — activate manually in n8n UI"
+        fi
+      done
+      SIGNAL_CONFIGURED=true
+    fi
+  fi
+elif [[ "$DO_SIGNAL" =~ ^[Yy] ]] && [ "$DRY_RUN" = true ]; then
+  echo -e "${BLUE}  [dry-run] register Signal number and activate signal workflows${NC}"
+  SIGNAL_CONFIGURED=true
+else
+  warn "Skipping Signal — register later: docker exec geivs_signal-cli signal-cli -a +1NXXNXXXXXX register"
+fi
+
+# ── Step 19: Google Calendar ──────────────────────────────────
+step "Configuring Google Calendar integration"
+
+GCAL_CONFIGURED=false
+
+echo ""
+echo -e "  ${BOLD}Google Calendar requires manual OAuth setup (browser-based, cannot be automated).${NC}"
+read -rp "  Show setup instructions now? [Y/n]: " DO_GCAL
+DO_GCAL=${DO_GCAL:-Y}
+
+if [[ "$DO_GCAL" =~ ^[Yy] ]]; then
+  echo ""
+  echo -e "  ${CYAN}── Google Calendar OAuth Setup ──${NC}"
+  echo -e "  ${BOLD}1.${NC} Open: http://${GEIVS_HOST}/automation/"
+  echo -e "  ${BOLD}2.${NC} Go to Settings → Credentials → + Add Credential"
+  echo -e "  ${BOLD}3.${NC} Search for: ${BOLD}Google Calendar OAuth2 API${NC}"
+  echo -e "  ${BOLD}4.${NC} Create a Google Cloud project at https://console.cloud.google.com/"
+  echo -e "       a. Enable the Google Calendar API"
+  echo -e "       b. APIs & Services → Credentials → OAuth 2.0 Client ID"
+  echo -e "       c. Application type: Web application"
+  echo -e "       d. Add the redirect URI shown in the n8n credential form"
+  echo -e "       e. Copy Client ID and Client Secret into n8n"
+  echo -e "  ${BOLD}5.${NC} Click 'Connect my account' and authorise"
+  echo -e "  ${BOLD}6.${NC} Open ${BOLD}geivs-calendar-integration${NC} workflow and activate it"
+  echo ""
+  read -rp "  Press Enter when done, or type S to skip: " GCAL_DONE
+  if [[ ! "$GCAL_DONE" =~ ^[Ss] ]]; then
+    GCAL_CONFIGURED=true
+    ok "Google Calendar marked as configured"
+  else
+    warn "Google Calendar skipped — follow the steps above at any time"
+  fi
+else
+  warn "Skipping Google Calendar — set up OAuth at http://$GEIVS_HOST/automation/ later"
+fi
+
+# ── Step 20: Social Media / Postiz ───────────────────────────
+step "Configuring social media integration (Postiz)"
+
+POSTIZ_CONFIGURED=false
+
+echo ""
+echo -e "  ${BOLD}Postiz handles social media scheduling — Twitter/X, LinkedIn, Facebook, Instagram, Discord.${NC}"
+echo -e "  ${CYAN}Postiz UI: http://${GEIVS_HOST}/social/${NC}"
+read -rp "  Show account connection instructions now? [Y/n]: " DO_POSTIZ
+DO_POSTIZ=${DO_POSTIZ:-Y}
+
+if [[ "$DO_POSTIZ" =~ ^[Yy] ]]; then
+  echo ""
+  echo -e "  ${CYAN}── Postiz Setup ──${NC}"
+  echo -e "  ${BOLD}1.${NC} Open: http://${GEIVS_HOST}/social/"
+  echo -e "  ${BOLD}2.${NC} Register with ${ADMIN_EMAIL} (use your chosen admin password)"
+  echo -e "  ${BOLD}3.${NC} Go to Settings → Integrations"
+  echo -e "  ${BOLD}4.${NC} Connect your social platforms:"
+  echo -e "       • Twitter/X  — API keys from developer.twitter.com"
+  echo -e "       • LinkedIn   — OAuth via LinkedIn Developer portal"
+  echo -e "       • Facebook   — Meta for Developers app"
+  echo -e "       • Instagram  — same Meta app as Facebook"
+  echo -e "       • Discord    — Bot token from discord.com/developers"
+  echo -e "  ${BOLD}5.${NC} Each platform requires an app/developer account on that platform"
+  echo ""
+  read -rp "  Press Enter when done connecting platforms, or type S to skip: " POSTIZ_DONE
+  if [[ ! "$POSTIZ_DONE" =~ ^[Ss] ]]; then
+    POSTIZ_CONFIGURED=true
+    ok "Social media integration marked as configured"
+  else
+    warn "Social media skipped — connect platforms later at http://$GEIVS_HOST/social/"
+  fi
+else
+  warn "Skipping Postiz — connect social accounts later at http://$GEIVS_HOST/social/"
+fi
+
+# ── Step 21: Final Summary ────────────────────────────────────
 step "Installation complete"
 
 TS_IP=""
@@ -502,22 +746,35 @@ echo -e "${CYAN}║${NC}  Automation:   http://${GEIVS_HOST}/automation/        
 echo -e "${CYAN}║${NC}  Monitoring:   http://${GEIVS_HOST}/monitor/                  ${CYAN}║${NC}"
 echo -e "${CYAN}║${NC}  Image Gen:    http://${GEIVS_HOST}/imagine/                  ${CYAN}║${NC}"
 echo -e "${CYAN}║${NC}  Search:       http://${GEIVS_HOST}/search/                   ${CYAN}║${NC}"
+echo -e "${CYAN}║${NC}  Social:       http://${GEIVS_HOST}/social/                   ${CYAN}║${NC}"
 echo -e "${CYAN}║${NC}  Portainer:    http://${GEIVS_HOST}/portainer/                ${CYAN}║${NC}"
 echo -e "${CYAN}╠══════════════════════════════════════════════════════════╣${NC}"
-echo -e "${CYAN}║${NC}  ${BOLD}Credentials${NC}                                             ${CYAN}║${NC}"
-echo -e "${CYAN}║${NC}  Email:        ${ADMIN_EMAIL}                   ${CYAN}║${NC}"
-echo -e "${CYAN}║${NC}  Password:     ${ADMIN_PASSWORD}                            ${CYAN}║${NC}"
+echo -e "${CYAN}║${NC}  ${BOLD}Login${NC}                                                   ${CYAN}║${NC}"
+echo -e "${CYAN}║${NC}  Email:    ${ADMIN_EMAIL}                       ${CYAN}║${NC}"
+echo -e "${CYAN}║${NC}  Password: ${ADMIN_PASSWORD}                                ${CYAN}║${NC}"
 [ -n "$TS_IP" ] && \
-echo -e "${CYAN}║${NC}  Tailscale:    ${TS_IP}                                  ${CYAN}║${NC}"
+echo -e "${CYAN}║${NC}  Tailscale: ${TS_IP}                                ${CYAN}║${NC}"
+echo -e "${CYAN}╠══════════════════════════════════════════════════════════╣${NC}"
+echo -e "${CYAN}║${NC}  ${BOLD}Integration Status${NC}                                      ${CYAN}║${NC}"
+[ "$EMAIL_CONFIGURED"  = true ] && \
+echo -e "${CYAN}║${NC}  ${GREEN}✓${NC} Email (IMAP/SMTP)                                    ${CYAN}║${NC}" || \
+echo -e "${CYAN}║${NC}  ${YELLOW}○${NC} Email       → http://${GEIVS_HOST}/automation/          ${CYAN}║${NC}"
+[ "$SIGNAL_CONFIGURED" = true ] && \
+echo -e "${CYAN}║${NC}  ${GREEN}✓${NC} Signal                                               ${CYAN}║${NC}" || \
+echo -e "${CYAN}║${NC}  ${YELLOW}○${NC} Signal      → docker exec geivs_signal-cli ...       ${CYAN}║${NC}"
+[ "$GCAL_CONFIGURED"   = true ] && \
+echo -e "${CYAN}║${NC}  ${GREEN}✓${NC} Google Calendar                                      ${CYAN}║${NC}" || \
+echo -e "${CYAN}║${NC}  ${YELLOW}○${NC} Google Cal  → OAuth in n8n credentials               ${CYAN}║${NC}"
+[ "$POSTIZ_CONFIGURED" = true ] && \
+echo -e "${CYAN}║${NC}  ${GREEN}✓${NC} Social Media (Postiz)                                ${CYAN}║${NC}" || \
+echo -e "${CYAN}║${NC}  ${YELLOW}○${NC} Social Media → http://${GEIVS_HOST}/social/             ${CYAN}║${NC}"
 echo -e "${CYAN}╠══════════════════════════════════════════════════════════╣${NC}"
 echo -e "${CYAN}║${NC}  ${BOLD}Next Steps${NC}                                              ${CYAN}║${NC}"
-echo -e "${CYAN}║${NC}  1. Open the Web UI and sign in                          ${CYAN}║${NC}"
-echo -e "${CYAN}║${NC}  2. Go to /automation/ → add email credentials           ${CYAN}║${NC}"
-echo -e "${CYAN}║${NC}  3. Configure Signal number in /automation/               ${CYAN}║${NC}"
-echo -e "${CYAN}║${NC}  4. Add Google Calendar OAuth in n8n credentials         ${CYAN}║${NC}"
-echo -e "${CYAN}║${NC}  5. Wait for model download to finish, then chat!        ${CYAN}║${NC}"
+echo -e "${CYAN}║${NC}  1. Wait for the AI model download to finish           ${CYAN}║${NC}"
+echo -e "${CYAN}║${NC}  2. Open the Web UI and start chatting with Jeeves     ${CYAN}║${NC}"
+echo -e "${CYAN}║${NC}  3. Complete any ○ integrations listed above           ${CYAN}║${NC}"
 echo -e "${CYAN}╚══════════════════════════════════════════════════════════╝${NC}"
 echo ""
-echo -e "  Config saved to: ${BOLD}$GEIVS_DIR/.env${NC}"
-echo -e "  Model pull log:  ${BOLD}$GEIVS_DIR/logs/model-pull.log${NC}"
+echo -e "  Config: ${BOLD}$GEIVS_DIR/.env${NC}"
+echo -e "  Model:  ${BOLD}$GEIVS_DIR/logs/model-pull.log${NC}"
 echo ""
