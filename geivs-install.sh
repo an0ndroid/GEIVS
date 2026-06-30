@@ -377,7 +377,7 @@ if [ "$DRY_RUN" = false ]; then
   # Retry loop: SearXNG generates settings.yml on first boot which can take 30-60s
   echo -e "  ${BLUE}Waiting for SearXNG to initialise...${NC}"
   SEARXNG_PATCHED=false
-  for attempt in $(seq 1 15); do
+  for attempt in $(seq 1 60); do
     PATCH_RESULT=$(docker exec geivs_searxng python3 -c "
 import re, sys
 f = '/etc/searxng/settings.yml'
@@ -417,7 +417,7 @@ step "Waiting for Open WebUI to be ready"
 
 if [ "$DRY_RUN" = false ]; then
   echo -n "  Waiting"
-  for i in $(seq 1 60); do
+  for i in $(seq 1 200); do
     if curl -sf http://localhost:3000/health &>/dev/null; then
       echo ""
       ok "Open WebUI is ready"
@@ -425,9 +425,9 @@ if [ "$DRY_RUN" = false ]; then
     fi
     echo -n "."
     sleep 3
-    if [ "$i" = "60" ]; then
+    if [ "$i" = "200" ]; then
       echo ""
-      warn "Open WebUI did not become ready in 3 minutes — continuing anyway"
+      warn "Open WebUI did not become ready in 10 minutes — continuing anyway"
     fi
   done
 fi
