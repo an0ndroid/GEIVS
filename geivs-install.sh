@@ -51,6 +51,10 @@ echo -e "${CYAN}║       GEIVS Pro — AI Butler Platform Installer       ║${
 echo -e "${CYAN}║         Self-hosted · Private · Production-ready     ║${NC}"
 echo -e "${CYAN}╚══════════════════════════════════════════════════════╝${NC}"
 echo ""
+echo -e "${YELLOW}  ⏱  This install takes 60-90+ minutes on a fresh machine.${NC}"
+echo -e "${YELLOW}     Most of the time is downloading Docker images (15+ GB).${NC}"
+echo -e "${YELLOW}     Leave it running — it will prompt you when input is needed.${NC}"
+echo ""
 [ "$DRY_RUN" = true ] && echo -e "${YELLOW}  DRY RUN MODE — no changes will be made${NC}\n"
 
 # ── Step 1: Prerequisites ─────────────────────────────────────
