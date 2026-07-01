@@ -118,7 +118,7 @@ init_state_file() {
         }
     },
     "models": {
-        "primary": "llama3.3:70b",
+        "primary": "${PRIMARY_MODEL:-qwen2.5:7b}",
         "fast": "qwen2.5:9b",
         "pulled": []
     },
@@ -183,7 +183,7 @@ configure_openwebui() {
     curl -sf -X POST "${OPENWEBUI_URL}/api/v1/configs/default/model" \
         -H "Authorization: Bearer ${token}" \
         -H "Content-Type: application/json" \
-        -d '{"model": "llama3.3:70b"}' > /dev/null 2>&1 || true
+        -d "{\"model\": \"${PRIMARY_MODEL:-qwen2.5:7b}\"}" > /dev/null 2>&1 || true
 
     # Create GEIVS model preset with butler system prompt
     local escaped_prompt
@@ -195,7 +195,7 @@ configure_openwebui() {
         -d "{
             \"id\": \"geivs-butler\",
             \"name\": \"GEIVS\",
-            \"base_model_id\": \"llama3.3:70b\",
+            \"base_model_id\": \"${PRIMARY_MODEL:-qwen2.5:7b}\",
             \"params\": {
                 \"system\": ${escaped_prompt},
                 \"temperature\": 0.7,
