@@ -380,10 +380,11 @@ for key in "${!SSH_SETTINGS[@]}"; do
 done
 
 # Ubuntu 24.04 uses ssh.service; 22.04 uses sshd.service
-if systemctl list-units --all --type=service 2>/dev/null | grep -q 'sshd\.service'; then
-  SSH_SVC=sshd
-else
+# Check the actual unit file on disk rather than systemctl output (aliases are misleading)
+if [ -f /lib/systemd/system/ssh.service ] || [ -f /usr/lib/systemd/system/ssh.service ]; then
   SSH_SVC=ssh
+else
+  SSH_SVC=sshd
 fi
 sshd -t && systemctl restart "$SSH_SVC"
 ok "SSH hardened (root login disabled, max auth tries = 4)"
