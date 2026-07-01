@@ -379,7 +379,7 @@ if [ "$DRY_RUN" = false ]; then
 
   # Pre-create SearXNG volume with correct permissions (searxng runs as non-root)
   docker volume create geivs_searxng_data >/dev/null 2>&1 || true
-  docker run --rm -v geivs_searxng_data:/etc/searxng busybox chmod 777 /etc/searxng >/dev/null 2>&1 || true
+  docker run --rm -v geivs_searxng_data:/etc/searxng ubuntu:24.04 chmod 777 /etc/searxng >/dev/null 2>&1 || true
 
   docker compose -f docker-compose.pro.yml --env-file .env up -d 2>&1 | \
     grep -E "(Started|Created|Error|error)" || true
@@ -634,12 +634,28 @@ if [[ "$DO_SIGNAL" =~ ^[Yy] ]] && [ "$DRY_RUN" = false ]; then
   REG_RESULT=$(docker exec geivs_signal \
     signal-cli -a "$SIGNAL_PHONE" register 2>&1 || true)
 
-  if echo "$REG_RESULT" | grep -qi "error\|failed\|invalid"; then
+  # Signal now requires captcha for new number registrations
+  if echo "$REG_RESULT" | grep -qi "captcha"; then
+    echo ""
+    warn "Signal requires a captcha to register this number."
+    echo -e "  ${BOLD}1.${NC} Open: ${CYAN}https://signalcaptchas.org/registration/generate.html${NC}"
+    echo -e "  ${BOLD}2.${NC} Solve the captcha on that page"
+    echo -e "  ${BOLD}3.${NC} Right-click the ${BOLD}\"Open Signal\"${NC} link → Copy Link"
+    echo -e "  ${BOLD}4.${NC} Paste the full URL below (starts with signalcaptcha://)"
+    echo ""
+    read -rp "  Captcha URL: " SIGNAL_CAPTCHA < /dev/tty
+    if [ -n "$SIGNAL_CAPTCHA" ]; then
+      REG_RESULT=$(docker exec geivs_signal \
+        signal-cli -a "$SIGNAL_PHONE" register --captcha "$SIGNAL_CAPTCHA" 2>&1 || true)
+    fi
+  fi
+
+  if echo "$REG_RESULT" | grep -qi "error\|failed\|invalid\|captcha"; then
     warn "Registration issue: $REG_RESULT"
     warn "Try manually: docker exec geivs_signal signal-cli -a $SIGNAL_PHONE register"
   else
     ok "SMS sent — check your phone"
-    read -rp "  Enter the verification code from the SMS: " SIGNAL_CODE < /dev/tty
+    read -rp "  Enter the 6-digit verification code from the SMS: " SIGNAL_CODE < /dev/tty
     VERIFY_RESULT=$(docker exec geivs_signal \
       signal-cli -a "$SIGNAL_PHONE" verify "$SIGNAL_CODE" 2>&1 || true)
 
