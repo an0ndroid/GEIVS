@@ -381,18 +381,25 @@ if [ "$DRY_RUN" = false ]; then
     sed 's/^/  /' || true
   ok "Images ready"
 
-  # Pre-create SearXNG volume with correct permissions (searxng runs as non-root)
-  docker volume create geivs_searxng_data >/dev/null 2>&1 || true
-  docker run --rm -v geivs_searxng_data:/etc/searxng ubuntu:24.04 chmod 777 /etc/searxng >/dev/null 2>&1 || true
-
   docker compose -f docker-compose.pro.yml --env-file .env up -d 2>&1 | \
     grep -E "(Started|Created|Error|error)" || true
   ok "Stack started"
 
+  # Fix SearXNG volume permissions AFTER compose up initialises the volume from the image.
+  # cap_drop:ALL removes CAP_DAC_OVERRIDE so root inside the container can't write to a
+  # 755 dir it doesn't own. Docker initialises the named volume from the image (977:977/755)
+  # after our pre-compose chmod, overwriting it — so we must chmod post-init instead.
+  echo -e "  ${BLUE}Fixing SearXNG volume permissions...${NC}"
+  sleep 5  # give Docker time to initialise the volume from the image
+  docker stop geivs_searxng >/dev/null 2>&1 || true
+  docker run --rm -v geivs_searxng_data:/etc/searxng ubuntu:24.04 chmod 777 /etc/searxng >/dev/null 2>&1 || true
+  docker start geivs_searxng >/dev/null 2>&1 || true
+  ok "SearXNG permissions fixed"
+
   # Enable JSON format in SearXNG (required for Open WebUI web search)
   # Wait for SearXNG to write settings.yml on first boot, then patch via docker cp
   echo -e "  ${BLUE}Waiting for SearXNG to initialise...${NC}"
-  sleep 8  # let containerd finish wiring container stdio before docker cp
+  sleep 8  # let SearXNG write settings.yml before we try to patch it
   SEARXNG_PATCHED=false
   for attempt in $(seq 1 90); do
     if docker exec geivs_searxng test -f /etc/searxng/settings.yml 2>/dev/null; then
