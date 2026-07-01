@@ -638,10 +638,11 @@ if [[ "$DO_SIGNAL" =~ ^[Yy] ]] && [ "$DRY_RUN" = false ]; then
   if echo "$REG_RESULT" | grep -qi "captcha"; then
     echo ""
     warn "Signal requires a captcha to register this number."
-    echo -e "  ${BOLD}1.${NC} Open: ${CYAN}https://signalcaptchas.org/registration/generate.html${NC}"
+    echo -e "  ${YELLOW}Do this on your local computer (laptop/desktop), not this server:${NC}"
+    echo -e "  ${BOLD}1.${NC} Open in a browser: ${CYAN}https://signalcaptchas.org/registration/generate.html${NC}"
     echo -e "  ${BOLD}2.${NC} Solve the captcha on that page"
-    echo -e "  ${BOLD}3.${NC} Right-click the ${BOLD}\"Open Signal\"${NC} link → Copy Link"
-    echo -e "  ${BOLD}4.${NC} Paste the full URL below (starts with signalcaptcha://)"
+    echo -e "  ${BOLD}3.${NC} Right-click the ${BOLD}\"Open Signal\"${NC} link → Copy Link Address"
+    echo -e "  ${BOLD}4.${NC} Come back here and paste the URL (starts with signalcaptcha://)"
     echo ""
     read -rp "  Captcha URL: " SIGNAL_CAPTCHA < /dev/tty
     if [ -n "$SIGNAL_CAPTCHA" ]; then
