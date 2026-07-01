@@ -369,11 +369,20 @@ step "Starting GEIVS stack"
 
 if [ "$DRY_RUN" = false ]; then
   cd "$GEIVS_DIR"
+
+  # Pull images first so progress is visible and compose up starts quickly
+  echo -e "  ${BLUE}Pulling Docker images — this can take 20-40 minutes on first run...${NC}"
+  docker compose -f docker-compose.pro.yml --env-file .env pull 2>&1 | \
+    grep -E "(Pulling|Pull complete|Already exists|Error|error)" | \
+    sed 's/^/  /' || true
+  ok "Images ready"
+
   # Pre-create SearXNG volume with correct permissions (searxng runs as non-root)
   docker volume create geivs_searxng_data >/dev/null 2>&1 || true
   docker run --rm -v geivs_searxng_data:/etc/searxng busybox chmod 777 /etc/searxng >/dev/null 2>&1 || true
+
   docker compose -f docker-compose.pro.yml --env-file .env up -d 2>&1 | \
-    grep -E "(Started|Created|Pulled|Error|error)" || true
+    grep -E "(Started|Created|Error|error)" || true
   ok "Stack started"
 
   # Enable JSON format in SearXNG (required for Open WebUI web search)
@@ -417,7 +426,7 @@ step "Waiting for Open WebUI to be ready"
 
 if [ "$DRY_RUN" = false ]; then
   echo -n "  Waiting"
-  for i in $(seq 1 200); do
+  for i in $(seq 1 400); do
     if curl -sf http://localhost:3000/health &>/dev/null; then
       echo ""
       ok "Open WebUI is ready"
@@ -425,9 +434,9 @@ if [ "$DRY_RUN" = false ]; then
     fi
     echo -n "."
     sleep 3
-    if [ "$i" = "200" ]; then
+    if [ "$i" = "400" ]; then
       echo ""
-      warn "Open WebUI did not become ready in 10 minutes — continuing anyway"
+      warn "Open WebUI did not become ready in 20 minutes — continuing anyway"
     fi
   done
 fi
