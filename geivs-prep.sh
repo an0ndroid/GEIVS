@@ -379,7 +379,13 @@ for key in "${!SSH_SETTINGS[@]}"; do
   fi
 done
 
-sshd -t && systemctl restart sshd
+# Ubuntu 24.04 uses ssh.service; 22.04 uses sshd.service
+if systemctl list-units --all --type=service 2>/dev/null | grep -q 'sshd\.service'; then
+  SSH_SVC=sshd
+else
+  SSH_SVC=ssh
+fi
+sshd -t && systemctl restart "$SSH_SVC"
 ok "SSH hardened (root login disabled, max auth tries = 4)"
 
 # ── Step 12: Firewall (UFW) ───────────────────────────────────
