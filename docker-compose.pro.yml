@@ -120,7 +120,7 @@ services:
       - AUDIO_STT_ENGINE=openai
       - AUDIO_STT_OPENAI_API_BASE_URL=http://whisper:8000/v1
       - AUDIO_STT_OPENAI_API_KEY=skip
-      - DEFAULT_MODELS=llama3.3:70b
+      - DEFAULT_MODELS=${PRIMARY_MODEL}
 
   # -----------------------------------------------------------
   # QDRANT — Vector database for RAG / memory

@@ -412,9 +412,13 @@ if [ "$DRY_RUN" = false ]; then
           SEARXNG_PATCHED=true
           break
         fi
-        # Insert '    - json' after the '    - html' line under formats:
-        sed -i '/^  formats:/,/^  [^ ]/{s/^    - html$/    - html\n    - json/}' \
-          /tmp/searxng-settings-$$.yml
+        # SearXNG uses use_default_settings:true so minimal settings.yml has no
+        # formats block. Append it if missing; insert json if formats exists.
+        if grep -q '^  formats:' /tmp/searxng-settings-$$.yml; then
+          sed -i '/^    - html$/a\          - json' /tmp/searxng-settings-$$.yml
+        else
+          printf '\nsearch:\n  formats:\n    - html\n    - json\n' >> /tmp/searxng-settings-$$.yml
+        fi
         docker cp /tmp/searxng-settings-$$.yml geivs_searxng:/etc/searxng/settings.yml >/dev/null 2>&1 || true
         rm -f /tmp/searxng-settings-$$.yml
         docker restart geivs_searxng >/dev/null 2>&1 || true
