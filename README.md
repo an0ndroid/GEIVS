@@ -2,15 +2,15 @@
 
 **General Encrypted Intelligent Valet Software — Pro Edition**
 
-A fully self-hosted personal AI butler platform. Private, local, no subscriptions, no cloud dependency.
+A fully self-hosted AI platform for small businesses. Private, local, no subscriptions, no cloud dependency.
 
 ---
 
 ## What is GEIVS?
 
-GEIVS is a personal AI butler that runs entirely on your own hardware. It combines a capable local language model with a suite of integrated services — email, messaging, calendar, social media, image generation, web search, and more — all managed through a single conversational interface with a British butler persona.
+GEIVS gives your business a private AI assistant that runs entirely on your own hardware. It combines a capable local language model with a full suite of integrated services — email, messaging, calendar, social media, image generation, web search, and more — all managed through a single conversational interface.
 
-Your data stays on your machine. Always.
+The assistant's name and personality are set during installation. Your data stays on your machine. Always.
 
 ---
 
@@ -19,9 +19,9 @@ Your data stays on your machine. Always.
 | | Minimum | Recommended |
 |---|---|---|
 | OS | Ubuntu 22.04 LTS | Ubuntu 24.04 LTS |
-| GPU | NVIDIA 8GB VRAM | NVIDIA 24GB VRAM (RTX 4090 / RTX Pro 4500) |
+| GPU | NVIDIA 8GB VRAM | NVIDIA 24GB VRAM (RTX 4090) |
 | RAM | 16GB | 32GB+ |
-| Storage | 100GB free | 200GB+ free |
+| Storage | 100GB free | 240GB+ free |
 
 > No GPU? See [CPU / VM Mode](#cpu--vm-mode) below.
 
@@ -55,7 +55,9 @@ Run as your normal user (not root). Downloads the stack, generates all secrets, 
 curl -fsSL https://raw.githubusercontent.com/an0ndroid/GEIVS/main/geivs-install.sh | bash
 ```
 
-Once complete, open `http://your-server-ip` — Jeeves will greet you.
+The installer will prompt for your business name, assistant persona name, and preferred AI model. Once complete, open `http://your-server-ip` to start.
+
+> ⏱ First install takes 60–90 minutes — most of that is downloading Docker images (15+ GB). Leave it running.
 
 ---
 
@@ -84,18 +86,18 @@ Once complete, open `http://your-server-ip` — Jeeves will greet you.
 | Step | Action |
 |------|--------|
 | GPU detection | Identifies NVIDIA / AMD / CPU-only and configures accordingly |
-| Configuration | Prompts for hostname, admin email/password, timezone, AI model |
+| Configuration | Prompts for hostname, admin email/password, business name, persona name, AI model |
 | Secrets | Generates all keys (WebUI, n8n encryption, JWT, API key, etc.) |
 | .env | Writes fully populated environment file (chmod 600) |
 | Compose file | Downloads and patches docker-compose.pro.yml |
-| nginx config | Downloads reverse proxy config (or generates fallback) |
+| nginx config | Downloads reverse proxy config |
 | Workflows | Downloads all 13 n8n automation workflows |
 | Support files | Downloads onboarding script, system prompt, model pull scripts |
 | Stack start | `docker compose up -d` |
 | SearXNG patch | Enables JSON format required for Open WebUI web search |
 | Onboarding | Runs first-boot Open WebUI configuration |
 | Model download | Pulls primary AI model in background |
-| Workflow import | Imports all n8n workflows |
+| Workflow import | Imports all n8n workflows via API |
 | Tailscale | Configures remote access (if key provided) |
 | Email setup | Collects IMAP/SMTP credentials, creates n8n credentials, activates email workflows |
 | Signal setup | Registers phone number, verifies SMS code, activates Signal workflows |
@@ -111,7 +113,7 @@ All services route through nginx on port 80.
 
 | URL | Service |
 |-----|---------|
-| `http://your-ip/` | Open WebUI — chat with Jeeves |
+| `http://your-ip/` | Open WebUI — chat with your AI assistant |
 | `http://your-ip/automation/` | n8n workflow automation |
 | `http://your-ip/monitor/` | Uptime Kuma monitoring |
 | `http://your-ip/imagine/` | ComfyUI image generation |
@@ -146,7 +148,7 @@ All services route through nginx on port 80.
 
 | Workflow | Function |
 |----------|---------|
-| geivs-email-bot | Reads and replies to email via Jeeves |
+| geivs-email-bot | Reads and replies to email via your AI assistant |
 | geivs-signal-bot | Sends and receives Signal messages |
 | geivs-daily-briefing | Morning summary: weather, calendar, email digest |
 | geivs-email-draft | Drafts email responses for review |
@@ -166,7 +168,7 @@ All services route through nginx on port 80.
 
 | Model | Size | Best for |
 |-------|------|---------|
-| llama3.3:70b | ~42GB | Best quality (quantized automatically by Ollama) |
+| llama3.3:70b | ~42GB | Best quality (GPU required) |
 | gemma3:12b | ~8GB | Balanced quality and speed |
 | qwen2.5:7b | ~4.7GB | Fast, efficient, good reasoning |
 | gemma3:4b | ~3GB | CPU mode / low RAM systems |
@@ -199,8 +201,8 @@ GEIVS/
 ├── docker-compose.cpu.yml      # CPU-only stack definition
 ├── update-geivs.sh             # Update all images and models
 ├── onboarding-init.sh          # First-boot Open WebUI configuration
-├── geivs-state.json            # Default butler state template
-├── geivs-system-prompt.md      # Butler persona and instructions
+├── geivs-state.json            # Default assistant state template
+├── geivs-system-prompt.md      # Default assistant persona and instructions
 ├── pull-models.sh              # GPU model download script
 ├── pull-models-cpu.sh          # CPU model download script
 ├── nginx/
@@ -235,26 +237,15 @@ Pulls latest Docker images and refreshes Ollama models.
 
 ## CPU / VM Mode
 
-No NVIDIA GPU? The installer detects this automatically and configures the CPU stack. To run manually:
-
-```bash
-docker compose -f docker-compose.cpu.yml up -d
-bash pull-models-cpu.sh
-```
+No NVIDIA GPU? The installer detects this automatically and configures the CPU stack.
 
 | | GPU (Pro) | CPU |
 |---|---|---|
 | GPU required | Yes | No |
-| Default model | gemma3:12b | qwen2.5:7b |
+| Default model | llama3.3:70b | qwen2.5:7b |
 | ComfyUI image | latest-cuda | latest-cpu |
 | Whisper mode | cuda / medium | cpu / tiny |
 | Recommended RAM | 32GB | 16GB minimum |
-
-To switch back to GPU:
-```bash
-docker compose -f docker-compose.cpu.yml down
-docker compose -f docker-compose.pro.yml up -d
-```
 
 ---
 
@@ -268,7 +259,7 @@ sudo resize2fs /dev/mapper/ubuntu--vg-ubuntu--lv
 df -h
 ```
 
-GPU passthrough is not available in most VM configurations — use `docker-compose.cpu.yml`.
+GPU passthrough is not available in most VM configurations — use the CPU stack.
 
 ---
 
@@ -283,7 +274,6 @@ nvidia-smi          # verify driver is loaded — if this fails, reboot
 ```bash
 docker exec geivs_searxng grep -A5 'formats:' /etc/searxng/settings.yml
 # should show both: - html and - json
-# re-run geivs-install.sh to re-apply the patch (idempotent)
 ```
 
 **n8n workflows not imported:**
@@ -297,7 +287,6 @@ docker exec geivs_n8n n8n import:workflow --separate --input=/tmp/
 **View any container's logs:**
 ```bash
 docker logs geivs_<service> --tail 50 -f
-# service names: ollama, openwebui, n8n, searxng, signal-cli, comfyui, portainer
 ```
 
 **Out of disk space:**
@@ -305,9 +294,6 @@ docker logs geivs_<service> --tail 50 -f
 df -h
 docker system prune -f
 ```
-
-**Re-run credential setup:**
-`geivs-install.sh` is idempotent — re-running it skips completed steps and re-prompts for any credentials.
 
 ---
 
