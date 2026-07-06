@@ -1,1 +1,209 @@
-{"updatedAt":"2026-07-03T06:52:23.000Z","createdAt":"2026-07-03T06:41:39.287Z","id":"jeevesremfire1","name":"Jeeves - Reminder Fire","description":null,"active":true,"isArchived":false,"nodes":[{"parameters":{"rule":{"interval":[{"field":"minutes","minutesInterval":1}]}},"id":"c1111111-1111-4111-8111-111111111111","name":"Every Minute","type":"n8n-nodes-base.scheduleTrigger","typeVersion":1.2,"position":[0,300]},{"parameters":{"resource":"table","operation":"create","tableName":"jeeves_reminders","columns":{"column":[{"name":"reminder_id","type":"string"},{"name":"due","type":"string"},{"name":"text","type":"string"},{"name":"done","type":"boolean"}]},"options":{"createIfNotExists":true}},"id":"c2222222-2222-4222-8222-222222222222","name":"Ensure Table","type":"n8n-nodes-base.dataTable","typeVersion":1.1,"position":[220,300]},{"parameters":{"resource":"row","operation":"get","dataTableId":{"__rl":true,"mode":"name","value":"jeeves_reminders"},"returnAll":true,"filters":{"conditions":[]},"options":{}},"id":"c3333333-3333-4333-8333-333333333333","name":"Get Reminders","type":"n8n-nodes-base.dataTable","typeVersion":1.1,"position":[440,300]},{"parameters":{"jsCode":"const rows = $input.all();\nconst now = Date.now();\nconst out = [];\nfor (const it of rows) {\n  const r = it.json || {};\n  if (r.done === true) continue;\n  if (!r.due) continue;\n  const t = new Date(r.due).getTime();\n  if (!isNaN(t) && t <= now) {\n    out.push({ json: { reminder_id: r.reminder_id, text: r.text, due: r.due } });\n  }\n}\nreturn out;"},"id":"c4444444-4444-4444-8444-444444444444","name":"Filter Due","type":"n8n-nodes-base.code","typeVersion":2,"position":[660,300]},{"parameters":{"resource":"row","operation":"deleteRows","dataTableId":{"__rl":true,"mode":"name","value":"jeeves_reminders"},"filters":{"conditions":[{"keyName":"reminder_id","condition":"eq","keyValue":"={{ $json.reminder_id }}"}]},"matchType":"anyCondition","options":{}},"id":"c5555555-5555-4555-8555-555555555555","name":"Mark Done (delete)","type":"n8n-nodes-base.dataTable","typeVersion":1.1,"position":[880,300]},{"parameters":{"method":"POST","url":"http://172.17.0.1:8765/send","sendBody":true,"specifyBody":"json","jsonBody":"={{ JSON.stringify({ message: 'Reminder: ' + $json.text }) }}","options":{}},"id":"c6666666-6666-4666-8666-666666666666","name":"Send Reminder","type":"n8n-nodes-base.httpRequest","typeVersion":4.2,"position":[1100,300]}],"connections":{"Every Minute":{"main":[[{"node":"Ensure Table","type":"main","index":0}]]},"Ensure Table":{"main":[[{"node":"Get Reminders","type":"main","index":0}]]},"Get Reminders":{"main":[[{"node":"Filter Due","type":"main","index":0}]]},"Filter Due":{"main":[[{"node":"Mark Done (delete)","type":"main","index":0}]]},"Mark Done (delete)":{"main":[[{"node":"Send Reminder","type":"main","index":0}]]}},"settings":{"executionOrder":"v1"},"staticData":{"node:Every Minute":{"recurrenceRules":[]}},"meta":null,"nodeGroups":[],"pinData":null,"versionId":"00afb170-1e49-4d98-a819-97e86254c1b6","activeVersionId":"00afb170-1e49-4d98-a819-97e86254c1b6","versionCounter":2,"triggerCount":1,"sourceWorkflowId":null,"shared":[{"updatedAt":"2026-07-03T06:41:39.290Z","createdAt":"2026-07-03T06:41:39.290Z","role":"workflow:owner","workflowId":"jeevesremfire1","projectId":"3zeb0nZhOgw0YQIO","project":{"updatedAt":"2026-06-22T21:50:39.765Z","createdAt":"2026-06-22T20:18:13.120Z","id":"3zeb0nZhOgw0YQIO","name":"Richard Vickers <{{OWNER_CALENDAR_EMAIL}}>","type":"personal","icon":null,"description":null,"customTelemetryTags":[],"creatorId":"c06e9f36-d5fe-4bba-a51c-dfbab46a64fe"}}],"tags":[],"activeVersion":{"updatedAt":"2026-07-03T06:52:18.630Z","createdAt":"2026-07-03T06:52:18.630Z","versionId":"00afb170-1e49-4d98-a819-97e86254c1b6","workflowId":"jeevesremfire1","nodes":[{"parameters":{"rule":{"interval":[{"field":"minutes","minutesInterval":1}]}},"id":"c1111111-1111-4111-8111-111111111111","name":"Every Minute","type":"n8n-nodes-base.scheduleTrigger","typeVersion":1.2,"position":[0,300]},{"parameters":{"resource":"table","operation":"create","tableName":"jeeves_reminders","columns":{"column":[{"name":"reminder_id","type":"string"},{"name":"due","type":"string"},{"name":"text","type":"string"},{"name":"done","type":"boolean"}]},"options":{"createIfNotExists":true}},"id":"c2222222-2222-4222-8222-222222222222","name":"Ensure Table","type":"n8n-nodes-base.dataTable","typeVersion":1.1,"position":[220,300]},{"parameters":{"resource":"row","operation":"get","dataTableId":{"__rl":true,"mode":"name","value":"jeeves_reminders"},"returnAll":true,"filters":{"conditions":[]},"options":{}},"id":"c3333333-3333-4333-8333-333333333333","name":"Get Reminders","type":"n8n-nodes-base.dataTable","typeVersion":1.1,"position":[440,300]},{"parameters":{"jsCode":"const rows = $input.all();\nconst now = Date.now();\nconst out = [];\nfor (const it of rows) {\n  const r = it.json || {};\n  if (r.done === true) continue;\n  if (!r.due) continue;\n  const t = new Date(r.due).getTime();\n  if (!isNaN(t) && t <= now) {\n    out.push({ json: { reminder_id: r.reminder_id, text: r.text, due: r.due } });\n  }\n}\nreturn out;"},"id":"c4444444-4444-4444-8444-444444444444","name":"Filter Due","type":"n8n-nodes-base.code","typeVersion":2,"position":[660,300]},{"parameters":{"resource":"row","operation":"deleteRows","dataTableId":{"__rl":true,"mode":"name","value":"jeeves_reminders"},"filters":{"conditions":[{"keyName":"reminder_id","condition":"eq","keyValue":"={{ $json.reminder_id }}"}]},"matchType":"anyCondition","options":{}},"id":"c5555555-5555-4555-8555-555555555555","name":"Mark Done (delete)","type":"n8n-nodes-base.dataTable","typeVersion":1.1,"position":[880,300]},{"parameters":{"method":"POST","url":"http://172.17.0.1:8765/send","sendBody":true,"specifyBody":"json","jsonBody":"={{ JSON.stringify({ message: 'Reminder: ' + $json.text }) }}","options":{}},"id":"c6666666-6666-4666-8666-666666666666","name":"Send Reminder","type":"n8n-nodes-base.httpRequest","typeVersion":4.2,"position":[1100,300]}],"connections":{"Every Minute":{"main":[[{"node":"Ensure Table","type":"main","index":0}]]},"Ensure Table":{"main":[[{"node":"Get Reminders","type":"main","index":0}]]},"Get Reminders":{"main":[[{"node":"Filter Due","type":"main","index":0}]]},"Filter Due":{"main":[[{"node":"Mark Done (delete)","type":"main","index":0}]]},"Mark Done (delete)":{"main":[[{"node":"Send Reminder","type":"main","index":0}]]}},"nodeGroups":[],"authors":"import","name":null,"description":null,"autosaved":false,"workflowPublishHistory":[]}}
+{
+  "id": "jeevesremfire1",
+  "name": "Jeeves - Reminder Fire",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "minutes",
+              "minutesInterval": 1
+            }
+          ]
+        }
+      },
+      "id": "c1111111-1111-4111-8111-111111111111",
+      "name": "Every Minute",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        0,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "resource": "table",
+        "operation": "create",
+        "tableName": "jeeves_reminders",
+        "columns": {
+          "column": [
+            {
+              "name": "reminder_id",
+              "type": "string"
+            },
+            {
+              "name": "due",
+              "type": "string"
+            },
+            {
+              "name": "text",
+              "type": "string"
+            },
+            {
+              "name": "done",
+              "type": "boolean"
+            }
+          ]
+        },
+        "options": {
+          "createIfNotExists": true
+        }
+      },
+      "id": "c2222222-2222-4222-8222-222222222222",
+      "name": "Ensure Table",
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        220,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "resource": "row",
+        "operation": "get",
+        "dataTableId": {
+          "__rl": true,
+          "mode": "name",
+          "value": "jeeves_reminders"
+        },
+        "returnAll": true,
+        "filters": {
+          "conditions": []
+        },
+        "options": {}
+      },
+      "id": "c3333333-3333-4333-8333-333333333333",
+      "name": "Get Reminders",
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        440,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const rows = $input.all();\nconst now = Date.now();\nconst out = [];\nfor (const it of rows) {\n  const r = it.json || {};\n  if (r.done === true) continue;\n  if (!r.due) continue;\n  const t = new Date(r.due).getTime();\n  if (!isNaN(t) && t <= now) {\n    out.push({ json: { reminder_id: r.reminder_id, text: r.text, due: r.due } });\n  }\n}\nreturn out;"
+      },
+      "id": "c4444444-4444-4444-8444-444444444444",
+      "name": "Filter Due",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        660,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "resource": "row",
+        "operation": "deleteRows",
+        "dataTableId": {
+          "__rl": true,
+          "mode": "name",
+          "value": "jeeves_reminders"
+        },
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "reminder_id",
+              "condition": "eq",
+              "keyValue": "={{ $json.reminder_id }}"
+            }
+          ]
+        },
+        "matchType": "anyCondition",
+        "options": {}
+      },
+      "id": "c5555555-5555-4555-8555-555555555555",
+      "name": "Mark Done (delete)",
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        880,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://172.17.0.1:8765/send",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ message: 'Reminder: ' + $json.text }) }}",
+        "options": {}
+      },
+      "id": "c6666666-6666-4666-8666-666666666666",
+      "name": "Send Reminder",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1100,
+        300
+      ]
+    }
+  ],
+  "connections": {
+    "Every Minute": {
+      "main": [
+        [
+          {
+            "node": "Ensure Table",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Ensure Table": {
+      "main": [
+        [
+          {
+            "node": "Get Reminders",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Reminders": {
+      "main": [
+        [
+          {
+            "node": "Filter Due",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Filter Due": {
+      "main": [
+        [
+          {
+            "node": "Mark Done (delete)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Mark Done (delete)": {
+      "main": [
+        [
+          {
+            "node": "Send Reminder",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  }
+}

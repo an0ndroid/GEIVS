@@ -1,1 +1,244 @@
-{"updatedAt":"2026-07-06T03:17:07.609Z","createdAt":"2026-07-06T03:17:07.609Z","id":"xzLhx3Hoovkdy6Zp","name":"Jeeves Domain - Google Tasks","description":null,"active":true,"isArchived":false,"nodes":[{"parameters":{"inputSource":"passthrough"},"id":"e0defcab187d","name":"Trigger","type":"n8n-nodes-base.executeWorkflowTrigger","typeVersion":1.1,"position":[0,300]},{"parameters":{"rules":{"values":[{"conditions":{"options":{"caseSensitive":true,"leftValue":"","typeValidation":"loose","version":2},"conditions":[{"id":"7a2d1f596700","leftValue":"={{ ($json.action || '').toString().toLowerCase().trim() }}","rightValue":"list","operator":{"type":"string","operation":"equals","name":"filter.operator.equals"}}],"combinator":"and"},"renameOutput":true,"outputKey":"list"},{"conditions":{"options":{"caseSensitive":true,"leftValue":"","typeValidation":"loose","version":2},"conditions":[{"id":"a2dbf6870307","leftValue":"={{ ($json.action || '').toString().toLowerCase().trim() }}","rightValue":"add","operator":{"type":"string","operation":"equals","name":"filter.operator.equals"}}],"combinator":"and"},"renameOutput":true,"outputKey":"add"},{"conditions":{"options":{"caseSensitive":true,"leftValue":"","typeValidation":"loose","version":2},"conditions":[{"id":"3c649035eff0","leftValue":"={{ ($json.action || '').toString().toLowerCase().trim() }}","rightValue":"complete","operator":{"type":"string","operation":"equals","name":"filter.operator.equals"}}],"combinator":"and"},"renameOutput":true,"outputKey":"complete"}]},"options":{"fallbackOutput":"extra","renameFallbackOutput":"unknown"}},"id":"23180dac6538","name":"Route by action","type":"n8n-nodes-base.switch","typeVersion":3.2,"position":[260,300]},{"parameters":{"source":"database","workflowId":{"__rl":true,"value":"BIYUfcs0TDqWR4Aq","mode":"id","cachedResultName":"Jeeves Tool - Tasks List"},"mode":"once","options":{"waitForSubWorkflow":true}},"id":"64893e34d543","name":"exec_list","type":"n8n-nodes-base.executeWorkflow","typeVersion":1.1,"position":[560,40]},{"parameters":{"source":"database","workflowId":{"__rl":true,"value":"OOtdthSDoMdjqqkJ","mode":"id","cachedResultName":"Jeeves Tool - Tasks Add"},"mode":"once","options":{"waitForSubWorkflow":true}},"id":"ca9277e53787","name":"exec_add","type":"n8n-nodes-base.executeWorkflow","typeVersion":1.1,"position":[560,170]},{"parameters":{"source":"database","workflowId":{"__rl":true,"value":"FWeLhp1FK1AeXyEK","mode":"id","cachedResultName":"Jeeves Tool - Tasks Complete"},"mode":"once","options":{"waitForSubWorkflow":true}},"id":"9e052eaa1ee1","name":"exec_complete","type":"n8n-nodes-base.executeWorkflow","typeVersion":1.1,"position":[560,300]},{"parameters":{"jsCode":"const a = ($json.action||'').toString();\nreturn [{ json: { summary: `Unknown action '${a}'. Check the tool's action list.` } }];"},"id":"cb1000eb8dea","name":"Unknown","type":"n8n-nodes-base.code","typeVersion":2,"position":[560,430]}],"connections":{"Trigger":{"main":[[{"node":"Route by action","type":"main","index":0}]]},"Route by action":{"main":[[{"node":"exec_list","type":"main","index":0}],[{"node":"exec_add","type":"main","index":0}],[{"node":"exec_complete","type":"main","index":0}],[{"node":"Unknown","type":"main","index":0}]]}},"settings":{"executionOrder":"v1"},"staticData":null,"meta":null,"nodeGroups":[],"pinData":null,"versionId":"3f1881b2-fc6c-420c-a6d0-b600c912a415","activeVersionId":"3f1881b2-fc6c-420c-a6d0-b600c912a415","versionCounter":1,"triggerCount":0,"sourceWorkflowId":null,"shared":[{"updatedAt":"2026-07-06T03:17:07.612Z","createdAt":"2026-07-06T03:17:07.612Z","role":"workflow:owner","workflowId":"xzLhx3Hoovkdy6Zp","projectId":"3zeb0nZhOgw0YQIO","project":{"updatedAt":"2026-06-22T21:50:39.765Z","createdAt":"2026-06-22T20:18:13.120Z","id":"3zeb0nZhOgw0YQIO","name":"Richard Vickers <{{OWNER_CALENDAR_EMAIL}}>","type":"personal","icon":null,"description":null,"customTelemetryTags":[],"creatorId":"c06e9f36-d5fe-4bba-a51c-dfbab46a64fe"}}],"tags":[],"activeVersion":{"updatedAt":"2026-07-06T03:17:07.613Z","createdAt":"2026-07-06T03:17:07.613Z","versionId":"3f1881b2-fc6c-420c-a6d0-b600c912a415","workflowId":"xzLhx3Hoovkdy6Zp","nodes":[{"parameters":{"inputSource":"passthrough"},"id":"e0defcab187d","name":"Trigger","type":"n8n-nodes-base.executeWorkflowTrigger","typeVersion":1.1,"position":[0,300]},{"parameters":{"rules":{"values":[{"conditions":{"options":{"caseSensitive":true,"leftValue":"","typeValidation":"loose","version":2},"conditions":[{"id":"7a2d1f596700","leftValue":"={{ ($json.action || '').toString().toLowerCase().trim() }}","rightValue":"list","operator":{"type":"string","operation":"equals","name":"filter.operator.equals"}}],"combinator":"and"},"renameOutput":true,"outputKey":"list"},{"conditions":{"options":{"caseSensitive":true,"leftValue":"","typeValidation":"loose","version":2},"conditions":[{"id":"a2dbf6870307","leftValue":"={{ ($json.action || '').toString().toLowerCase().trim() }}","rightValue":"add","operator":{"type":"string","operation":"equals","name":"filter.operator.equals"}}],"combinator":"and"},"renameOutput":true,"outputKey":"add"},{"conditions":{"options":{"caseSensitive":true,"leftValue":"","typeValidation":"loose","version":2},"conditions":[{"id":"3c649035eff0","leftValue":"={{ ($json.action || '').toString().toLowerCase().trim() }}","rightValue":"complete","operator":{"type":"string","operation":"equals","name":"filter.operator.equals"}}],"combinator":"and"},"renameOutput":true,"outputKey":"complete"}]},"options":{"fallbackOutput":"extra","renameFallbackOutput":"unknown"}},"id":"23180dac6538","name":"Route by action","type":"n8n-nodes-base.switch","typeVersion":3.2,"position":[260,300]},{"parameters":{"source":"database","workflowId":{"__rl":true,"value":"BIYUfcs0TDqWR4Aq","mode":"id","cachedResultName":"Jeeves Tool - Tasks List"},"mode":"once","options":{"waitForSubWorkflow":true}},"id":"64893e34d543","name":"exec_list","type":"n8n-nodes-base.executeWorkflow","typeVersion":1.1,"position":[560,40]},{"parameters":{"source":"database","workflowId":{"__rl":true,"value":"OOtdthSDoMdjqqkJ","mode":"id","cachedResultName":"Jeeves Tool - Tasks Add"},"mode":"once","options":{"waitForSubWorkflow":true}},"id":"ca9277e53787","name":"exec_add","type":"n8n-nodes-base.executeWorkflow","typeVersion":1.1,"position":[560,170]},{"parameters":{"source":"database","workflowId":{"__rl":true,"value":"FWeLhp1FK1AeXyEK","mode":"id","cachedResultName":"Jeeves Tool - Tasks Complete"},"mode":"once","options":{"waitForSubWorkflow":true}},"id":"9e052eaa1ee1","name":"exec_complete","type":"n8n-nodes-base.executeWorkflow","typeVersion":1.1,"position":[560,300]},{"parameters":{"jsCode":"const a = ($json.action||'').toString();\nreturn [{ json: { summary: `Unknown action '${a}'. Check the tool's action list.` } }];"},"id":"cb1000eb8dea","name":"Unknown","type":"n8n-nodes-base.code","typeVersion":2,"position":[560,430]}],"connections":{"Trigger":{"main":[[{"node":"Route by action","type":"main","index":0}]]},"Route by action":{"main":[[{"node":"exec_list","type":"main","index":0}],[{"node":"exec_add","type":"main","index":0}],[{"node":"exec_complete","type":"main","index":0}],[{"node":"Unknown","type":"main","index":0}]]}},"nodeGroups":[],"authors":"Richard Vickers","name":null,"description":null,"autosaved":false,"workflowPublishHistory":[{"createdAt":"2026-07-06T03:17:07.668Z","id":172,"workflowId":"xzLhx3Hoovkdy6Zp","versionId":"3f1881b2-fc6c-420c-a6d0-b600c912a415","event":"activated","userId":"c06e9f36-d5fe-4bba-a51c-dfbab46a64fe"}]}}
+{
+  "id": "xzLhx3Hoovkdy6Zp",
+  "name": "Jeeves Domain - Google Tasks",
+  "nodes": [
+    {
+      "parameters": {
+        "inputSource": "passthrough"
+      },
+      "id": "e0defcab187d",
+      "name": "Trigger",
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "typeVersion": 1.1,
+      "position": [
+        0,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "loose",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "7a2d1f596700",
+                    "leftValue": "={{ ($json.action || '').toString().toLowerCase().trim() }}",
+                    "rightValue": "list",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "list"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "loose",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "a2dbf6870307",
+                    "leftValue": "={{ ($json.action || '').toString().toLowerCase().trim() }}",
+                    "rightValue": "add",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "add"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "loose",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "3c649035eff0",
+                    "leftValue": "={{ ($json.action || '').toString().toLowerCase().trim() }}",
+                    "rightValue": "complete",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "complete"
+            }
+          ]
+        },
+        "options": {
+          "fallbackOutput": "extra",
+          "renameFallbackOutput": "unknown"
+        }
+      },
+      "id": "23180dac6538",
+      "name": "Route by action",
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.2,
+      "position": [
+        260,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "source": "database",
+        "workflowId": {
+          "__rl": true,
+          "value": "BIYUfcs0TDqWR4Aq",
+          "mode": "id",
+          "cachedResultName": "Jeeves Tool - Tasks List"
+        },
+        "mode": "once",
+        "options": {
+          "waitForSubWorkflow": true
+        }
+      },
+      "id": "64893e34d543",
+      "name": "exec_list",
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.1,
+      "position": [
+        560,
+        40
+      ]
+    },
+    {
+      "parameters": {
+        "source": "database",
+        "workflowId": {
+          "__rl": true,
+          "value": "OOtdthSDoMdjqqkJ",
+          "mode": "id",
+          "cachedResultName": "Jeeves Tool - Tasks Add"
+        },
+        "mode": "once",
+        "options": {
+          "waitForSubWorkflow": true
+        }
+      },
+      "id": "ca9277e53787",
+      "name": "exec_add",
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.1,
+      "position": [
+        560,
+        170
+      ]
+    },
+    {
+      "parameters": {
+        "source": "database",
+        "workflowId": {
+          "__rl": true,
+          "value": "FWeLhp1FK1AeXyEK",
+          "mode": "id",
+          "cachedResultName": "Jeeves Tool - Tasks Complete"
+        },
+        "mode": "once",
+        "options": {
+          "waitForSubWorkflow": true
+        }
+      },
+      "id": "9e052eaa1ee1",
+      "name": "exec_complete",
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.1,
+      "position": [
+        560,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const a = ($json.action||'').toString();\nreturn [{ json: { summary: `Unknown action '${a}'. Check the tool's action list.` } }];"
+      },
+      "id": "cb1000eb8dea",
+      "name": "Unknown",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        560,
+        430
+      ]
+    }
+  ],
+  "connections": {
+    "Trigger": {
+      "main": [
+        [
+          {
+            "node": "Route by action",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Route by action": {
+      "main": [
+        [
+          {
+            "node": "exec_list",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "exec_add",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "exec_complete",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Unknown",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  }
+}

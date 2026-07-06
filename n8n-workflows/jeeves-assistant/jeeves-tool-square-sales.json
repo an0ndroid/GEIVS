@@ -1,0 +1,142 @@
+{
+  "id": "loTJ1xYsI1dFVINy",
+  "name": "Jeeves Tool - Square Sales",
+  "nodes": [
+    {
+      "parameters": {
+        "inputSource": "passthrough"
+      },
+      "name": "Trigger",
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "typeVersion": 1.1,
+      "position": [
+        0,
+        0
+      ],
+      "id": "6f850f8c-947b-4929-80a9-75e32685d972"
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "\nconst p=((($json.period)||'month')+'').toLowerCase().trim();\nlet begin;\nconst now=new Date();\nif(p==='today'){ begin=new Date(Date.UTC(now.getUTCFullYear(),now.getUTCMonth(),now.getUTCDate())).toISOString(); }\nelse if(p==='week'){ begin=new Date(now.getTime()-7*24*3600*1000).toISOString(); }\nelse { begin=new Date(now.getTime()-30*24*3600*1000).toISOString(); }\nreturn [{json:{period:(p==='today'||p==='week')?p:'month', begin_time:begin}}];\n"
+      },
+      "name": "BuildQuery",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        240,
+        0
+      ],
+      "alwaysOutputData": true,
+      "id": "5e80aeea-d307-4646-b350-3a43a260031b"
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "https://connect.squareup.com/v2/payments",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Square-Version",
+              "value": "2025-01-23"
+            }
+          ]
+        },
+        "options": {
+          "response": {
+            "response": {
+              "neverError": true
+            }
+          }
+        },
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "location_id",
+              "value": "{{SQUARE_LOCATION_ID}}"
+            },
+            {
+              "name": "begin_time",
+              "value": "={{ $json.begin_time }}"
+            },
+            {
+              "name": "limit",
+              "value": "100"
+            }
+          ]
+        }
+      },
+      "name": "Payments",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        500,
+        0
+      ],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "squarehdr01",
+          "name": "Square account"
+        }
+      },
+      "id": "a503adfc-2ec7-43c4-aa8b-c9bc87b0e7aa"
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "\nconst period=$('BuildQuery').first().json.period;\nconst d=$json||{};\nif(d.errors&&d.errors.length) return [{json:{summary:'Square error reading sales: '+d.errors.map(e=>e.detail||e.code).join('; ')}}];\nconst pays=d.payments||[];\nlet cents=0,n=0;\nconst byDay={};\nfor(const p of pays){\n  if(p.status==='COMPLETED'){\n    n++;\n    const amt=(p.amount_money&&p.amount_money.amount)||0;\n    cents+=amt;\n    const day=(p.created_at||'').slice(0,10);\n    if(day){ byDay[day]=(byDay[day]||0)+amt; }\n  }\n}\nconst label=period==='today'?'Today':(period==='week'?'This week':'This month');\nconst more=d.cursor?' (first 100 payments)':'';\nconst daily=Object.keys(byDay).sort().map(date=>({date, total:Number((byDay[date]/100).toFixed(2))}));\nreturn [{json:{summary:`${label}: ${n} sale${n===1?'':'s'}, $${(cents/100).toFixed(2)} collected${more}.`, daily}}];\n"
+      },
+      "name": "Format",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        760,
+        0
+      ],
+      "alwaysOutputData": true,
+      "id": "9dd9986a-1f48-40f5-98c1-fdb190daef82"
+    }
+  ],
+  "connections": {
+    "Trigger": {
+      "main": [
+        [
+          {
+            "node": "BuildQuery",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "BuildQuery": {
+      "main": [
+        [
+          {
+            "node": "Payments",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Payments": {
+      "main": [
+        [
+          {
+            "node": "Format",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  }
+}

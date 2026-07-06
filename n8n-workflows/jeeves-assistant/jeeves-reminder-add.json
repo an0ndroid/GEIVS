@@ -1,1 +1,162 @@
-{"updatedAt":"2026-07-03T06:52:21.000Z","createdAt":"2026-07-03T06:41:36.602Z","id":"jeevesremadd1","name":"Jeeves - Reminder Add","description":null,"active":true,"isArchived":false,"nodes":[{"parameters":{"httpMethod":"POST","path":"jeeves-reminder-add","responseMode":"responseNode","options":{}},"id":"b1111111-1111-4111-8111-111111111111","name":"Webhook","type":"n8n-nodes-base.webhook","typeVersion":2,"position":[0,300],"webhookId":"26a9b90f-3ad8-428c-9dbb-23bea4c8e247"},{"parameters":{"resource":"table","operation":"create","tableName":"jeeves_reminders","columns":{"column":[{"name":"reminder_id","type":"string"},{"name":"due","type":"string"},{"name":"text","type":"string"},{"name":"done","type":"boolean"}]},"options":{"createIfNotExists":true}},"id":"b2222222-2222-4222-8222-222222222222","name":"Ensure Table","type":"n8n-nodes-base.dataTable","typeVersion":1.1,"position":[220,300]},{"parameters":{"jsCode":"const body = $('Webhook').first().json.body || {};\nif (!body.due || !body.text) {\n  throw new Error('set_reminder requires both due and text');\n}\nconst reminder_id = 'r_' + Date.now() + '_' + Math.random().toString(36).slice(2, 8);\nreturn [{ json: { reminder_id, due: String(body.due), text: String(body.text), done: false } }];"},"id":"b3333333-3333-4333-8333-333333333333","name":"Build Row","type":"n8n-nodes-base.code","typeVersion":2,"position":[440,300]},{"parameters":{"resource":"row","operation":"insert","dataTableId":{"__rl":true,"mode":"name","value":"jeeves_reminders"},"columns":{"mappingMode":"autoMapInputData","value":null},"options":{}},"id":"b4444444-4444-4444-8444-444444444444","name":"Insert Reminder","type":"n8n-nodes-base.dataTable","typeVersion":1.1,"position":[660,300]},{"parameters":{"respondWith":"json","responseBody":"={{ { \"ok\": true, \"due\": $('Build Row').item.json.due, \"id\": $('Build Row').item.json.reminder_id } }}","options":{}},"id":"b5555555-5555-4555-8555-555555555555","name":"Respond","type":"n8n-nodes-base.respondToWebhook","typeVersion":1.1,"position":[880,300]}],"connections":{"Webhook":{"main":[[{"node":"Ensure Table","type":"main","index":0}]]},"Ensure Table":{"main":[[{"node":"Build Row","type":"main","index":0}]]},"Build Row":{"main":[[{"node":"Insert Reminder","type":"main","index":0}]]},"Insert Reminder":{"main":[[{"node":"Respond","type":"main","index":0}]]}},"settings":{"executionOrder":"v1"},"staticData":null,"meta":null,"nodeGroups":[],"pinData":null,"versionId":"94a606a9-ff6e-46c0-be34-81f5f20b881a","activeVersionId":"94a606a9-ff6e-46c0-be34-81f5f20b881a","versionCounter":2,"triggerCount":1,"sourceWorkflowId":null,"shared":[{"updatedAt":"2026-07-03T06:41:36.604Z","createdAt":"2026-07-03T06:41:36.604Z","role":"workflow:owner","workflowId":"jeevesremadd1","projectId":"3zeb0nZhOgw0YQIO","project":{"updatedAt":"2026-06-22T21:50:39.765Z","createdAt":"2026-06-22T20:18:13.120Z","id":"3zeb0nZhOgw0YQIO","name":"Richard Vickers <{{OWNER_CALENDAR_EMAIL}}>","type":"personal","icon":null,"description":null,"customTelemetryTags":[],"creatorId":"c06e9f36-d5fe-4bba-a51c-dfbab46a64fe"}}],"tags":[],"activeVersion":{"updatedAt":"2026-07-03T06:52:15.531Z","createdAt":"2026-07-03T06:52:15.531Z","versionId":"94a606a9-ff6e-46c0-be34-81f5f20b881a","workflowId":"jeevesremadd1","nodes":[{"parameters":{"httpMethod":"POST","path":"jeeves-reminder-add","responseMode":"responseNode","options":{}},"id":"b1111111-1111-4111-8111-111111111111","name":"Webhook","type":"n8n-nodes-base.webhook","typeVersion":2,"position":[0,300],"webhookId":"26a9b90f-3ad8-428c-9dbb-23bea4c8e247"},{"parameters":{"resource":"table","operation":"create","tableName":"jeeves_reminders","columns":{"column":[{"name":"reminder_id","type":"string"},{"name":"due","type":"string"},{"name":"text","type":"string"},{"name":"done","type":"boolean"}]},"options":{"createIfNotExists":true}},"id":"b2222222-2222-4222-8222-222222222222","name":"Ensure Table","type":"n8n-nodes-base.dataTable","typeVersion":1.1,"position":[220,300]},{"parameters":{"jsCode":"const body = $('Webhook').first().json.body || {};\nif (!body.due || !body.text) {\n  throw new Error('set_reminder requires both due and text');\n}\nconst reminder_id = 'r_' + Date.now() + '_' + Math.random().toString(36).slice(2, 8);\nreturn [{ json: { reminder_id, due: String(body.due), text: String(body.text), done: false } }];"},"id":"b3333333-3333-4333-8333-333333333333","name":"Build Row","type":"n8n-nodes-base.code","typeVersion":2,"position":[440,300]},{"parameters":{"resource":"row","operation":"insert","dataTableId":{"__rl":true,"mode":"name","value":"jeeves_reminders"},"columns":{"mappingMode":"autoMapInputData","value":null},"options":{}},"id":"b4444444-4444-4444-8444-444444444444","name":"Insert Reminder","type":"n8n-nodes-base.dataTable","typeVersion":1.1,"position":[660,300]},{"parameters":{"respondWith":"json","responseBody":"={{ { \"ok\": true, \"due\": $('Build Row').item.json.due, \"id\": $('Build Row').item.json.reminder_id } }}","options":{}},"id":"b5555555-5555-4555-8555-555555555555","name":"Respond","type":"n8n-nodes-base.respondToWebhook","typeVersion":1.1,"position":[880,300]}],"connections":{"Webhook":{"main":[[{"node":"Ensure Table","type":"main","index":0}]]},"Ensure Table":{"main":[[{"node":"Build Row","type":"main","index":0}]]},"Build Row":{"main":[[{"node":"Insert Reminder","type":"main","index":0}]]},"Insert Reminder":{"main":[[{"node":"Respond","type":"main","index":0}]]}},"nodeGroups":[],"authors":"import","name":null,"description":null,"autosaved":false,"workflowPublishHistory":[]}}
+{
+  "id": "jeevesremadd1",
+  "name": "Jeeves - Reminder Add",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "jeeves-reminder-add",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "b1111111-1111-4111-8111-111111111111",
+      "name": "Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        0,
+        300
+      ],
+      "webhookId": "26a9b90f-3ad8-428c-9dbb-23bea4c8e247"
+    },
+    {
+      "parameters": {
+        "resource": "table",
+        "operation": "create",
+        "tableName": "jeeves_reminders",
+        "columns": {
+          "column": [
+            {
+              "name": "reminder_id",
+              "type": "string"
+            },
+            {
+              "name": "due",
+              "type": "string"
+            },
+            {
+              "name": "text",
+              "type": "string"
+            },
+            {
+              "name": "done",
+              "type": "boolean"
+            }
+          ]
+        },
+        "options": {
+          "createIfNotExists": true
+        }
+      },
+      "id": "b2222222-2222-4222-8222-222222222222",
+      "name": "Ensure Table",
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        220,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const body = $('Webhook').first().json.body || {};\nif (!body.due || !body.text) {\n  throw new Error('set_reminder requires both due and text');\n}\nconst reminder_id = 'r_' + Date.now() + '_' + Math.random().toString(36).slice(2, 8);\nreturn [{ json: { reminder_id, due: String(body.due), text: String(body.text), done: false } }];"
+      },
+      "id": "b3333333-3333-4333-8333-333333333333",
+      "name": "Build Row",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        440,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "resource": "row",
+        "operation": "insert",
+        "dataTableId": {
+          "__rl": true,
+          "mode": "name",
+          "value": "jeeves_reminders"
+        },
+        "columns": {
+          "mappingMode": "autoMapInputData",
+          "value": null
+        },
+        "options": {}
+      },
+      "id": "b4444444-4444-4444-8444-444444444444",
+      "name": "Insert Reminder",
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        660,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ { \"ok\": true, \"due\": $('Build Row').item.json.due, \"id\": $('Build Row').item.json.reminder_id } }}",
+        "options": {}
+      },
+      "id": "b5555555-5555-4555-8555-555555555555",
+      "name": "Respond",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        880,
+        300
+      ]
+    }
+  ],
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Ensure Table",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Ensure Table": {
+      "main": [
+        [
+          {
+            "node": "Build Row",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Row": {
+      "main": [
+        [
+          {
+            "node": "Insert Reminder",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Insert Reminder": {
+      "main": [
+        [
+          {
+            "node": "Respond",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  }
+}

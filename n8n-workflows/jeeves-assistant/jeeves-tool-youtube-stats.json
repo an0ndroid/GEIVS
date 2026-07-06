@@ -1,1 +1,156 @@
-{"updatedAt":"2026-07-05T21:53:08.609Z","createdAt":"2026-07-05T21:53:08.609Z","id":"v3DiiikjrsgFxDUy","name":"Jeeves Tool - YouTube Stats","description":null,"active":true,"isArchived":false,"nodes":[{"parameters":{"inputSource":"passthrough"},"id":"trigger-trg","name":"Trigger","type":"n8n-nodes-base.executeWorkflowTrigger","typeVersion":1.1,"position":[0,0]},{"parameters":{"url":"https://youtube.googleapis.com/youtube/v3/channels","authentication":"predefinedCredentialType","nodeCredentialType":"googleOAuth2Api","options":{},"sendQuery":true,"queryParameters":{"parameters":[{"name":"part","value":"snippet,statistics"},{"name":"mine","value":"true"}]}},"id":"yt-ch","name":"Channels","type":"n8n-nodes-base.httpRequest","typeVersion":4.2,"position":[240,0],"credentials":{"googleOAuth2Api":{"id":"googlemulti01","name":"Google (Docs/Sheets/Tasks/Contacts/YouTube)"}}},{"parameters":{"url":"https://youtube.googleapis.com/youtube/v3/search","authentication":"predefinedCredentialType","nodeCredentialType":"googleOAuth2Api","options":{},"sendQuery":true,"queryParameters":{"parameters":[{"name":"part","value":"snippet"},{"name":"forMine","value":"true"},{"name":"type","value":"video"},{"name":"order","value":"date"},{"name":"maxResults","value":"3"}]}},"id":"yt-rec","name":"Recent","type":"n8n-nodes-base.httpRequest","typeVersion":4.2,"position":[480,0],"credentials":{"googleOAuth2Api":{"id":"googlemulti01","name":"Google (Docs/Sheets/Tasks/Contacts/YouTube)"}},"onError":"continueRegularOutput","alwaysOutputData":true},{"parameters":{"mode":"runOnceForAllItems","jsCode":"const ch=($('Channels').first().json.items)||[];\nif(!ch.length) return [{json:{summary:'Could not load your YouTube channel.'}}];\nconst c=ch[0]; const st=c.statistics||{}; const sn=c.snippet||{};\nlet s='YouTube channel \"'+(sn.title||'')+'\": '+(st.subscriberCount||'0')+' subscribers, '\n  +(st.viewCount||'0')+' total views, '+(st.videoCount||'0')+' videos.';\nlet recent=[];\ntry{ recent=(($input.first().json.items)||[]).slice(0,3)\n  .map(x=>x.snippet&&x.snippet.title).filter(Boolean); }catch(e){}\nif(recent.length) s+='\\nRecent uploads: '+recent.join('; ')+'.';\nreturn [{json:{summary:s}}];"},"id":"yt-fmt","name":"Format","type":"n8n-nodes-base.code","typeVersion":2,"position":[720,0],"alwaysOutputData":true}],"connections":{"Trigger":{"main":[[{"node":"Channels","type":"main","index":0}]]},"Channels":{"main":[[{"node":"Recent","type":"main","index":0}]]},"Recent":{"main":[[{"node":"Format","type":"main","index":0}]]}},"settings":{"executionOrder":"v1"},"staticData":null,"meta":null,"nodeGroups":[],"pinData":null,"versionId":"41016eef-edb4-4194-98f1-e4bf7439c09b","activeVersionId":"41016eef-edb4-4194-98f1-e4bf7439c09b","versionCounter":1,"triggerCount":0,"sourceWorkflowId":null,"shared":[{"updatedAt":"2026-07-05T21:53:08.609Z","createdAt":"2026-07-05T21:53:08.609Z","role":"workflow:owner","workflowId":"v3DiiikjrsgFxDUy","projectId":"3zeb0nZhOgw0YQIO","project":{"updatedAt":"2026-06-22T21:50:39.765Z","createdAt":"2026-06-22T20:18:13.120Z","id":"3zeb0nZhOgw0YQIO","name":"Richard Vickers <{{OWNER_CALENDAR_EMAIL}}>","type":"personal","icon":null,"description":null,"customTelemetryTags":[],"creatorId":"c06e9f36-d5fe-4bba-a51c-dfbab46a64fe"}}],"tags":[],"activeVersion":{"updatedAt":"2026-07-05T21:53:08.610Z","createdAt":"2026-07-05T21:53:08.610Z","versionId":"41016eef-edb4-4194-98f1-e4bf7439c09b","workflowId":"v3DiiikjrsgFxDUy","nodes":[{"parameters":{"inputSource":"passthrough"},"id":"trigger-trg","name":"Trigger","type":"n8n-nodes-base.executeWorkflowTrigger","typeVersion":1.1,"position":[0,0]},{"parameters":{"url":"https://youtube.googleapis.com/youtube/v3/channels","authentication":"predefinedCredentialType","nodeCredentialType":"googleOAuth2Api","options":{},"sendQuery":true,"queryParameters":{"parameters":[{"name":"part","value":"snippet,statistics"},{"name":"mine","value":"true"}]}},"id":"yt-ch","name":"Channels","type":"n8n-nodes-base.httpRequest","typeVersion":4.2,"position":[240,0],"credentials":{"googleOAuth2Api":{"id":"googlemulti01","name":"Google (Docs/Sheets/Tasks/Contacts/YouTube)"}}},{"parameters":{"url":"https://youtube.googleapis.com/youtube/v3/search","authentication":"predefinedCredentialType","nodeCredentialType":"googleOAuth2Api","options":{},"sendQuery":true,"queryParameters":{"parameters":[{"name":"part","value":"snippet"},{"name":"forMine","value":"true"},{"name":"type","value":"video"},{"name":"order","value":"date"},{"name":"maxResults","value":"3"}]}},"id":"yt-rec","name":"Recent","type":"n8n-nodes-base.httpRequest","typeVersion":4.2,"position":[480,0],"credentials":{"googleOAuth2Api":{"id":"googlemulti01","name":"Google (Docs/Sheets/Tasks/Contacts/YouTube)"}},"onError":"continueRegularOutput","alwaysOutputData":true},{"parameters":{"mode":"runOnceForAllItems","jsCode":"const ch=($('Channels').first().json.items)||[];\nif(!ch.length) return [{json:{summary:'Could not load your YouTube channel.'}}];\nconst c=ch[0]; const st=c.statistics||{}; const sn=c.snippet||{};\nlet s='YouTube channel \"'+(sn.title||'')+'\": '+(st.subscriberCount||'0')+' subscribers, '\n  +(st.viewCount||'0')+' total views, '+(st.videoCount||'0')+' videos.';\nlet recent=[];\ntry{ recent=(($input.first().json.items)||[]).slice(0,3)\n  .map(x=>x.snippet&&x.snippet.title).filter(Boolean); }catch(e){}\nif(recent.length) s+='\\nRecent uploads: '+recent.join('; ')+'.';\nreturn [{json:{summary:s}}];"},"id":"yt-fmt","name":"Format","type":"n8n-nodes-base.code","typeVersion":2,"position":[720,0],"alwaysOutputData":true}],"connections":{"Trigger":{"main":[[{"node":"Channels","type":"main","index":0}]]},"Channels":{"main":[[{"node":"Recent","type":"main","index":0}]]},"Recent":{"main":[[{"node":"Format","type":"main","index":0}]]}},"nodeGroups":[],"authors":"Richard Vickers","name":null,"description":null,"autosaved":false,"workflowPublishHistory":[{"createdAt":"2026-07-05T21:53:08.638Z","id":132,"workflowId":"v3DiiikjrsgFxDUy","versionId":"41016eef-edb4-4194-98f1-e4bf7439c09b","event":"activated","userId":"c06e9f36-d5fe-4bba-a51c-dfbab46a64fe"}]}}
+{
+  "id": "v3DiiikjrsgFxDUy",
+  "name": "Jeeves Tool - YouTube Stats",
+  "nodes": [
+    {
+      "parameters": {
+        "inputSource": "passthrough"
+      },
+      "id": "trigger-trg",
+      "name": "Trigger",
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "typeVersion": 1.1,
+      "position": [
+        0,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "url": "https://youtube.googleapis.com/youtube/v3/channels",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleOAuth2Api",
+        "options": {},
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "part",
+              "value": "snippet,statistics"
+            },
+            {
+              "name": "mine",
+              "value": "true"
+            }
+          ]
+        }
+      },
+      "id": "yt-ch",
+      "name": "Channels",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        240,
+        0
+      ],
+      "credentials": {
+        "googleOAuth2Api": {
+          "id": "googlemulti01",
+          "name": "Google (Docs/Sheets/Tasks/Contacts/YouTube)"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "url": "https://youtube.googleapis.com/youtube/v3/search",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleOAuth2Api",
+        "options": {},
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "part",
+              "value": "snippet"
+            },
+            {
+              "name": "forMine",
+              "value": "true"
+            },
+            {
+              "name": "type",
+              "value": "video"
+            },
+            {
+              "name": "order",
+              "value": "date"
+            },
+            {
+              "name": "maxResults",
+              "value": "3"
+            }
+          ]
+        }
+      },
+      "id": "yt-rec",
+      "name": "Recent",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        480,
+        0
+      ],
+      "credentials": {
+        "googleOAuth2Api": {
+          "id": "googlemulti01",
+          "name": "Google (Docs/Sheets/Tasks/Contacts/YouTube)"
+        }
+      },
+      "onError": "continueRegularOutput",
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const ch=($('Channels').first().json.items)||[];\nif(!ch.length) return [{json:{summary:'Could not load your YouTube channel.'}}];\nconst c=ch[0]; const st=c.statistics||{}; const sn=c.snippet||{};\nlet s='YouTube channel \"'+(sn.title||'')+'\": '+(st.subscriberCount||'0')+' subscribers, '\n  +(st.viewCount||'0')+' total views, '+(st.videoCount||'0')+' videos.';\nlet recent=[];\ntry{ recent=(($input.first().json.items)||[]).slice(0,3)\n  .map(x=>x.snippet&&x.snippet.title).filter(Boolean); }catch(e){}\nif(recent.length) s+='\\nRecent uploads: '+recent.join('; ')+'.';\nreturn [{json:{summary:s}}];"
+      },
+      "id": "yt-fmt",
+      "name": "Format",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        720,
+        0
+      ],
+      "alwaysOutputData": true
+    }
+  ],
+  "connections": {
+    "Trigger": {
+      "main": [
+        [
+          {
+            "node": "Channels",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Channels": {
+      "main": [
+        [
+          {
+            "node": "Recent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Recent": {
+      "main": [
+        [
+          {
+            "node": "Format",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  }
+}

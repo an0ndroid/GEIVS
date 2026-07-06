@@ -1,1 +1,598 @@
-{"updatedAt":"2026-07-06T03:17:43.910Z","createdAt":"2026-07-06T03:17:43.910Z","id":"LIhJejhMTgvgAaPv","name":"Jeeves Domain - Meta","description":null,"active":true,"isArchived":false,"nodes":[{"parameters":{"inputSource":"passthrough"},"id":"72d78ce54ba7","name":"Trigger","type":"n8n-nodes-base.executeWorkflowTrigger","typeVersion":1.1,"position":[0,300]},{"parameters":{"rules":{"values":[{"conditions":{"options":{"caseSensitive":true,"leftValue":"","typeValidation":"loose","version":2},"conditions":[{"id":"79191b030925","leftValue":"={{ ($json.action || '').toString().toLowerCase().trim() }}","rightValue":"insights","operator":{"type":"string","operation":"equals","name":"filter.operator.equals"}}],"combinator":"and"},"renameOutput":true,"outputKey":"insights"},{"conditions":{"options":{"caseSensitive":true,"leftValue":"","typeValidation":"loose","version":2},"conditions":[{"id":"6ba4844c3232","leftValue":"={{ ($json.action || '').toString().toLowerCase().trim() }}","rightValue":"recent_posts","operator":{"type":"string","operation":"equals","name":"filter.operator.equals"}}],"combinator":"and"},"renameOutput":true,"outputKey":"recent_posts"},{"conditions":{"options":{"caseSensitive":true,"leftValue":"","typeValidation":"loose","version":2},"conditions":[{"id":"23ea2f005c10","leftValue":"={{ ($json.action || '').toString().toLowerCase().trim() }}","rightValue":"read_comments","operator":{"type":"string","operation":"equals","name":"filter.operator.equals"}}],"combinator":"and"},"renameOutput":true,"outputKey":"read_comments"},{"conditions":{"options":{"caseSensitive":true,"leftValue":"","typeValidation":"loose","version":2},"conditions":[{"id":"84b64b62d25e","leftValue":"={{ ($json.action || '').toString().toLowerCase().trim() }}","rightValue":"ads_summary","operator":{"type":"string","operation":"equals","name":"filter.operator.equals"}}],"combinator":"and"},"renameOutput":true,"outputKey":"ads_summary"},{"conditions":{"options":{"caseSensitive":true,"leftValue":"","typeValidation":"loose","version":2},"conditions":[{"id":"9e53a06c3c0f","leftValue":"={{ ($json.action || '').toString().toLowerCase().trim() }}","rightValue":"draft_post","operator":{"type":"string","operation":"equals","name":"filter.operator.equals"}}],"combinator":"and"},"renameOutput":true,"outputKey":"draft_post"},{"conditions":{"options":{"caseSensitive":true,"leftValue":"","typeValidation":"loose","version":2},"conditions":[{"id":"43338ed4fc86","leftValue":"={{ ($json.action || '').toString().toLowerCase().trim() }}","rightValue":"list_drafts","operator":{"type":"string","operation":"equals","name":"filter.operator.equals"}}],"combinator":"and"},"renameOutput":true,"outputKey":"list_drafts"},{"conditions":{"options":{"caseSensitive":true,"leftValue":"","typeValidation":"loose","version":2},"conditions":[{"id":"9aff4442198a","leftValue":"={{ ($json.action || '').toString().toLowerCase().trim() }}","rightValue":"publish_draft","operator":{"type":"string","operation":"equals","name":"filter.operator.equals"}}],"combinator":"and"},"renameOutput":true,"outputKey":"publish_draft"},{"conditions":{"options":{"caseSensitive":true,"leftValue":"","typeValidation":"loose","version":2},"conditions":[{"id":"101040cd906c","leftValue":"={{ ($json.action || '').toString().toLowerCase().trim() }}","rightValue":"draft_reply","operator":{"type":"string","operation":"equals","name":"filter.operator.equals"}}],"combinator":"and"},"renameOutput":true,"outputKey":"draft_reply"},{"conditions":{"options":{"caseSensitive":true,"leftValue":"","typeValidation":"loose","version":2},"conditions":[{"id":"9c6ea741c6df","leftValue":"={{ ($json.action || '').toString().toLowerCase().trim() }}","rightValue":"draft_ad_change","operator":{"type":"string","operation":"equals","name":"filter.operator.equals"}}],"combinator":"and"},"renameOutput":true,"outputKey":"draft_ad_change"}]},"options":{"fallbackOutput":"extra","renameFallbackOutput":"unknown"}},"id":"6a12044bf24d","name":"Route by action","type":"n8n-nodes-base.switch","typeVersion":3.2,"position":[260,300]},{"parameters":{"source":"database","workflowId":{"__rl":true,"value":"C0JnlGYmPUbJzWv8","mode":"id","cachedResultName":"Jeeves Tool - Meta Insights"},"mode":"once","options":{"waitForSubWorkflow":true}},"id":"e6620018a010","name":"exec_insights","type":"n8n-nodes-base.executeWorkflow","typeVersion":1.1,"position":[560,40]},{"parameters":{"source":"database","workflowId":{"__rl":true,"value":"rfxCXVPvRSgKqUoG","mode":"id","cachedResultName":"Jeeves Tool - Meta Recent Posts"},"mode":"once","options":{"waitForSubWorkflow":true}},"id":"8cc0033c5b01","name":"exec_recent_posts","type":"n8n-nodes-base.executeWorkflow","typeVersion":1.1,"position":[560,170]},{"parameters":{"source":"database","workflowId":{"__rl":true,"value":"AoaGvUK4uaox8u9R","mode":"id","cachedResultName":"Jeeves Tool - Meta Read Comments"},"mode":"once","options":{"waitForSubWorkflow":true}},"id":"3930711bc079","name":"exec_read_comments","type":"n8n-nodes-base.executeWorkflow","typeVersion":1.1,"position":[560,300]},{"parameters":{"source":"database","workflowId":{"__rl":true,"value":"TUMCnE6Jtd5GZGpO","mode":"id","cachedResultName":"Jeeves Tool - Meta Ads Summary"},"mode":"once","options":{"waitForSubWorkflow":true}},"id":"3e8f7ba0c39d","name":"exec_ads_summary","type":"n8n-nodes-base.executeWorkflow","typeVersion":1.1,"position":[560,430]},{"parameters":{"source":"database","workflowId":{"__rl":true,"value":"Z7w3xteb5GFCBnfS","mode":"id","cachedResultName":"Jeeves Tool - Meta Draft Post"},"mode":"once","options":{"waitForSubWorkflow":true}},"id":"52f214438f01","name":"exec_draft_post","type":"n8n-nodes-base.executeWorkflow","typeVersion":1.1,"position":[560,560]},{"parameters":{"source":"database","workflowId":{"__rl":true,"value":"lNdBzB0oYtvDFeiq","mode":"id","cachedResultName":"Jeeves Tool - Meta List Drafts"},"mode":"once","options":{"waitForSubWorkflow":true}},"id":"025c4805f28f","name":"exec_list_drafts","type":"n8n-nodes-base.executeWorkflow","typeVersion":1.1,"position":[560,690]},{"parameters":{"source":"database","workflowId":{"__rl":true,"value":"Yx5FHAmI3bIoKmy5","mode":"id","cachedResultName":"Jeeves Tool - Meta Publish Draft"},"mode":"once","options":{"waitForSubWorkflow":true}},"id":"68801abe9fb0","name":"exec_publish_draft","type":"n8n-nodes-base.executeWorkflow","typeVersion":1.1,"position":[560,820]},{"parameters":{"source":"database","workflowId":{"__rl":true,"value":"jVrN7DbORhY5Pe3m","mode":"id","cachedResultName":"Jeeves Tool - Meta Draft Reply"},"mode":"once","options":{"waitForSubWorkflow":true}},"id":"67f78a30adb0","name":"exec_draft_reply","type":"n8n-nodes-base.executeWorkflow","typeVersion":1.1,"position":[560,950]},{"parameters":{"jsCode":"return [{ json: { ...$json, action: ($json.ad_action||'') , target: $json.target, value: $json.value, level: $json.level } }];"},"id":"0db310bed0fd","name":"prep_draft_ad_change","type":"n8n-nodes-base.code","typeVersion":2,"position":[560,1080]},{"parameters":{"source":"database","workflowId":{"__rl":true,"value":"dOEpjXFNk7ebR5Jn","mode":"id","cachedResultName":"Jeeves Tool - Meta Draft Ad Change"},"mode":"once","options":{"waitForSubWorkflow":true}},"id":"ae093968c57b","name":"exec_draft_ad_change","type":"n8n-nodes-base.executeWorkflow","typeVersion":1.1,"position":[820,1080]},{"parameters":{"jsCode":"const a = ($json.action||'').toString();\nreturn [{ json: { summary: `Unknown action '${a}'. Check the tool's action list.` } }];"},"id":"62951f41a8c5","name":"Unknown","type":"n8n-nodes-base.code","typeVersion":2,"position":[560,1210]}],"connections":{"Trigger":{"main":[[{"node":"Route by action","type":"main","index":0}]]},"prep_draft_ad_change":{"main":[[{"node":"exec_draft_ad_change","type":"main","index":0}]]},"Route by action":{"main":[[{"node":"exec_insights","type":"main","index":0}],[{"node":"exec_recent_posts","type":"main","index":0}],[{"node":"exec_read_comments","type":"main","index":0}],[{"node":"exec_ads_summary","type":"main","index":0}],[{"node":"exec_draft_post","type":"main","index":0}],[{"node":"exec_list_drafts","type":"main","index":0}],[{"node":"exec_publish_draft","type":"main","index":0}],[{"node":"exec_draft_reply","type":"main","index":0}],[{"node":"prep_draft_ad_change","type":"main","index":0}],[{"node":"Unknown","type":"main","index":0}]]}},"settings":{"executionOrder":"v1"},"staticData":null,"meta":null,"nodeGroups":[],"pinData":null,"versionId":"5dec6ad2-c4ac-4b07-a992-45dc9da2c7cb","activeVersionId":"5dec6ad2-c4ac-4b07-a992-45dc9da2c7cb","versionCounter":1,"triggerCount":0,"sourceWorkflowId":null,"shared":[{"updatedAt":"2026-07-06T03:17:43.911Z","createdAt":"2026-07-06T03:17:43.911Z","role":"workflow:owner","workflowId":"LIhJejhMTgvgAaPv","projectId":"3zeb0nZhOgw0YQIO","project":{"updatedAt":"2026-06-22T21:50:39.765Z","createdAt":"2026-06-22T20:18:13.120Z","id":"3zeb0nZhOgw0YQIO","name":"Richard Vickers <{{OWNER_CALENDAR_EMAIL}}>","type":"personal","icon":null,"description":null,"customTelemetryTags":[],"creatorId":"c06e9f36-d5fe-4bba-a51c-dfbab46a64fe"}}],"tags":[],"activeVersion":{"updatedAt":"2026-07-06T03:17:43.912Z","createdAt":"2026-07-06T03:17:43.912Z","versionId":"5dec6ad2-c4ac-4b07-a992-45dc9da2c7cb","workflowId":"LIhJejhMTgvgAaPv","nodes":[{"parameters":{"inputSource":"passthrough"},"id":"72d78ce54ba7","name":"Trigger","type":"n8n-nodes-base.executeWorkflowTrigger","typeVersion":1.1,"position":[0,300]},{"parameters":{"rules":{"values":[{"conditions":{"options":{"caseSensitive":true,"leftValue":"","typeValidation":"loose","version":2},"conditions":[{"id":"79191b030925","leftValue":"={{ ($json.action || '').toString().toLowerCase().trim() }}","rightValue":"insights","operator":{"type":"string","operation":"equals","name":"filter.operator.equals"}}],"combinator":"and"},"renameOutput":true,"outputKey":"insights"},{"conditions":{"options":{"caseSensitive":true,"leftValue":"","typeValidation":"loose","version":2},"conditions":[{"id":"6ba4844c3232","leftValue":"={{ ($json.action || '').toString().toLowerCase().trim() }}","rightValue":"recent_posts","operator":{"type":"string","operation":"equals","name":"filter.operator.equals"}}],"combinator":"and"},"renameOutput":true,"outputKey":"recent_posts"},{"conditions":{"options":{"caseSensitive":true,"leftValue":"","typeValidation":"loose","version":2},"conditions":[{"id":"23ea2f005c10","leftValue":"={{ ($json.action || '').toString().toLowerCase().trim() }}","rightValue":"read_comments","operator":{"type":"string","operation":"equals","name":"filter.operator.equals"}}],"combinator":"and"},"renameOutput":true,"outputKey":"read_comments"},{"conditions":{"options":{"caseSensitive":true,"leftValue":"","typeValidation":"loose","version":2},"conditions":[{"id":"84b64b62d25e","leftValue":"={{ ($json.action || '').toString().toLowerCase().trim() }}","rightValue":"ads_summary","operator":{"type":"string","operation":"equals","name":"filter.operator.equals"}}],"combinator":"and"},"renameOutput":true,"outputKey":"ads_summary"},{"conditions":{"options":{"caseSensitive":true,"leftValue":"","typeValidation":"loose","version":2},"conditions":[{"id":"9e53a06c3c0f","leftValue":"={{ ($json.action || '').toString().toLowerCase().trim() }}","rightValue":"draft_post","operator":{"type":"string","operation":"equals","name":"filter.operator.equals"}}],"combinator":"and"},"renameOutput":true,"outputKey":"draft_post"},{"conditions":{"options":{"caseSensitive":true,"leftValue":"","typeValidation":"loose","version":2},"conditions":[{"id":"43338ed4fc86","leftValue":"={{ ($json.action || '').toString().toLowerCase().trim() }}","rightValue":"list_drafts","operator":{"type":"string","operation":"equals","name":"filter.operator.equals"}}],"combinator":"and"},"renameOutput":true,"outputKey":"list_drafts"},{"conditions":{"options":{"caseSensitive":true,"leftValue":"","typeValidation":"loose","version":2},"conditions":[{"id":"9aff4442198a","leftValue":"={{ ($json.action || '').toString().toLowerCase().trim() }}","rightValue":"publish_draft","operator":{"type":"string","operation":"equals","name":"filter.operator.equals"}}],"combinator":"and"},"renameOutput":true,"outputKey":"publish_draft"},{"conditions":{"options":{"caseSensitive":true,"leftValue":"","typeValidation":"loose","version":2},"conditions":[{"id":"101040cd906c","leftValue":"={{ ($json.action || '').toString().toLowerCase().trim() }}","rightValue":"draft_reply","operator":{"type":"string","operation":"equals","name":"filter.operator.equals"}}],"combinator":"and"},"renameOutput":true,"outputKey":"draft_reply"},{"conditions":{"options":{"caseSensitive":true,"leftValue":"","typeValidation":"loose","version":2},"conditions":[{"id":"9c6ea741c6df","leftValue":"={{ ($json.action || '').toString().toLowerCase().trim() }}","rightValue":"draft_ad_change","operator":{"type":"string","operation":"equals","name":"filter.operator.equals"}}],"combinator":"and"},"renameOutput":true,"outputKey":"draft_ad_change"}]},"options":{"fallbackOutput":"extra","renameFallbackOutput":"unknown"}},"id":"6a12044bf24d","name":"Route by action","type":"n8n-nodes-base.switch","typeVersion":3.2,"position":[260,300]},{"parameters":{"source":"database","workflowId":{"__rl":true,"value":"C0JnlGYmPUbJzWv8","mode":"id","cachedResultName":"Jeeves Tool - Meta Insights"},"mode":"once","options":{"waitForSubWorkflow":true}},"id":"e6620018a010","name":"exec_insights","type":"n8n-nodes-base.executeWorkflow","typeVersion":1.1,"position":[560,40]},{"parameters":{"source":"database","workflowId":{"__rl":true,"value":"rfxCXVPvRSgKqUoG","mode":"id","cachedResultName":"Jeeves Tool - Meta Recent Posts"},"mode":"once","options":{"waitForSubWorkflow":true}},"id":"8cc0033c5b01","name":"exec_recent_posts","type":"n8n-nodes-base.executeWorkflow","typeVersion":1.1,"position":[560,170]},{"parameters":{"source":"database","workflowId":{"__rl":true,"value":"AoaGvUK4uaox8u9R","mode":"id","cachedResultName":"Jeeves Tool - Meta Read Comments"},"mode":"once","options":{"waitForSubWorkflow":true}},"id":"3930711bc079","name":"exec_read_comments","type":"n8n-nodes-base.executeWorkflow","typeVersion":1.1,"position":[560,300]},{"parameters":{"source":"database","workflowId":{"__rl":true,"value":"TUMCnE6Jtd5GZGpO","mode":"id","cachedResultName":"Jeeves Tool - Meta Ads Summary"},"mode":"once","options":{"waitForSubWorkflow":true}},"id":"3e8f7ba0c39d","name":"exec_ads_summary","type":"n8n-nodes-base.executeWorkflow","typeVersion":1.1,"position":[560,430]},{"parameters":{"source":"database","workflowId":{"__rl":true,"value":"Z7w3xteb5GFCBnfS","mode":"id","cachedResultName":"Jeeves Tool - Meta Draft Post"},"mode":"once","options":{"waitForSubWorkflow":true}},"id":"52f214438f01","name":"exec_draft_post","type":"n8n-nodes-base.executeWorkflow","typeVersion":1.1,"position":[560,560]},{"parameters":{"source":"database","workflowId":{"__rl":true,"value":"lNdBzB0oYtvDFeiq","mode":"id","cachedResultName":"Jeeves Tool - Meta List Drafts"},"mode":"once","options":{"waitForSubWorkflow":true}},"id":"025c4805f28f","name":"exec_list_drafts","type":"n8n-nodes-base.executeWorkflow","typeVersion":1.1,"position":[560,690]},{"parameters":{"source":"database","workflowId":{"__rl":true,"value":"Yx5FHAmI3bIoKmy5","mode":"id","cachedResultName":"Jeeves Tool - Meta Publish Draft"},"mode":"once","options":{"waitForSubWorkflow":true}},"id":"68801abe9fb0","name":"exec_publish_draft","type":"n8n-nodes-base.executeWorkflow","typeVersion":1.1,"position":[560,820]},{"parameters":{"source":"database","workflowId":{"__rl":true,"value":"jVrN7DbORhY5Pe3m","mode":"id","cachedResultName":"Jeeves Tool - Meta Draft Reply"},"mode":"once","options":{"waitForSubWorkflow":true}},"id":"67f78a30adb0","name":"exec_draft_reply","type":"n8n-nodes-base.executeWorkflow","typeVersion":1.1,"position":[560,950]},{"parameters":{"jsCode":"return [{ json: { ...$json, action: ($json.ad_action||'') , target: $json.target, value: $json.value, level: $json.level } }];"},"id":"0db310bed0fd","name":"prep_draft_ad_change","type":"n8n-nodes-base.code","typeVersion":2,"position":[560,1080]},{"parameters":{"source":"database","workflowId":{"__rl":true,"value":"dOEpjXFNk7ebR5Jn","mode":"id","cachedResultName":"Jeeves Tool - Meta Draft Ad Change"},"mode":"once","options":{"waitForSubWorkflow":true}},"id":"ae093968c57b","name":"exec_draft_ad_change","type":"n8n-nodes-base.executeWorkflow","typeVersion":1.1,"position":[820,1080]},{"parameters":{"jsCode":"const a = ($json.action||'').toString();\nreturn [{ json: { summary: `Unknown action '${a}'. Check the tool's action list.` } }];"},"id":"62951f41a8c5","name":"Unknown","type":"n8n-nodes-base.code","typeVersion":2,"position":[560,1210]}],"connections":{"Trigger":{"main":[[{"node":"Route by action","type":"main","index":0}]]},"prep_draft_ad_change":{"main":[[{"node":"exec_draft_ad_change","type":"main","index":0}]]},"Route by action":{"main":[[{"node":"exec_insights","type":"main","index":0}],[{"node":"exec_recent_posts","type":"main","index":0}],[{"node":"exec_read_comments","type":"main","index":0}],[{"node":"exec_ads_summary","type":"main","index":0}],[{"node":"exec_draft_post","type":"main","index":0}],[{"node":"exec_list_drafts","type":"main","index":0}],[{"node":"exec_publish_draft","type":"main","index":0}],[{"node":"exec_draft_reply","type":"main","index":0}],[{"node":"prep_draft_ad_change","type":"main","index":0}],[{"node":"Unknown","type":"main","index":0}]]}},"nodeGroups":[],"authors":"Richard Vickers","name":null,"description":null,"autosaved":false,"workflowPublishHistory":[{"createdAt":"2026-07-06T03:17:43.950Z","id":176,"workflowId":"LIhJejhMTgvgAaPv","versionId":"5dec6ad2-c4ac-4b07-a992-45dc9da2c7cb","event":"activated","userId":"c06e9f36-d5fe-4bba-a51c-dfbab46a64fe"}]}}
+{
+  "id": "LIhJejhMTgvgAaPv",
+  "name": "Jeeves Domain - Meta",
+  "nodes": [
+    {
+      "parameters": {
+        "inputSource": "passthrough"
+      },
+      "id": "72d78ce54ba7",
+      "name": "Trigger",
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "typeVersion": 1.1,
+      "position": [
+        0,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "loose",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "79191b030925",
+                    "leftValue": "={{ ($json.action || '').toString().toLowerCase().trim() }}",
+                    "rightValue": "insights",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "insights"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "loose",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "6ba4844c3232",
+                    "leftValue": "={{ ($json.action || '').toString().toLowerCase().trim() }}",
+                    "rightValue": "recent_posts",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "recent_posts"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "loose",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "23ea2f005c10",
+                    "leftValue": "={{ ($json.action || '').toString().toLowerCase().trim() }}",
+                    "rightValue": "read_comments",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "read_comments"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "loose",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "84b64b62d25e",
+                    "leftValue": "={{ ($json.action || '').toString().toLowerCase().trim() }}",
+                    "rightValue": "ads_summary",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "ads_summary"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "loose",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "9e53a06c3c0f",
+                    "leftValue": "={{ ($json.action || '').toString().toLowerCase().trim() }}",
+                    "rightValue": "draft_post",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "draft_post"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "loose",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "43338ed4fc86",
+                    "leftValue": "={{ ($json.action || '').toString().toLowerCase().trim() }}",
+                    "rightValue": "list_drafts",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "list_drafts"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "loose",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "9aff4442198a",
+                    "leftValue": "={{ ($json.action || '').toString().toLowerCase().trim() }}",
+                    "rightValue": "publish_draft",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "publish_draft"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "loose",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "101040cd906c",
+                    "leftValue": "={{ ($json.action || '').toString().toLowerCase().trim() }}",
+                    "rightValue": "draft_reply",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "draft_reply"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "loose",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "9c6ea741c6df",
+                    "leftValue": "={{ ($json.action || '').toString().toLowerCase().trim() }}",
+                    "rightValue": "draft_ad_change",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "draft_ad_change"
+            }
+          ]
+        },
+        "options": {
+          "fallbackOutput": "extra",
+          "renameFallbackOutput": "unknown"
+        }
+      },
+      "id": "6a12044bf24d",
+      "name": "Route by action",
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.2,
+      "position": [
+        260,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "source": "database",
+        "workflowId": {
+          "__rl": true,
+          "value": "C0JnlGYmPUbJzWv8",
+          "mode": "id",
+          "cachedResultName": "Jeeves Tool - Meta Insights"
+        },
+        "mode": "once",
+        "options": {
+          "waitForSubWorkflow": true
+        }
+      },
+      "id": "e6620018a010",
+      "name": "exec_insights",
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.1,
+      "position": [
+        560,
+        40
+      ]
+    },
+    {
+      "parameters": {
+        "source": "database",
+        "workflowId": {
+          "__rl": true,
+          "value": "rfxCXVPvRSgKqUoG",
+          "mode": "id",
+          "cachedResultName": "Jeeves Tool - Meta Recent Posts"
+        },
+        "mode": "once",
+        "options": {
+          "waitForSubWorkflow": true
+        }
+      },
+      "id": "8cc0033c5b01",
+      "name": "exec_recent_posts",
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.1,
+      "position": [
+        560,
+        170
+      ]
+    },
+    {
+      "parameters": {
+        "source": "database",
+        "workflowId": {
+          "__rl": true,
+          "value": "AoaGvUK4uaox8u9R",
+          "mode": "id",
+          "cachedResultName": "Jeeves Tool - Meta Read Comments"
+        },
+        "mode": "once",
+        "options": {
+          "waitForSubWorkflow": true
+        }
+      },
+      "id": "3930711bc079",
+      "name": "exec_read_comments",
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.1,
+      "position": [
+        560,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "source": "database",
+        "workflowId": {
+          "__rl": true,
+          "value": "TUMCnE6Jtd5GZGpO",
+          "mode": "id",
+          "cachedResultName": "Jeeves Tool - Meta Ads Summary"
+        },
+        "mode": "once",
+        "options": {
+          "waitForSubWorkflow": true
+        }
+      },
+      "id": "3e8f7ba0c39d",
+      "name": "exec_ads_summary",
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.1,
+      "position": [
+        560,
+        430
+      ]
+    },
+    {
+      "parameters": {
+        "source": "database",
+        "workflowId": {
+          "__rl": true,
+          "value": "Z7w3xteb5GFCBnfS",
+          "mode": "id",
+          "cachedResultName": "Jeeves Tool - Meta Draft Post"
+        },
+        "mode": "once",
+        "options": {
+          "waitForSubWorkflow": true
+        }
+      },
+      "id": "52f214438f01",
+      "name": "exec_draft_post",
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.1,
+      "position": [
+        560,
+        560
+      ]
+    },
+    {
+      "parameters": {
+        "source": "database",
+        "workflowId": {
+          "__rl": true,
+          "value": "lNdBzB0oYtvDFeiq",
+          "mode": "id",
+          "cachedResultName": "Jeeves Tool - Meta List Drafts"
+        },
+        "mode": "once",
+        "options": {
+          "waitForSubWorkflow": true
+        }
+      },
+      "id": "025c4805f28f",
+      "name": "exec_list_drafts",
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.1,
+      "position": [
+        560,
+        690
+      ]
+    },
+    {
+      "parameters": {
+        "source": "database",
+        "workflowId": {
+          "__rl": true,
+          "value": "Yx5FHAmI3bIoKmy5",
+          "mode": "id",
+          "cachedResultName": "Jeeves Tool - Meta Publish Draft"
+        },
+        "mode": "once",
+        "options": {
+          "waitForSubWorkflow": true
+        }
+      },
+      "id": "68801abe9fb0",
+      "name": "exec_publish_draft",
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.1,
+      "position": [
+        560,
+        820
+      ]
+    },
+    {
+      "parameters": {
+        "source": "database",
+        "workflowId": {
+          "__rl": true,
+          "value": "jVrN7DbORhY5Pe3m",
+          "mode": "id",
+          "cachedResultName": "Jeeves Tool - Meta Draft Reply"
+        },
+        "mode": "once",
+        "options": {
+          "waitForSubWorkflow": true
+        }
+      },
+      "id": "67f78a30adb0",
+      "name": "exec_draft_reply",
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.1,
+      "position": [
+        560,
+        950
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "return [{ json: { ...$json, action: ($json.ad_action||'') , target: $json.target, value: $json.value, level: $json.level } }];"
+      },
+      "id": "0db310bed0fd",
+      "name": "prep_draft_ad_change",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        560,
+        1080
+      ]
+    },
+    {
+      "parameters": {
+        "source": "database",
+        "workflowId": {
+          "__rl": true,
+          "value": "dOEpjXFNk7ebR5Jn",
+          "mode": "id",
+          "cachedResultName": "Jeeves Tool - Meta Draft Ad Change"
+        },
+        "mode": "once",
+        "options": {
+          "waitForSubWorkflow": true
+        }
+      },
+      "id": "ae093968c57b",
+      "name": "exec_draft_ad_change",
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.1,
+      "position": [
+        820,
+        1080
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const a = ($json.action||'').toString();\nreturn [{ json: { summary: `Unknown action '${a}'. Check the tool's action list.` } }];"
+      },
+      "id": "62951f41a8c5",
+      "name": "Unknown",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        560,
+        1210
+      ]
+    }
+  ],
+  "connections": {
+    "Trigger": {
+      "main": [
+        [
+          {
+            "node": "Route by action",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "prep_draft_ad_change": {
+      "main": [
+        [
+          {
+            "node": "exec_draft_ad_change",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Route by action": {
+      "main": [
+        [
+          {
+            "node": "exec_insights",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "exec_recent_posts",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "exec_read_comments",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "exec_ads_summary",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "exec_draft_post",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "exec_list_drafts",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "exec_publish_draft",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "exec_draft_reply",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "prep_draft_ad_change",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Unknown",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  }
+}

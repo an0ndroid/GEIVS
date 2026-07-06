@@ -120,6 +120,7 @@ All services route through nginx on port 80.
 | `http://your-ip/search/` | SearXNG private search |
 | `http://your-ip/social/` | Postiz social media scheduler |
 | `http://your-ip/portainer/` | Portainer container management |
+| `http://your-ip/dashboard/` | GEIVS Dashboard — quick-access GUI (optional, see Jeeves Assistant Layer below) |
 
 ---
 
@@ -195,10 +196,35 @@ A conversational agent layer on top of the base install. Two front doors — Sig
 | jeeves-tool-reminder-set | Lets the agent schedule a reminder mid-conversation |
 | jeeves-tool-contact-lookup | Google Contacts lookup |
 | jeeves-tool-youtube-stats | Channel stats lookup (read-only) |
+| jeeves-tool-cal-get | Reads calendar events for a given time range — called by `jeeves-domain-calendar` and by the Dashboard API below |
+| jeeves-tool-square-sales | Reads Square payments for a period (today/week/month) and returns a summary + daily breakdown — called by `jeeves-domain-square` and the Dashboard API |
+| jeeves-tool-gmail-search | Searches Gmail and returns a compact summary — called by `jeeves-domain-email` and the Dashboard API |
 | jeeves-reminder-add / jeeves-reminder-fire | Reminder queue + per-minute firing check |
 | jeeves-morning-briefing | Scheduled daily summary (calendar + unread email) delivered to Signal |
 | jeeves-bootstrap-data-table | One-time setup of the n8n data table the reminder queue uses |
 | jeeves-backend-gmail / jeeves-backend-calendar / jeeves-backend-meta / jeeves-backend-x / jeeves-backend-square | Internal webhooks the domain tools call — keeps service-account/API auth off the agent's direct tool path |
+
+### GEIVS Dashboard (dashboard/ + jeeves-dashboard-api)
+
+A quick-access GUI that sits alongside the chat interface: a chat box (talks to `jeeves-agent-http`, same as the web chat above) plus a row of buttons that skip the LLM entirely for deterministic lookups — no tool-call reasoning, no wait, just a direct backend read. Useful for anything you'd otherwise have to ask Jeeves in words every time.
+
+![GEIVS Dashboard](docs/dashboard-screenshot.png)
+
+- **`jeeves-dashboard-api`** (n8n-workflows/jeeves-assistant/) — a thin gateway workflow. One webhook (`/webhook/geivs-dashboard`), takes `{"action": "..."}`, routes via a Switch node to the matching tool workflow above, and returns its result untouched. No LLM call in this path.
+- **`dashboard/`** (repo root) — the static front-end: `index.html` (vanilla HTML/JS/CSS, no build step, no external dependencies) and `geivs-logo.png`. Served by the existing nginx container at `/dashboard/`, proxying `/dashboard/api/dashboard` and `/dashboard/api/chat/` to n8n internally — already wired into both `docker-compose.pro.yml` and `docker-compose.cpu.yml`, no extra services to run.
+- **Default buttons**: calendar (this week, rendered as a day-by-day agenda), sales (this week, with a small bar chart), unread email count, YouTube channel stats.
+
+**Customizing per client** — this is the intended per-install customization point. Open `dashboard/index.html` and edit the `BUTTONS` array near the top of the `<script>` block:
+
+```js
+const BUTTONS = [
+  { action: 'calendar', label: 'Calendar (this week)' },
+  { action: 'sales', label: 'Sales (this week)' },
+  // add, remove, or relabel entries here
+];
+```
+
+Each `action` must have a matching branch in `jeeves-dashboard-api`'s Switch node (add one there first if you're wiring up a new lookup, following the existing branches as a template). The buttons and their result cards are generated from this list — no other HTML/JS needs editing to add or remove a button.
 
 **Setup notes**
 
@@ -252,6 +278,9 @@ GEIVS/
 ├── pull-models-cpu.sh          # CPU model download script
 ├── nginx/
 │   └── geivs.conf              # Nginx reverse proxy configuration
+├── dashboard/                   # optional quick-access GUI, see Jeeves Assistant Layer below
+│   ├── index.html               # customize the BUTTONS list here per client
+│   └── geivs-logo.png
 └── n8n-workflows/
     ├── geivs-email-bot.json
     ├── geivs-signal-bot.json
@@ -280,6 +309,9 @@ GEIVS/
         ├── jeeves-tool-reminder-set.json
         ├── jeeves-tool-contact-lookup.json
         ├── jeeves-tool-youtube-stats.json
+        ├── jeeves-tool-cal-get.json
+        ├── jeeves-tool-square-sales.json
+        ├── jeeves-tool-gmail-search.json
         ├── jeeves-reminder-add.json
         ├── jeeves-reminder-fire.json
         ├── jeeves-morning-briefing.json
@@ -288,7 +320,8 @@ GEIVS/
         ├── jeeves-backend-calendar.json
         ├── jeeves-backend-meta.json
         ├── jeeves-backend-x.json
-        └── jeeves-backend-square.json
+        ├── jeeves-backend-square.json
+        └── jeeves-dashboard-api.json
 ```
 
 ---

@@ -1,1 +1,71 @@
-{"updatedAt":"2026-07-03T06:49:07.967Z","createdAt":"2026-07-03T06:49:07.967Z","id":"jeevesboot1","name":"Jeeves - Bootstrap Data Table","description":null,"active":false,"isArchived":false,"nodes":[{"parameters":{},"id":"d1111111-1111-4111-8111-111111111111","name":"When clicking Test","type":"n8n-nodes-base.manualTrigger","typeVersion":1,"position":[0,300]},{"parameters":{"resource":"table","operation":"create","tableName":"jeeves_reminders","columns":{"column":[{"name":"reminder_id","type":"string"},{"name":"due","type":"string"},{"name":"text","type":"string"},{"name":"done","type":"boolean"}]},"options":{"createIfNotExists":true}},"id":"d2222222-2222-4222-8222-222222222222","name":"Create Table","type":"n8n-nodes-base.dataTable","typeVersion":1.1,"position":[240,300]}],"connections":{"When clicking Test":{"main":[[{"node":"Create Table","type":"main","index":0}]]}},"settings":{"executionOrder":"v1"},"staticData":null,"meta":null,"nodeGroups":[],"pinData":null,"versionId":"16226b52-704c-4fd6-a03e-f6bfccc86854","activeVersionId":null,"versionCounter":1,"triggerCount":0,"sourceWorkflowId":null,"shared":[{"updatedAt":"2026-07-03T06:49:07.970Z","createdAt":"2026-07-03T06:49:07.970Z","role":"workflow:owner","workflowId":"jeevesboot1","projectId":"3zeb0nZhOgw0YQIO","project":{"updatedAt":"2026-06-22T21:50:39.765Z","createdAt":"2026-06-22T20:18:13.120Z","id":"3zeb0nZhOgw0YQIO","name":"Richard Vickers <{{OWNER_CALENDAR_EMAIL}}>","type":"personal","icon":null,"description":null,"customTelemetryTags":[],"creatorId":"c06e9f36-d5fe-4bba-a51c-dfbab46a64fe"}}],"tags":[],"activeVersion":null}
+{
+  "id": "jeevesboot1",
+  "name": "Jeeves - Bootstrap Data Table",
+  "nodes": [
+    {
+      "parameters": {},
+      "id": "d1111111-1111-4111-8111-111111111111",
+      "name": "When clicking Test",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "resource": "table",
+        "operation": "create",
+        "tableName": "jeeves_reminders",
+        "columns": {
+          "column": [
+            {
+              "name": "reminder_id",
+              "type": "string"
+            },
+            {
+              "name": "due",
+              "type": "string"
+            },
+            {
+              "name": "text",
+              "type": "string"
+            },
+            {
+              "name": "done",
+              "type": "boolean"
+            }
+          ]
+        },
+        "options": {
+          "createIfNotExists": true
+        }
+      },
+      "id": "d2222222-2222-4222-8222-222222222222",
+      "name": "Create Table",
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        240,
+        300
+      ]
+    }
+  ],
+  "connections": {
+    "When clicking Test": {
+      "main": [
+        [
+          {
+            "node": "Create Table",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  }
+}

@@ -1,1 +1,299 @@
-{"updatedAt":"2026-07-06T03:17:44.053Z","createdAt":"2026-07-06T03:17:44.053Z","id":"rqTNAh00Mxxy1Tq3","name":"Jeeves Domain - Social X","description":null,"active":true,"isArchived":false,"nodes":[{"parameters":{"inputSource":"passthrough"},"id":"d1a051d3495b","name":"Trigger","type":"n8n-nodes-base.executeWorkflowTrigger","typeVersion":1.1,"position":[0,300]},{"parameters":{"rules":{"values":[{"conditions":{"options":{"caseSensitive":true,"leftValue":"","typeValidation":"loose","version":2},"conditions":[{"id":"4012d4e1dd3d","leftValue":"={{ ($json.action || '').toString().toLowerCase().trim() }}","rightValue":"read","operator":{"type":"string","operation":"equals","name":"filter.operator.equals"}}],"combinator":"and"},"renameOutput":true,"outputKey":"read"},{"conditions":{"options":{"caseSensitive":true,"leftValue":"","typeValidation":"loose","version":2},"conditions":[{"id":"501ade52e177","leftValue":"={{ ($json.action || '').toString().toLowerCase().trim() }}","rightValue":"draft","operator":{"type":"string","operation":"equals","name":"filter.operator.equals"}}],"combinator":"and"},"renameOutput":true,"outputKey":"draft"},{"conditions":{"options":{"caseSensitive":true,"leftValue":"","typeValidation":"loose","version":2},"conditions":[{"id":"ed082166ffdc","leftValue":"={{ ($json.action || '').toString().toLowerCase().trim() }}","rightValue":"list_drafts","operator":{"type":"string","operation":"equals","name":"filter.operator.equals"}}],"combinator":"and"},"renameOutput":true,"outputKey":"list_drafts"},{"conditions":{"options":{"caseSensitive":true,"leftValue":"","typeValidation":"loose","version":2},"conditions":[{"id":"50b97afab234","leftValue":"={{ ($json.action || '').toString().toLowerCase().trim() }}","rightValue":"publish","operator":{"type":"string","operation":"equals","name":"filter.operator.equals"}}],"combinator":"and"},"renameOutput":true,"outputKey":"publish"}]},"options":{"fallbackOutput":"extra","renameFallbackOutput":"unknown"}},"id":"0c0b6ce26723","name":"Route by action","type":"n8n-nodes-base.switch","typeVersion":3.2,"position":[260,300]},{"parameters":{"source":"database","workflowId":{"__rl":true,"value":"BRzEFAgeNjZ4851E","mode":"id","cachedResultName":"Jeeves Tool - X Read"},"mode":"once","options":{"waitForSubWorkflow":true}},"id":"b95455c2b987","name":"exec_read","type":"n8n-nodes-base.executeWorkflow","typeVersion":1.1,"position":[560,40]},{"parameters":{"source":"database","workflowId":{"__rl":true,"value":"qjbwtXtwD4moFZzE","mode":"id","cachedResultName":"Jeeves Tool - X Draft Post"},"mode":"once","options":{"waitForSubWorkflow":true}},"id":"1c9bd2a5fda6","name":"exec_draft","type":"n8n-nodes-base.executeWorkflow","typeVersion":1.1,"position":[560,170]},{"parameters":{"source":"database","workflowId":{"__rl":true,"value":"R19TptPKcg8FQu6v","mode":"id","cachedResultName":"Jeeves Tool - X List Drafts"},"mode":"once","options":{"waitForSubWorkflow":true}},"id":"b55d15a942ac","name":"exec_list_drafts","type":"n8n-nodes-base.executeWorkflow","typeVersion":1.1,"position":[560,300]},{"parameters":{"source":"database","workflowId":{"__rl":true,"value":"bCeqH7P5elzBNfE9","mode":"id","cachedResultName":"Jeeves Tool - X Publish Draft"},"mode":"once","options":{"waitForSubWorkflow":true}},"id":"6e8516df91a9","name":"exec_publish","type":"n8n-nodes-base.executeWorkflow","typeVersion":1.1,"position":[560,430]},{"parameters":{"jsCode":"const a = ($json.action||'').toString();\nreturn [{ json: { summary: `Unknown action '${a}'. Check the tool's action list.` } }];"},"id":"811a16ebbe1c","name":"Unknown","type":"n8n-nodes-base.code","typeVersion":2,"position":[560,560]}],"connections":{"Trigger":{"main":[[{"node":"Route by action","type":"main","index":0}]]},"Route by action":{"main":[[{"node":"exec_read","type":"main","index":0}],[{"node":"exec_draft","type":"main","index":0}],[{"node":"exec_list_drafts","type":"main","index":0}],[{"node":"exec_publish","type":"main","index":0}],[{"node":"Unknown","type":"main","index":0}]]}},"settings":{"executionOrder":"v1"},"staticData":null,"meta":null,"nodeGroups":[],"pinData":null,"versionId":"7cc64a40-4d55-4eb3-9906-29ecf56c5f9b","activeVersionId":"7cc64a40-4d55-4eb3-9906-29ecf56c5f9b","versionCounter":1,"triggerCount":0,"sourceWorkflowId":null,"shared":[{"updatedAt":"2026-07-06T03:17:44.054Z","createdAt":"2026-07-06T03:17:44.054Z","role":"workflow:owner","workflowId":"rqTNAh00Mxxy1Tq3","projectId":"3zeb0nZhOgw0YQIO","project":{"updatedAt":"2026-06-22T21:50:39.765Z","createdAt":"2026-06-22T20:18:13.120Z","id":"3zeb0nZhOgw0YQIO","name":"Richard Vickers <{{OWNER_CALENDAR_EMAIL}}>","type":"personal","icon":null,"description":null,"customTelemetryTags":[],"creatorId":"c06e9f36-d5fe-4bba-a51c-dfbab46a64fe"}}],"tags":[],"activeVersion":{"updatedAt":"2026-07-06T03:17:44.055Z","createdAt":"2026-07-06T03:17:44.055Z","versionId":"7cc64a40-4d55-4eb3-9906-29ecf56c5f9b","workflowId":"rqTNAh00Mxxy1Tq3","nodes":[{"parameters":{"inputSource":"passthrough"},"id":"d1a051d3495b","name":"Trigger","type":"n8n-nodes-base.executeWorkflowTrigger","typeVersion":1.1,"position":[0,300]},{"parameters":{"rules":{"values":[{"conditions":{"options":{"caseSensitive":true,"leftValue":"","typeValidation":"loose","version":2},"conditions":[{"id":"4012d4e1dd3d","leftValue":"={{ ($json.action || '').toString().toLowerCase().trim() }}","rightValue":"read","operator":{"type":"string","operation":"equals","name":"filter.operator.equals"}}],"combinator":"and"},"renameOutput":true,"outputKey":"read"},{"conditions":{"options":{"caseSensitive":true,"leftValue":"","typeValidation":"loose","version":2},"conditions":[{"id":"501ade52e177","leftValue":"={{ ($json.action || '').toString().toLowerCase().trim() }}","rightValue":"draft","operator":{"type":"string","operation":"equals","name":"filter.operator.equals"}}],"combinator":"and"},"renameOutput":true,"outputKey":"draft"},{"conditions":{"options":{"caseSensitive":true,"leftValue":"","typeValidation":"loose","version":2},"conditions":[{"id":"ed082166ffdc","leftValue":"={{ ($json.action || '').toString().toLowerCase().trim() }}","rightValue":"list_drafts","operator":{"type":"string","operation":"equals","name":"filter.operator.equals"}}],"combinator":"and"},"renameOutput":true,"outputKey":"list_drafts"},{"conditions":{"options":{"caseSensitive":true,"leftValue":"","typeValidation":"loose","version":2},"conditions":[{"id":"50b97afab234","leftValue":"={{ ($json.action || '').toString().toLowerCase().trim() }}","rightValue":"publish","operator":{"type":"string","operation":"equals","name":"filter.operator.equals"}}],"combinator":"and"},"renameOutput":true,"outputKey":"publish"}]},"options":{"fallbackOutput":"extra","renameFallbackOutput":"unknown"}},"id":"0c0b6ce26723","name":"Route by action","type":"n8n-nodes-base.switch","typeVersion":3.2,"position":[260,300]},{"parameters":{"source":"database","workflowId":{"__rl":true,"value":"BRzEFAgeNjZ4851E","mode":"id","cachedResultName":"Jeeves Tool - X Read"},"mode":"once","options":{"waitForSubWorkflow":true}},"id":"b95455c2b987","name":"exec_read","type":"n8n-nodes-base.executeWorkflow","typeVersion":1.1,"position":[560,40]},{"parameters":{"source":"database","workflowId":{"__rl":true,"value":"qjbwtXtwD4moFZzE","mode":"id","cachedResultName":"Jeeves Tool - X Draft Post"},"mode":"once","options":{"waitForSubWorkflow":true}},"id":"1c9bd2a5fda6","name":"exec_draft","type":"n8n-nodes-base.executeWorkflow","typeVersion":1.1,"position":[560,170]},{"parameters":{"source":"database","workflowId":{"__rl":true,"value":"R19TptPKcg8FQu6v","mode":"id","cachedResultName":"Jeeves Tool - X List Drafts"},"mode":"once","options":{"waitForSubWorkflow":true}},"id":"b55d15a942ac","name":"exec_list_drafts","type":"n8n-nodes-base.executeWorkflow","typeVersion":1.1,"position":[560,300]},{"parameters":{"source":"database","workflowId":{"__rl":true,"value":"bCeqH7P5elzBNfE9","mode":"id","cachedResultName":"Jeeves Tool - X Publish Draft"},"mode":"once","options":{"waitForSubWorkflow":true}},"id":"6e8516df91a9","name":"exec_publish","type":"n8n-nodes-base.executeWorkflow","typeVersion":1.1,"position":[560,430]},{"parameters":{"jsCode":"const a = ($json.action||'').toString();\nreturn [{ json: { summary: `Unknown action '${a}'. Check the tool's action list.` } }];"},"id":"811a16ebbe1c","name":"Unknown","type":"n8n-nodes-base.code","typeVersion":2,"position":[560,560]}],"connections":{"Trigger":{"main":[[{"node":"Route by action","type":"main","index":0}]]},"Route by action":{"main":[[{"node":"exec_read","type":"main","index":0}],[{"node":"exec_draft","type":"main","index":0}],[{"node":"exec_list_drafts","type":"main","index":0}],[{"node":"exec_publish","type":"main","index":0}],[{"node":"Unknown","type":"main","index":0}]]}},"nodeGroups":[],"authors":"Richard Vickers","name":null,"description":null,"autosaved":false,"workflowPublishHistory":[{"createdAt":"2026-07-06T03:17:44.090Z","id":177,"workflowId":"rqTNAh00Mxxy1Tq3","versionId":"7cc64a40-4d55-4eb3-9906-29ecf56c5f9b","event":"activated","userId":"c06e9f36-d5fe-4bba-a51c-dfbab46a64fe"}]}}
+{
+  "id": "rqTNAh00Mxxy1Tq3",
+  "name": "Jeeves Domain - Social X",
+  "nodes": [
+    {
+      "parameters": {
+        "inputSource": "passthrough"
+      },
+      "id": "d1a051d3495b",
+      "name": "Trigger",
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "typeVersion": 1.1,
+      "position": [
+        0,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "loose",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "4012d4e1dd3d",
+                    "leftValue": "={{ ($json.action || '').toString().toLowerCase().trim() }}",
+                    "rightValue": "read",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "read"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "loose",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "501ade52e177",
+                    "leftValue": "={{ ($json.action || '').toString().toLowerCase().trim() }}",
+                    "rightValue": "draft",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "draft"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "loose",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "ed082166ffdc",
+                    "leftValue": "={{ ($json.action || '').toString().toLowerCase().trim() }}",
+                    "rightValue": "list_drafts",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "list_drafts"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "loose",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "50b97afab234",
+                    "leftValue": "={{ ($json.action || '').toString().toLowerCase().trim() }}",
+                    "rightValue": "publish",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "publish"
+            }
+          ]
+        },
+        "options": {
+          "fallbackOutput": "extra",
+          "renameFallbackOutput": "unknown"
+        }
+      },
+      "id": "0c0b6ce26723",
+      "name": "Route by action",
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.2,
+      "position": [
+        260,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "source": "database",
+        "workflowId": {
+          "__rl": true,
+          "value": "BRzEFAgeNjZ4851E",
+          "mode": "id",
+          "cachedResultName": "Jeeves Tool - X Read"
+        },
+        "mode": "once",
+        "options": {
+          "waitForSubWorkflow": true
+        }
+      },
+      "id": "b95455c2b987",
+      "name": "exec_read",
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.1,
+      "position": [
+        560,
+        40
+      ]
+    },
+    {
+      "parameters": {
+        "source": "database",
+        "workflowId": {
+          "__rl": true,
+          "value": "qjbwtXtwD4moFZzE",
+          "mode": "id",
+          "cachedResultName": "Jeeves Tool - X Draft Post"
+        },
+        "mode": "once",
+        "options": {
+          "waitForSubWorkflow": true
+        }
+      },
+      "id": "1c9bd2a5fda6",
+      "name": "exec_draft",
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.1,
+      "position": [
+        560,
+        170
+      ]
+    },
+    {
+      "parameters": {
+        "source": "database",
+        "workflowId": {
+          "__rl": true,
+          "value": "R19TptPKcg8FQu6v",
+          "mode": "id",
+          "cachedResultName": "Jeeves Tool - X List Drafts"
+        },
+        "mode": "once",
+        "options": {
+          "waitForSubWorkflow": true
+        }
+      },
+      "id": "b55d15a942ac",
+      "name": "exec_list_drafts",
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.1,
+      "position": [
+        560,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "source": "database",
+        "workflowId": {
+          "__rl": true,
+          "value": "bCeqH7P5elzBNfE9",
+          "mode": "id",
+          "cachedResultName": "Jeeves Tool - X Publish Draft"
+        },
+        "mode": "once",
+        "options": {
+          "waitForSubWorkflow": true
+        }
+      },
+      "id": "6e8516df91a9",
+      "name": "exec_publish",
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.1,
+      "position": [
+        560,
+        430
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const a = ($json.action||'').toString();\nreturn [{ json: { summary: `Unknown action '${a}'. Check the tool's action list.` } }];"
+      },
+      "id": "811a16ebbe1c",
+      "name": "Unknown",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        560,
+        560
+      ]
+    }
+  ],
+  "connections": {
+    "Trigger": {
+      "main": [
+        [
+          {
+            "node": "Route by action",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Route by action": {
+      "main": [
+        [
+          {
+            "node": "exec_read",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "exec_draft",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "exec_list_drafts",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "exec_publish",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Unknown",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  }
+}

@@ -1,1 +1,299 @@
-{"updatedAt":"2026-07-06T03:17:43.643Z","createdAt":"2026-07-06T03:17:43.643Z","id":"Biiz4PiKMFGGmOuI","name":"Jeeves Domain - Email","description":null,"active":true,"isArchived":false,"nodes":[{"parameters":{"inputSource":"passthrough"},"id":"18b77af88b91","name":"Trigger","type":"n8n-nodes-base.executeWorkflowTrigger","typeVersion":1.1,"position":[0,300]},{"parameters":{"rules":{"values":[{"conditions":{"options":{"caseSensitive":true,"leftValue":"","typeValidation":"loose","version":2},"conditions":[{"id":"0edd151c2171","leftValue":"={{ ($json.action || '').toString().toLowerCase().trim() }}","rightValue":"search","operator":{"type":"string","operation":"equals","name":"filter.operator.equals"}}],"combinator":"and"},"renameOutput":true,"outputKey":"search"},{"conditions":{"options":{"caseSensitive":true,"leftValue":"","typeValidation":"loose","version":2},"conditions":[{"id":"bc4c556b37da","leftValue":"={{ ($json.action || '').toString().toLowerCase().trim() }}","rightValue":"read","operator":{"type":"string","operation":"equals","name":"filter.operator.equals"}}],"combinator":"and"},"renameOutput":true,"outputKey":"read"},{"conditions":{"options":{"caseSensitive":true,"leftValue":"","typeValidation":"loose","version":2},"conditions":[{"id":"5c63ef0efb1f","leftValue":"={{ ($json.action || '').toString().toLowerCase().trim() }}","rightValue":"draft","operator":{"type":"string","operation":"equals","name":"filter.operator.equals"}}],"combinator":"and"},"renameOutput":true,"outputKey":"draft"},{"conditions":{"options":{"caseSensitive":true,"leftValue":"","typeValidation":"loose","version":2},"conditions":[{"id":"24363c619125","leftValue":"={{ ($json.action || '').toString().toLowerCase().trim() }}","rightValue":"send","operator":{"type":"string","operation":"equals","name":"filter.operator.equals"}}],"combinator":"and"},"renameOutput":true,"outputKey":"send"}]},"options":{"fallbackOutput":"extra","renameFallbackOutput":"unknown"}},"id":"386909b1309f","name":"Route by action","type":"n8n-nodes-base.switch","typeVersion":3.2,"position":[260,300]},{"parameters":{"source":"database","workflowId":{"__rl":true,"value":"jeevestgsrch1","mode":"id","cachedResultName":"Jeeves Tool - Gmail Search"},"mode":"once","options":{"waitForSubWorkflow":true}},"id":"bc756e4ea6bd","name":"exec_search","type":"n8n-nodes-base.executeWorkflow","typeVersion":1.1,"position":[560,40]},{"parameters":{"source":"database","workflowId":{"__rl":true,"value":"jeevestgread1","mode":"id","cachedResultName":"Jeeves Tool - Gmail Read"},"mode":"once","options":{"waitForSubWorkflow":true}},"id":"486a248eab67","name":"exec_read","type":"n8n-nodes-base.executeWorkflow","typeVersion":1.1,"position":[560,170]},{"parameters":{"source":"database","workflowId":{"__rl":true,"value":"jeevestgdrft1","mode":"id","cachedResultName":"Jeeves Tool - Gmail Draft"},"mode":"once","options":{"waitForSubWorkflow":true}},"id":"829a41cf1332","name":"exec_draft","type":"n8n-nodes-base.executeWorkflow","typeVersion":1.1,"position":[560,300]},{"parameters":{"source":"database","workflowId":{"__rl":true,"value":"jeevestgsend1","mode":"id","cachedResultName":"Jeeves Tool - Gmail Send"},"mode":"once","options":{"waitForSubWorkflow":true}},"id":"ad0bc8202513","name":"exec_send","type":"n8n-nodes-base.executeWorkflow","typeVersion":1.1,"position":[560,430]},{"parameters":{"jsCode":"const a = ($json.action||'').toString();\nreturn [{ json: { summary: `Unknown action '${a}'. Check the tool's action list.` } }];"},"id":"41d67907170b","name":"Unknown","type":"n8n-nodes-base.code","typeVersion":2,"position":[560,560]}],"connections":{"Trigger":{"main":[[{"node":"Route by action","type":"main","index":0}]]},"Route by action":{"main":[[{"node":"exec_search","type":"main","index":0}],[{"node":"exec_read","type":"main","index":0}],[{"node":"exec_draft","type":"main","index":0}],[{"node":"exec_send","type":"main","index":0}],[{"node":"Unknown","type":"main","index":0}]]}},"settings":{"executionOrder":"v1"},"staticData":null,"meta":null,"nodeGroups":[],"pinData":null,"versionId":"d7a17276-0f58-4a3e-9b41-a558108f079a","activeVersionId":"d7a17276-0f58-4a3e-9b41-a558108f079a","versionCounter":1,"triggerCount":0,"sourceWorkflowId":null,"shared":[{"updatedAt":"2026-07-06T03:17:43.645Z","createdAt":"2026-07-06T03:17:43.645Z","role":"workflow:owner","workflowId":"Biiz4PiKMFGGmOuI","projectId":"3zeb0nZhOgw0YQIO","project":{"updatedAt":"2026-06-22T21:50:39.765Z","createdAt":"2026-06-22T20:18:13.120Z","id":"3zeb0nZhOgw0YQIO","name":"Richard Vickers <{{OWNER_CALENDAR_EMAIL}}>","type":"personal","icon":null,"description":null,"customTelemetryTags":[],"creatorId":"c06e9f36-d5fe-4bba-a51c-dfbab46a64fe"}}],"tags":[],"activeVersion":{"updatedAt":"2026-07-06T03:17:43.646Z","createdAt":"2026-07-06T03:17:43.646Z","versionId":"d7a17276-0f58-4a3e-9b41-a558108f079a","workflowId":"Biiz4PiKMFGGmOuI","nodes":[{"parameters":{"inputSource":"passthrough"},"id":"18b77af88b91","name":"Trigger","type":"n8n-nodes-base.executeWorkflowTrigger","typeVersion":1.1,"position":[0,300]},{"parameters":{"rules":{"values":[{"conditions":{"options":{"caseSensitive":true,"leftValue":"","typeValidation":"loose","version":2},"conditions":[{"id":"0edd151c2171","leftValue":"={{ ($json.action || '').toString().toLowerCase().trim() }}","rightValue":"search","operator":{"type":"string","operation":"equals","name":"filter.operator.equals"}}],"combinator":"and"},"renameOutput":true,"outputKey":"search"},{"conditions":{"options":{"caseSensitive":true,"leftValue":"","typeValidation":"loose","version":2},"conditions":[{"id":"bc4c556b37da","leftValue":"={{ ($json.action || '').toString().toLowerCase().trim() }}","rightValue":"read","operator":{"type":"string","operation":"equals","name":"filter.operator.equals"}}],"combinator":"and"},"renameOutput":true,"outputKey":"read"},{"conditions":{"options":{"caseSensitive":true,"leftValue":"","typeValidation":"loose","version":2},"conditions":[{"id":"5c63ef0efb1f","leftValue":"={{ ($json.action || '').toString().toLowerCase().trim() }}","rightValue":"draft","operator":{"type":"string","operation":"equals","name":"filter.operator.equals"}}],"combinator":"and"},"renameOutput":true,"outputKey":"draft"},{"conditions":{"options":{"caseSensitive":true,"leftValue":"","typeValidation":"loose","version":2},"conditions":[{"id":"24363c619125","leftValue":"={{ ($json.action || '').toString().toLowerCase().trim() }}","rightValue":"send","operator":{"type":"string","operation":"equals","name":"filter.operator.equals"}}],"combinator":"and"},"renameOutput":true,"outputKey":"send"}]},"options":{"fallbackOutput":"extra","renameFallbackOutput":"unknown"}},"id":"386909b1309f","name":"Route by action","type":"n8n-nodes-base.switch","typeVersion":3.2,"position":[260,300]},{"parameters":{"source":"database","workflowId":{"__rl":true,"value":"jeevestgsrch1","mode":"id","cachedResultName":"Jeeves Tool - Gmail Search"},"mode":"once","options":{"waitForSubWorkflow":true}},"id":"bc756e4ea6bd","name":"exec_search","type":"n8n-nodes-base.executeWorkflow","typeVersion":1.1,"position":[560,40]},{"parameters":{"source":"database","workflowId":{"__rl":true,"value":"jeevestgread1","mode":"id","cachedResultName":"Jeeves Tool - Gmail Read"},"mode":"once","options":{"waitForSubWorkflow":true}},"id":"486a248eab67","name":"exec_read","type":"n8n-nodes-base.executeWorkflow","typeVersion":1.1,"position":[560,170]},{"parameters":{"source":"database","workflowId":{"__rl":true,"value":"jeevestgdrft1","mode":"id","cachedResultName":"Jeeves Tool - Gmail Draft"},"mode":"once","options":{"waitForSubWorkflow":true}},"id":"829a41cf1332","name":"exec_draft","type":"n8n-nodes-base.executeWorkflow","typeVersion":1.1,"position":[560,300]},{"parameters":{"source":"database","workflowId":{"__rl":true,"value":"jeevestgsend1","mode":"id","cachedResultName":"Jeeves Tool - Gmail Send"},"mode":"once","options":{"waitForSubWorkflow":true}},"id":"ad0bc8202513","name":"exec_send","type":"n8n-nodes-base.executeWorkflow","typeVersion":1.1,"position":[560,430]},{"parameters":{"jsCode":"const a = ($json.action||'').toString();\nreturn [{ json: { summary: `Unknown action '${a}'. Check the tool's action list.` } }];"},"id":"41d67907170b","name":"Unknown","type":"n8n-nodes-base.code","typeVersion":2,"position":[560,560]}],"connections":{"Trigger":{"main":[[{"node":"Route by action","type":"main","index":0}]]},"Route by action":{"main":[[{"node":"exec_search","type":"main","index":0}],[{"node":"exec_read","type":"main","index":0}],[{"node":"exec_draft","type":"main","index":0}],[{"node":"exec_send","type":"main","index":0}],[{"node":"Unknown","type":"main","index":0}]]}},"nodeGroups":[],"authors":"Richard Vickers","name":null,"description":null,"autosaved":false,"workflowPublishHistory":[{"createdAt":"2026-07-06T03:17:43.686Z","id":174,"workflowId":"Biiz4PiKMFGGmOuI","versionId":"d7a17276-0f58-4a3e-9b41-a558108f079a","event":"activated","userId":"c06e9f36-d5fe-4bba-a51c-dfbab46a64fe"}]}}
+{
+  "id": "Biiz4PiKMFGGmOuI",
+  "name": "Jeeves Domain - Email",
+  "nodes": [
+    {
+      "parameters": {
+        "inputSource": "passthrough"
+      },
+      "id": "18b77af88b91",
+      "name": "Trigger",
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "typeVersion": 1.1,
+      "position": [
+        0,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "loose",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "0edd151c2171",
+                    "leftValue": "={{ ($json.action || '').toString().toLowerCase().trim() }}",
+                    "rightValue": "search",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "search"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "loose",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "bc4c556b37da",
+                    "leftValue": "={{ ($json.action || '').toString().toLowerCase().trim() }}",
+                    "rightValue": "read",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "read"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "loose",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "5c63ef0efb1f",
+                    "leftValue": "={{ ($json.action || '').toString().toLowerCase().trim() }}",
+                    "rightValue": "draft",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "draft"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "loose",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "24363c619125",
+                    "leftValue": "={{ ($json.action || '').toString().toLowerCase().trim() }}",
+                    "rightValue": "send",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "send"
+            }
+          ]
+        },
+        "options": {
+          "fallbackOutput": "extra",
+          "renameFallbackOutput": "unknown"
+        }
+      },
+      "id": "386909b1309f",
+      "name": "Route by action",
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.2,
+      "position": [
+        260,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "source": "database",
+        "workflowId": {
+          "__rl": true,
+          "value": "jeevestgsrch1",
+          "mode": "id",
+          "cachedResultName": "Jeeves Tool - Gmail Search"
+        },
+        "mode": "once",
+        "options": {
+          "waitForSubWorkflow": true
+        }
+      },
+      "id": "bc756e4ea6bd",
+      "name": "exec_search",
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.1,
+      "position": [
+        560,
+        40
+      ]
+    },
+    {
+      "parameters": {
+        "source": "database",
+        "workflowId": {
+          "__rl": true,
+          "value": "jeevestgread1",
+          "mode": "id",
+          "cachedResultName": "Jeeves Tool - Gmail Read"
+        },
+        "mode": "once",
+        "options": {
+          "waitForSubWorkflow": true
+        }
+      },
+      "id": "486a248eab67",
+      "name": "exec_read",
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.1,
+      "position": [
+        560,
+        170
+      ]
+    },
+    {
+      "parameters": {
+        "source": "database",
+        "workflowId": {
+          "__rl": true,
+          "value": "jeevestgdrft1",
+          "mode": "id",
+          "cachedResultName": "Jeeves Tool - Gmail Draft"
+        },
+        "mode": "once",
+        "options": {
+          "waitForSubWorkflow": true
+        }
+      },
+      "id": "829a41cf1332",
+      "name": "exec_draft",
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.1,
+      "position": [
+        560,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "source": "database",
+        "workflowId": {
+          "__rl": true,
+          "value": "jeevestgsend1",
+          "mode": "id",
+          "cachedResultName": "Jeeves Tool - Gmail Send"
+        },
+        "mode": "once",
+        "options": {
+          "waitForSubWorkflow": true
+        }
+      },
+      "id": "ad0bc8202513",
+      "name": "exec_send",
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.1,
+      "position": [
+        560,
+        430
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const a = ($json.action||'').toString();\nreturn [{ json: { summary: `Unknown action '${a}'. Check the tool's action list.` } }];"
+      },
+      "id": "41d67907170b",
+      "name": "Unknown",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        560,
+        560
+      ]
+    }
+  ],
+  "connections": {
+    "Trigger": {
+      "main": [
+        [
+          {
+            "node": "Route by action",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Route by action": {
+      "main": [
+        [
+          {
+            "node": "exec_search",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "exec_read",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "exec_draft",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "exec_send",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Unknown",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  }
+}

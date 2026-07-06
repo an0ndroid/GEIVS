@@ -1,1 +1,150 @@
-{"updatedAt":"2026-07-05T21:53:08.272Z","createdAt":"2026-07-05T21:53:08.272Z","id":"GQEFJsmfPAOmRYtL","name":"Jeeves Tool - Contact Lookup","description":null,"active":true,"isArchived":false,"nodes":[{"parameters":{"inputSource":"passthrough"},"id":"trigger-trg","name":"Trigger","type":"n8n-nodes-base.executeWorkflowTrigger","typeVersion":1.1,"position":[0,0]},{"parameters":{"url":"https://people.googleapis.com/v1/people:searchContacts","authentication":"predefinedCredentialType","nodeCredentialType":"googleOAuth2Api","options":{},"sendQuery":true,"queryParameters":{"parameters":[{"name":"query","value":""},{"name":"readMask","value":"names,emailAddresses,phoneNumbers"}]}},"id":"cl-warm","name":"Warmup","type":"n8n-nodes-base.httpRequest","typeVersion":4.2,"position":[240,0],"credentials":{"googleOAuth2Api":{"id":"googlemulti01","name":"Google (Docs/Sheets/Tasks/Contacts/YouTube)"}},"onError":"continueRegularOutput","alwaysOutputData":true},{"parameters":{"url":"https://people.googleapis.com/v1/people:searchContacts","authentication":"predefinedCredentialType","nodeCredentialType":"googleOAuth2Api","options":{},"sendQuery":true,"queryParameters":{"parameters":[{"name":"query","value":"={{ $('Trigger').first().json.query }}"},{"name":"readMask","value":"names,emailAddresses,phoneNumbers"},{"name":"pageSize","value":"5"}]}},"id":"cl-search","name":"Search","type":"n8n-nodes-base.httpRequest","typeVersion":4.2,"position":[480,0],"credentials":{"googleOAuth2Api":{"id":"googlemulti01","name":"Google (Docs/Sheets/Tasks/Contacts/YouTube)"}},"onError":"continueRegularOutput","alwaysOutputData":true},{"parameters":{"mode":"runOnceForAllItems","jsCode":"const res=($input.first().json.results)||[];\nif(!res.length) return [{json:{summary:'No contact found matching that name.'}}];\nconst lines=res.slice(0,5).map((r,i)=>{\n  const p=r.person||{};\n  const name=(p.names&&p.names[0]&&p.names[0].displayName)||'(no name)';\n  const email=(p.emailAddresses&&p.emailAddresses[0]&&p.emailAddresses[0].value)||'no email';\n  const phone=(p.phoneNumbers&&p.phoneNumbers[0]&&p.phoneNumbers[0].value)||'';\n  return (i+1)+'. '+name+' — '+email+(phone?' — '+phone:'');\n});\nreturn [{json:{summary:res.length+' match(es):\\n'+lines.join('\\n')}}];"},"id":"cl-fmt","name":"Format","type":"n8n-nodes-base.code","typeVersion":2,"position":[720,0],"alwaysOutputData":true}],"connections":{"Trigger":{"main":[[{"node":"Warmup","type":"main","index":0}]]},"Warmup":{"main":[[{"node":"Search","type":"main","index":0}]]},"Search":{"main":[[{"node":"Format","type":"main","index":0}]]}},"settings":{"executionOrder":"v1"},"staticData":null,"meta":null,"nodeGroups":[],"pinData":null,"versionId":"75c6a045-464a-4331-9907-923d29c37241","activeVersionId":"75c6a045-464a-4331-9907-923d29c37241","versionCounter":1,"triggerCount":0,"sourceWorkflowId":null,"shared":[{"updatedAt":"2026-07-05T21:53:08.274Z","createdAt":"2026-07-05T21:53:08.274Z","role":"workflow:owner","workflowId":"GQEFJsmfPAOmRYtL","projectId":"3zeb0nZhOgw0YQIO","project":{"updatedAt":"2026-06-22T21:50:39.765Z","createdAt":"2026-06-22T20:18:13.120Z","id":"3zeb0nZhOgw0YQIO","name":"Richard Vickers <{{OWNER_CALENDAR_EMAIL}}>","type":"personal","icon":null,"description":null,"customTelemetryTags":[],"creatorId":"c06e9f36-d5fe-4bba-a51c-dfbab46a64fe"}}],"tags":[],"activeVersion":{"updatedAt":"2026-07-05T21:53:08.276Z","createdAt":"2026-07-05T21:53:08.276Z","versionId":"75c6a045-464a-4331-9907-923d29c37241","workflowId":"GQEFJsmfPAOmRYtL","nodes":[{"parameters":{"inputSource":"passthrough"},"id":"trigger-trg","name":"Trigger","type":"n8n-nodes-base.executeWorkflowTrigger","typeVersion":1.1,"position":[0,0]},{"parameters":{"url":"https://people.googleapis.com/v1/people:searchContacts","authentication":"predefinedCredentialType","nodeCredentialType":"googleOAuth2Api","options":{},"sendQuery":true,"queryParameters":{"parameters":[{"name":"query","value":""},{"name":"readMask","value":"names,emailAddresses,phoneNumbers"}]}},"id":"cl-warm","name":"Warmup","type":"n8n-nodes-base.httpRequest","typeVersion":4.2,"position":[240,0],"credentials":{"googleOAuth2Api":{"id":"googlemulti01","name":"Google (Docs/Sheets/Tasks/Contacts/YouTube)"}},"onError":"continueRegularOutput","alwaysOutputData":true},{"parameters":{"url":"https://people.googleapis.com/v1/people:searchContacts","authentication":"predefinedCredentialType","nodeCredentialType":"googleOAuth2Api","options":{},"sendQuery":true,"queryParameters":{"parameters":[{"name":"query","value":"={{ $('Trigger').first().json.query }}"},{"name":"readMask","value":"names,emailAddresses,phoneNumbers"},{"name":"pageSize","value":"5"}]}},"id":"cl-search","name":"Search","type":"n8n-nodes-base.httpRequest","typeVersion":4.2,"position":[480,0],"credentials":{"googleOAuth2Api":{"id":"googlemulti01","name":"Google (Docs/Sheets/Tasks/Contacts/YouTube)"}},"onError":"continueRegularOutput","alwaysOutputData":true},{"parameters":{"mode":"runOnceForAllItems","jsCode":"const res=($input.first().json.results)||[];\nif(!res.length) return [{json:{summary:'No contact found matching that name.'}}];\nconst lines=res.slice(0,5).map((r,i)=>{\n  const p=r.person||{};\n  const name=(p.names&&p.names[0]&&p.names[0].displayName)||'(no name)';\n  const email=(p.emailAddresses&&p.emailAddresses[0]&&p.emailAddresses[0].value)||'no email';\n  const phone=(p.phoneNumbers&&p.phoneNumbers[0]&&p.phoneNumbers[0].value)||'';\n  return (i+1)+'. '+name+' — '+email+(phone?' — '+phone:'');\n});\nreturn [{json:{summary:res.length+' match(es):\\n'+lines.join('\\n')}}];"},"id":"cl-fmt","name":"Format","type":"n8n-nodes-base.code","typeVersion":2,"position":[720,0],"alwaysOutputData":true}],"connections":{"Trigger":{"main":[[{"node":"Warmup","type":"main","index":0}]]},"Warmup":{"main":[[{"node":"Search","type":"main","index":0}]]},"Search":{"main":[[{"node":"Format","type":"main","index":0}]]}},"nodeGroups":[],"authors":"Richard Vickers","name":null,"description":null,"autosaved":false,"workflowPublishHistory":[{"createdAt":"2026-07-05T21:53:08.334Z","id":127,"workflowId":"GQEFJsmfPAOmRYtL","versionId":"75c6a045-464a-4331-9907-923d29c37241","event":"activated","userId":"c06e9f36-d5fe-4bba-a51c-dfbab46a64fe"}]}}
+{
+  "id": "GQEFJsmfPAOmRYtL",
+  "name": "Jeeves Tool - Contact Lookup",
+  "nodes": [
+    {
+      "parameters": {
+        "inputSource": "passthrough"
+      },
+      "id": "trigger-trg",
+      "name": "Trigger",
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "typeVersion": 1.1,
+      "position": [
+        0,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "url": "https://people.googleapis.com/v1/people:searchContacts",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleOAuth2Api",
+        "options": {},
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "query",
+              "value": ""
+            },
+            {
+              "name": "readMask",
+              "value": "names,emailAddresses,phoneNumbers"
+            }
+          ]
+        }
+      },
+      "id": "cl-warm",
+      "name": "Warmup",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        240,
+        0
+      ],
+      "credentials": {
+        "googleOAuth2Api": {
+          "id": "googlemulti01",
+          "name": "Google (Docs/Sheets/Tasks/Contacts/YouTube)"
+        }
+      },
+      "onError": "continueRegularOutput",
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "url": "https://people.googleapis.com/v1/people:searchContacts",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleOAuth2Api",
+        "options": {},
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "query",
+              "value": "={{ $('Trigger').first().json.query }}"
+            },
+            {
+              "name": "readMask",
+              "value": "names,emailAddresses,phoneNumbers"
+            },
+            {
+              "name": "pageSize",
+              "value": "5"
+            }
+          ]
+        }
+      },
+      "id": "cl-search",
+      "name": "Search",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        480,
+        0
+      ],
+      "credentials": {
+        "googleOAuth2Api": {
+          "id": "googlemulti01",
+          "name": "Google (Docs/Sheets/Tasks/Contacts/YouTube)"
+        }
+      },
+      "onError": "continueRegularOutput",
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const res=($input.first().json.results)||[];\nif(!res.length) return [{json:{summary:'No contact found matching that name.'}}];\nconst lines=res.slice(0,5).map((r,i)=>{\n  const p=r.person||{};\n  const name=(p.names&&p.names[0]&&p.names[0].displayName)||'(no name)';\n  const email=(p.emailAddresses&&p.emailAddresses[0]&&p.emailAddresses[0].value)||'no email';\n  const phone=(p.phoneNumbers&&p.phoneNumbers[0]&&p.phoneNumbers[0].value)||'';\n  return (i+1)+'. '+name+' \u2014 '+email+(phone?' \u2014 '+phone:'');\n});\nreturn [{json:{summary:res.length+' match(es):\\n'+lines.join('\\n')}}];"
+      },
+      "id": "cl-fmt",
+      "name": "Format",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        720,
+        0
+      ],
+      "alwaysOutputData": true
+    }
+  ],
+  "connections": {
+    "Trigger": {
+      "main": [
+        [
+          {
+            "node": "Warmup",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Warmup": {
+      "main": [
+        [
+          {
+            "node": "Search",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Search": {
+      "main": [
+        [
+          {
+            "node": "Format",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  }
+}

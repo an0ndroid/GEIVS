@@ -1,1 +1,194 @@
-{"updatedAt":"2026-07-03T18:47:13.748Z","createdAt":"2026-07-03T18:47:13.748Z","id":"jeevescalbk1","name":"Jeeves - Calendar Backend","description":null,"active":true,"isArchived":false,"nodes":[{"parameters":{"httpMethod":"POST","path":"jeeves-cal-get","responseMode":"responseNode","options":{}},"id":"c1111111-1111-4111-8111-111111111111","name":"Cal Get Webhook","type":"n8n-nodes-base.webhook","typeVersion":2,"position":[0,200],"webhookId":"9f1fcf51-1b04-4038-9c21-39edc60573a3"},{"parameters":{"url":"https://www.googleapis.com/calendar/v3/calendars/{{OWNER_CALENDAR_EMAIL_URLENC}}/events","authentication":"predefinedCredentialType","nodeCredentialType":"googleApi","sendQuery":true,"queryParameters":{"parameters":[{"name":"singleEvents","value":"true"},{"name":"orderBy","value":"startTime"},{"name":"timeMin","value":"={{ $json.body.timeMin }}"},{"name":"timeMax","value":"={{ $json.body.timeMax }}"},{"name":"maxResults","value":"25"}]},"options":{}},"id":"c2222222-2222-4222-8222-222222222222","name":"Calendar Get","type":"n8n-nodes-base.httpRequest","typeVersion":4.2,"position":[260,200],"onError":"continueRegularOutput","alwaysOutputData":true,"credentials":{"googleApi":{"id":"dRaetinoQyffjWEJ","name":"Google Service Account account"}}},{"parameters":{"respondWith":"json","responseBody":"={{ { \"ok\": true, \"events\": ($json.items || []).map(e => ({ start: (e.start && (e.start.dateTime || e.start.date)) || null, summary: e.summary || \"(no title)\" })) } }}","options":{}},"id":"c3333333-3333-4333-8333-333333333333","name":"Respond Get","type":"n8n-nodes-base.respondToWebhook","typeVersion":1.1,"position":[520,200]},{"parameters":{"httpMethod":"POST","path":"jeeves-cal-create","responseMode":"responseNode","options":{}},"id":"c4444444-4444-4444-8444-444444444444","name":"Cal Create Webhook","type":"n8n-nodes-base.webhook","typeVersion":2,"position":[0,460],"webhookId":"ac0de051-c383-4ad7-adf9-e2bdd656e987"},{"parameters":{"method":"POST","url":"https://www.googleapis.com/calendar/v3/calendars/{{OWNER_CALENDAR_EMAIL_URLENC}}/events","authentication":"predefinedCredentialType","nodeCredentialType":"googleApi","sendBody":true,"specifyBody":"json","jsonBody":"={{ JSON.stringify({ summary: $json.body.summary, start: { dateTime: $json.body.start, timeZone: \"America/Chicago\" }, end: { dateTime: $json.body.end, timeZone: \"America/Chicago\" } }) }}","options":{}},"id":"c5555555-5555-4555-8555-555555555555","name":"Calendar Create","type":"n8n-nodes-base.httpRequest","typeVersion":4.2,"position":[260,460],"credentials":{"googleApi":{"id":"dRaetinoQyffjWEJ","name":"Google Service Account account"}}},{"parameters":{"respondWith":"json","responseBody":"={{ { \"ok\": true } }}","options":{}},"id":"c6666666-6666-4666-8666-666666666666","name":"Respond Create","type":"n8n-nodes-base.respondToWebhook","typeVersion":1.1,"position":[520,460]}],"connections":{"Cal Get Webhook":{"main":[[{"node":"Calendar Get","type":"main","index":0}]]},"Calendar Get":{"main":[[{"node":"Respond Get","type":"main","index":0}]]},"Cal Create Webhook":{"main":[[{"node":"Calendar Create","type":"main","index":0}]]},"Calendar Create":{"main":[[{"node":"Respond Create","type":"main","index":0}]]}},"settings":{"executionOrder":"v1"},"staticData":null,"meta":null,"nodeGroups":[],"pinData":null,"versionId":"ef7e09ba-96eb-4579-b73a-bc8d3a0e4af3","activeVersionId":"ef7e09ba-96eb-4579-b73a-bc8d3a0e4af3","versionCounter":1,"triggerCount":2,"sourceWorkflowId":null,"shared":[{"updatedAt":"2026-07-03T18:47:13.750Z","createdAt":"2026-07-03T18:47:13.750Z","role":"workflow:owner","workflowId":"jeevescalbk1","projectId":"3zeb0nZhOgw0YQIO","project":{"updatedAt":"2026-06-22T21:50:39.765Z","createdAt":"2026-06-22T20:18:13.120Z","id":"3zeb0nZhOgw0YQIO","name":"Richard Vickers <{{OWNER_CALENDAR_EMAIL}}>","type":"personal","icon":null,"description":null,"customTelemetryTags":[],"creatorId":"c06e9f36-d5fe-4bba-a51c-dfbab46a64fe"}}],"tags":[],"activeVersion":{"updatedAt":"2026-07-03T18:47:13.751Z","createdAt":"2026-07-03T18:47:13.751Z","versionId":"ef7e09ba-96eb-4579-b73a-bc8d3a0e4af3","workflowId":"jeevescalbk1","nodes":[{"parameters":{"httpMethod":"POST","path":"jeeves-cal-get","responseMode":"responseNode","options":{}},"id":"c1111111-1111-4111-8111-111111111111","name":"Cal Get Webhook","type":"n8n-nodes-base.webhook","typeVersion":2,"position":[0,200],"webhookId":"9f1fcf51-1b04-4038-9c21-39edc60573a3"},{"parameters":{"url":"https://www.googleapis.com/calendar/v3/calendars/{{OWNER_CALENDAR_EMAIL_URLENC}}/events","authentication":"predefinedCredentialType","nodeCredentialType":"googleApi","sendQuery":true,"queryParameters":{"parameters":[{"name":"singleEvents","value":"true"},{"name":"orderBy","value":"startTime"},{"name":"timeMin","value":"={{ $json.body.timeMin }}"},{"name":"timeMax","value":"={{ $json.body.timeMax }}"},{"name":"maxResults","value":"25"}]},"options":{}},"id":"c2222222-2222-4222-8222-222222222222","name":"Calendar Get","type":"n8n-nodes-base.httpRequest","typeVersion":4.2,"position":[260,200],"onError":"continueRegularOutput","alwaysOutputData":true,"credentials":{"googleApi":{"id":"dRaetinoQyffjWEJ","name":"Google Service Account account"}}},{"parameters":{"respondWith":"json","responseBody":"={{ { \"ok\": true, \"events\": ($json.items || []).map(e => ({ start: (e.start && (e.start.dateTime || e.start.date)) || null, summary: e.summary || \"(no title)\" })) } }}","options":{}},"id":"c3333333-3333-4333-8333-333333333333","name":"Respond Get","type":"n8n-nodes-base.respondToWebhook","typeVersion":1.1,"position":[520,200]},{"parameters":{"httpMethod":"POST","path":"jeeves-cal-create","responseMode":"responseNode","options":{}},"id":"c4444444-4444-4444-8444-444444444444","name":"Cal Create Webhook","type":"n8n-nodes-base.webhook","typeVersion":2,"position":[0,460],"webhookId":"ac0de051-c383-4ad7-adf9-e2bdd656e987"},{"parameters":{"method":"POST","url":"https://www.googleapis.com/calendar/v3/calendars/{{OWNER_CALENDAR_EMAIL_URLENC}}/events","authentication":"predefinedCredentialType","nodeCredentialType":"googleApi","sendBody":true,"specifyBody":"json","jsonBody":"={{ JSON.stringify({ summary: $json.body.summary, start: { dateTime: $json.body.start, timeZone: \"America/Chicago\" }, end: { dateTime: $json.body.end, timeZone: \"America/Chicago\" } }) }}","options":{}},"id":"c5555555-5555-4555-8555-555555555555","name":"Calendar Create","type":"n8n-nodes-base.httpRequest","typeVersion":4.2,"position":[260,460],"credentials":{"googleApi":{"id":"dRaetinoQyffjWEJ","name":"Google Service Account account"}}},{"parameters":{"respondWith":"json","responseBody":"={{ { \"ok\": true } }}","options":{}},"id":"c6666666-6666-4666-8666-666666666666","name":"Respond Create","type":"n8n-nodes-base.respondToWebhook","typeVersion":1.1,"position":[520,460]}],"connections":{"Cal Get Webhook":{"main":[[{"node":"Calendar Get","type":"main","index":0}]]},"Calendar Get":{"main":[[{"node":"Respond Get","type":"main","index":0}]]},"Cal Create Webhook":{"main":[[{"node":"Calendar Create","type":"main","index":0}]]},"Calendar Create":{"main":[[{"node":"Respond Create","type":"main","index":0}]]}},"nodeGroups":[],"authors":"import","name":null,"description":null,"autosaved":false,"workflowPublishHistory":[]}}
+{
+  "id": "jeevescalbk1",
+  "name": "Jeeves - Calendar Backend",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "jeeves-cal-get",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "c1111111-1111-4111-8111-111111111111",
+      "name": "Cal Get Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        0,
+        200
+      ],
+      "webhookId": "9f1fcf51-1b04-4038-9c21-39edc60573a3"
+    },
+    {
+      "parameters": {
+        "url": "https://www.googleapis.com/calendar/v3/calendars/{{OWNER_CALENDAR_EMAIL_URLENC}}/events",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleApi",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "singleEvents",
+              "value": "true"
+            },
+            {
+              "name": "orderBy",
+              "value": "startTime"
+            },
+            {
+              "name": "timeMin",
+              "value": "={{ $json.body.timeMin }}"
+            },
+            {
+              "name": "timeMax",
+              "value": "={{ $json.body.timeMax }}"
+            },
+            {
+              "name": "maxResults",
+              "value": "25"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "c2222222-2222-4222-8222-222222222222",
+      "name": "Calendar Get",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        260,
+        200
+      ],
+      "onError": "continueRegularOutput",
+      "alwaysOutputData": true,
+      "credentials": {
+        "googleApi": {
+          "id": "dRaetinoQyffjWEJ",
+          "name": "Google Service Account account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ { \"ok\": true, \"events\": ($json.items || []).map(e => ({ start: (e.start && (e.start.dateTime || e.start.date)) || null, summary: e.summary || \"(no title)\" })) } }}",
+        "options": {}
+      },
+      "id": "c3333333-3333-4333-8333-333333333333",
+      "name": "Respond Get",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        520,
+        200
+      ]
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "jeeves-cal-create",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "c4444444-4444-4444-8444-444444444444",
+      "name": "Cal Create Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        0,
+        460
+      ],
+      "webhookId": "ac0de051-c383-4ad7-adf9-e2bdd656e987"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://www.googleapis.com/calendar/v3/calendars/{{OWNER_CALENDAR_EMAIL_URLENC}}/events",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleApi",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ summary: $json.body.summary, start: { dateTime: $json.body.start, timeZone: \"America/Chicago\" }, end: { dateTime: $json.body.end, timeZone: \"America/Chicago\" } }) }}",
+        "options": {}
+      },
+      "id": "c5555555-5555-4555-8555-555555555555",
+      "name": "Calendar Create",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        260,
+        460
+      ],
+      "credentials": {
+        "googleApi": {
+          "id": "dRaetinoQyffjWEJ",
+          "name": "Google Service Account account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ { \"ok\": true } }}",
+        "options": {}
+      },
+      "id": "c6666666-6666-4666-8666-666666666666",
+      "name": "Respond Create",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        520,
+        460
+      ]
+    }
+  ],
+  "connections": {
+    "Cal Get Webhook": {
+      "main": [
+        [
+          {
+            "node": "Calendar Get",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Calendar Get": {
+      "main": [
+        [
+          {
+            "node": "Respond Get",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Cal Create Webhook": {
+      "main": [
+        [
+          {
+            "node": "Calendar Create",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Calendar Create": {
+      "main": [
+        [
+          {
+            "node": "Respond Create",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  }
+}

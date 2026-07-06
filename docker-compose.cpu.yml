@@ -328,6 +328,7 @@ services:
       - openwebui
     volumes:
       - ./nginx/geivs.conf:/etc/nginx/conf.d/default.conf:ro
+      - ./dashboard:/usr/share/nginx/dashboard:ro
       - nginx_certs:/etc/nginx/certs
     ports:
       - "80:80"

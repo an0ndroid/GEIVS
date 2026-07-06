@@ -1,1 +1,1144 @@
-{"updatedAt":"2026-07-06T03:23:08.199Z","createdAt":"2026-07-05T02:09:29.815Z","id":"jeevesagent2","name":"Jeeves - Agent v2","description":null,"active":true,"isArchived":false,"nodes":[{"parameters":{"httpMethod":"POST","path":"jeeves","responseMode":"onReceived","options":{}},"id":"b1111111-1111-4111-8111-111111111111","name":"Webhook","type":"n8n-nodes-base.webhook","typeVersion":2,"position":[0,300],"webhookId":"6c0cbdf3-cb5d-49b0-9ce5-57e9da9f9e7f"},{"parameters":{"promptType":"define","text":"={{ $json.body.message }}","options":{"systemMessage":"=Reasoning: low\n\nYou are Jeeves, Richard's private GEIVS butler. You talk to Richard over Signal on his phone, so keep every reply short and in PLAIN TEXT only. No markdown, no asterisks, no bullet characters, no headings, no code fences.\n\nThe current server date and time is {{ $now }} and the server clock runs in UTC. Treat this as the authoritative current time.\n\nWHAT YOU CAN DO (capabilities overview). When Richard asks what you can do, for help, or what your capabilities are, reply with a short friendly version of THIS list in plain language, grouped — do NOT call a tool to answer that:\n- Email: read, search, summarise, draft, and send his Gmail.\n- Calendar: check his schedule and create events.\n- Reminders: set reminders delivered to him on Signal.\n- Facebook & Instagram (PC Guru): performance insights, recent posts, comments, ad summaries; and draft posts / comments / ad changes for his approval.\n- X / Twitter (@{{X_HANDLE}}): read tweets, and draft tweets for his approval.\n- Google Docs & Sheets: create and read documents and spreadsheets.\n- Google Tasks: list, add, and complete his to-dos.\n- Google Contacts: look people up by name (email & phone).\n- YouTube: report his channel stats.\n- Square (PC Guru): sales & revenue reports, customer lookup, invoice status, and catalog; and draft invoices for your approval — he can never refund, charge, or send money.\nPost/comment/tweet/ad actions are always DRAFT-first and need his approval; email/calendar/tasks/docs act directly. If asked for something with no tool, say so honestly.\n\nHOW YOUR TOOLS WORK: each tool covers a whole domain and takes an \"action\" argument that selects what to do, plus the arguments that action needs. Always set action to one of the listed values, then supply that action's arguments.\n\nYour tools:\n- email — action = search | read | draft | send.\n    search (arg q, e.g. is:unread or newer_than:1d): returns matching messages WITH sender and subject already, usually enough to answer in one call.\n    read (arg id): read one message's sender and subject by id.\n    draft (args to, subject, body): create a DRAFT email. Use by DEFAULT when Richard asks to write or compose an email.\n    send (args to, subject, body): actually SEND. Only use when Richard EXPLICITLY says to send it.\n- calendar — action = list | create.\n    list (args timeMin, timeMax in ISO8601 UTC ending in Z): look up events in that window.\n    create (args summary, start, end in ISO8601 UTC ending in Z): add an event.\n- set_reminder (args due, text): schedule a one-off Signal reminder. due is absolute ISO8601 UTC ending in Z; convert natural-language times to absolute UTC first.\n- meta — Facebook Page \"PC guru\" + Instagram @{{INSTAGRAM_HANDLE}}. action = insights | recent_posts | read_comments | ads_summary | draft_post | list_drafts | publish_draft | draft_reply | draft_ad_change.\n    insights: performance summary (followers, page views, engagement, ad spend). Read-only.\n    recent_posts: the latest Facebook and Instagram posts. Read-only.\n    read_comments: recent comments on the latest FB/IG posts. Read-only.\n    ads_summary: current ad campaigns and spend. Read-only.\n    draft_post (args platform = facebook|instagram|both, message, optional image_url): STAGE a post as a pending draft. Does NOT publish.\n    list_drafts: list pending drafts with their ids.\n    publish_draft (arg id): publish a specific staged draft by id.\n    draft_reply (args platform, target, message): STAGE a reply to a comment/post. Does not publish.\n    draft_ad_change (args ad_action = pause|resume|budget, target, value, level): STAGE an ad change. Does not apply until approved.\n- social_x — X (Twitter) account @{{X_HANDLE}}. action = read | draft | list_drafts | publish.\n    read (optional arg query): no query = your own recent tweets; a query = keyword search. Read-only.\n    draft (arg text, <=280 chars): STAGE a tweet as a pending draft. Does NOT post.\n    list_drafts: list pending tweet drafts with their ids.\n    publish (arg id): post a specific staged draft by id.\n- google_docs — action = create | read.\n    create (args title, optional body): create a Google Doc; always give Richard the returned link.\n    read (arg doc = a doc id or title): read a Google Doc's text.\n- google_sheets — action = create | read.\n    create (args title, optional headers = comma-separated): create a Google Sheet; always give Richard the returned link.\n    read (args id = spreadsheet id, optional range = A1 range, default A1:Z20): read a sheet's cells.\n- google_tasks — action = list | add | complete.\n    list: list Richard's open Google Tasks with due dates.\n    add (args title, optional notes, optional due as ISO8601 UTC ending in Z): add a task.\n    complete (arg title): mark an open task complete by matching its title.\n- contact_lookup (arg query): look up a contact by name; returns name, email and phone.\n- youtube_stats: read-only stats for Richard's YouTube channel \"PC Guru\". No arguments.\n- square — business \"PC Guru\", USD. action = sales | customers | invoices | catalog | draft_invoice | publish_invoice.\n    sales (arg period = today|week|month): sales/revenue. Read-only.\n    customers (arg query): find a customer by name/email/phone. Read-only.\n    invoices (optional arg status): list invoices and their statuses. Read-only.\n    catalog (optional arg name): list catalog items and prices. Read-only.\n    draft_invoice (args customer incl. email, amount in dollars, note): STAGE an invoice as a pending draft. Does NOT create anything in Square.\n    publish_invoice (arg id): create a specific staged draft in Square as a DRAFT, by id.\n\nOnly say you have done something after the matching tool call has actually succeeded and returned data. If a tool returns no useful answer, be honest and say so rather than inventing a result. If asked for something you have no tool for, say honestly that you cannot do that yet. Be warm but brief. Never print the words 'Calling <tool>' or raw tool JSON to the user — either use a tool or reply in plain language.\n\nEMAIL RULES (follow exactly):\n- To answer ANY email question (today's mail, recent, unread, from someone), you MUST call email with action=search FIRST. Use q like \"newer_than:1d\" for today, \"is:unread\" for unread, \"from:name\" for a sender.\n- NEVER call email action=read with an id you did not just receive from a search result. NEVER invent, guess, or reuse an example id. Real Gmail ids are short hex (e.g. 19f292ddd38fa947), never UUIDs.\n- If a search returns no ids, say so plainly; do not fabricate a read.\n- Map time words to the search q EXACTLY: \"today\"->q=\"newer_than:1d\", \"recent\"/\"lately\"->q=\"newer_than:3d\", \"this week\"->q=\"newer_than:7d\", \"unread\"->q=\"is:unread\". Do NOT use date: or after: queries.\n- Email is draft by default: use action=draft, never action=send unless Richard explicitly says send. Before drafting or sending, confirm the recipient, subject and a short body back to Richard in your reply.\n\nSOCIAL RULE — META (follow exactly): NEVER publish a post or comment, and NEVER change an ad, without Richard explicitly approving a specific draft id. When Richard asks to post, comment, or change an ad, use meta with the matching draft_* action, then tell him the draft is staged and give him the draft id to approve. Only use meta action=publish_draft with a draft id Richard has explicitly approved. Reads (insights, recent_posts, read_comments, ads_summary) need no approval.\n\nSOCIAL RULE — X (follow exactly): NEVER post a tweet (or any public content) without Richard explicitly approving a specific draft id. When Richard asks to tweet or post, use social_x action=draft, then tell him the draft is staged and give him the draft id to approve. Only use social_x action=publish with a draft id Richard has explicitly approved. Reads (action=read) need no approval.\n\nGOOGLE RULE (follow exactly): google_docs, google_sheets, google_tasks and contact_lookup are Richard's own private data — act on them directly with NO approval and NO draft step. After creating a Doc or Sheet, always give Richard the link. youtube_stats is read-only.\n\nSQUARE RULE (follow exactly): sales, customers, invoices and catalog reads are direct and need no approval. Invoicing is draft-then-approve: when Richard wants to invoice/bill someone, ALWAYS use square action=draft_invoice first, then tell him the draft is staged and give him the draft id. Only use square action=publish_invoice with a draft id Richard has EXPLICITLY approved; it only ever creates a Square DRAFT that Richard reviews and sends himself. You can NEVER refund, charge, capture, take a payment, or send money or an invoice — if asked, say so plainly and tell Richard to do it himself in Square.\n","maxIterations":10}},"id":"b2222222-2222-4222-8222-222222222222","name":"Jeeves Agent","type":"@n8n/n8n-nodes-langchain.agent","typeVersion":3.1,"position":[280,300]},{"parameters":{"model":"gpt-oss:20b","options":{"temperature":0.3}},"id":"b3333333-3333-4333-8333-333333333333","name":"Ollama Chat Model","type":"@n8n/n8n-nodes-langchain.lmChatOllama","typeVersion":1,"position":[120,540],"credentials":{"ollamaApi":{"id":"jeevesollama1","name":"Jeeves Ollama (172.17.0.1 bridge)"}}},{"parameters":{"sessionIdType":"customKey","sessionKey":"={{ $json.body.sender }}","contextWindowLength":10},"id":"b4444444-4444-4444-8444-444444444444","name":"Window Memory","type":"@n8n/n8n-nodes-langchain.memoryBufferWindow","typeVersion":1.4,"position":[320,540]},{"parameters":{"method":"POST","url":"http://172.17.0.1:8765/send","sendBody":true,"specifyBody":"json","jsonBody":"={{ JSON.stringify({ message: $json.output }) }}","options":{}},"id":"bc222222-2222-4222-8222-222222222222","name":"Send to Signal","type":"n8n-nodes-base.httpRequest","typeVersion":4.2,"position":[620,300]},{"parameters":{"name":"email","description":"Richard's Gmail. Set action = search | read | draft | send. search (arg q, e.g. is:unread or newer_than:1d) returns matching messages WITH sender+subject (usually enough to answer in one call). read (arg id). draft (args to, subject, body) is the DEFAULT for composing email. send (args to, subject, body) only when Richard explicitly says send.","workflowId":{"__rl":true,"value":"Biiz4PiKMFGGmOuI","mode":"id","cachedResultName":"Jeeves Domain - Email"},"workflowInputs":{"mappingMode":"defineBelow","value":{"action":"={{ $fromAI('action', \"One of: search, read, draft, send\", 'string') }}","q":"={{ $fromAI('q', \"Gmail search query, e.g. is:unread or newer_than:1d\", 'string') }}","id":"={{ $fromAI('id', \"Gmail message id from a prior search\", 'string') }}","to":"={{ $fromAI('to', \"recipient email\", 'string') }}","subject":"={{ $fromAI('subject', \"email subject\", 'string') }}","body":"={{ $fromAI('body', \"email body\", 'string') }}"},"schema":[{"id":"action","displayName":"action","required":false,"defaultMatch":false,"display":true,"canBeUsedToMatch":true,"type":"string","removed":false},{"id":"q","displayName":"q","required":false,"defaultMatch":false,"display":true,"canBeUsedToMatch":true,"type":"string","removed":false},{"id":"id","displayName":"id","required":false,"defaultMatch":false,"display":true,"canBeUsedToMatch":true,"type":"string","removed":false},{"id":"to","displayName":"to","required":false,"defaultMatch":false,"display":true,"canBeUsedToMatch":true,"type":"string","removed":false},{"id":"subject","displayName":"subject","required":false,"defaultMatch":false,"display":true,"canBeUsedToMatch":true,"type":"string","removed":false},{"id":"body","displayName":"body","required":false,"defaultMatch":false,"display":true,"canBeUsedToMatch":true,"type":"string","removed":false}],"matchingColumns":[],"attemptToConvertTypes":false,"convertFieldsToString":false}},"id":"eea40931d3c5","name":"email","type":"@n8n/n8n-nodes-langchain.toolWorkflow","typeVersion":2,"position":[400,600]},{"parameters":{"name":"calendar","description":"Google Calendar. Set action = list | create. list (args timeMin, timeMax as ISO8601 UTC ending in Z) looks up events. create (args summary, start, end as ISO8601 UTC ending in Z) adds an event.","workflowId":{"__rl":true,"value":"KzWdcShOrjbkZi3k","mode":"id","cachedResultName":"Jeeves Domain - Calendar"},"workflowInputs":{"mappingMode":"defineBelow","value":{"action":"={{ $fromAI('action', \"One of: list, create\", 'string') }}","timeMin":"={{ $fromAI('timeMin', \"window start ISO8601 UTC Z\", 'string') }}","timeMax":"={{ $fromAI('timeMax', \"window end ISO8601 UTC Z\", 'string') }}","summary":"={{ $fromAI('summary', \"event title\", 'string') }}","start":"={{ $fromAI('start', \"event start ISO8601 UTC Z\", 'string') }}","end":"={{ $fromAI('end', \"event end ISO8601 UTC Z\", 'string') }}"},"schema":[{"id":"action","displayName":"action","required":false,"defaultMatch":false,"display":true,"canBeUsedToMatch":true,"type":"string","removed":false},{"id":"timeMin","displayName":"timeMin","required":false,"defaultMatch":false,"display":true,"canBeUsedToMatch":true,"type":"string","removed":false},{"id":"timeMax","displayName":"timeMax","required":false,"defaultMatch":false,"display":true,"canBeUsedToMatch":true,"type":"string","removed":false},{"id":"summary","displayName":"summary","required":false,"defaultMatch":false,"display":true,"canBeUsedToMatch":true,"type":"string","removed":false},{"id":"start","displayName":"start","required":false,"defaultMatch":false,"display":true,"canBeUsedToMatch":true,"type":"string","removed":false},{"id":"end","displayName":"end","required":false,"defaultMatch":false,"display":true,"canBeUsedToMatch":true,"type":"string","removed":false}],"matchingColumns":[],"attemptToConvertTypes":false,"convertFieldsToString":false}},"id":"8167a40ea7fe","name":"calendar","type":"@n8n/n8n-nodes-langchain.toolWorkflow","typeVersion":2,"position":[620,600]},{"parameters":{"name":"meta","description":"Facebook Page + Instagram (PC Guru). Set action = insights | recent_posts | read_comments | ads_summary (all read-only) | draft_post (platform=facebook|instagram|both, message, image_url) | list_drafts | publish_draft (id) | draft_reply (platform, target, message) | draft_ad_change (ad_action=pause|resume|budget, target, value, level). Posting/replies/ad changes are DRAFT-first; only publish_draft an id Richard approved.","workflowId":{"__rl":true,"value":"LIhJejhMTgvgAaPv","mode":"id","cachedResultName":"Jeeves Domain - Meta"},"workflowInputs":{"mappingMode":"defineBelow","value":{"action":"={{ $fromAI('action', \"One of: insights, recent_posts, read_comments, ads_summary, draft_post, list_drafts, publish_draft, draft_reply, draft_ad_change\", 'string') }}","platform":"={{ $fromAI('platform', \"facebook, instagram, or both\", 'string') }}","message":"={{ $fromAI('message', \"post or reply text\", 'string') }}","image_url":"={{ $fromAI('image_url', \"optional image url for a post\", 'string') }}","id":"={{ $fromAI('id', \"draft id to publish\", 'string') }}","target":"={{ $fromAI('target', \"comment/post id or ad target\", 'string') }}","ad_action":"={{ $fromAI('ad_action', \"for draft_ad_change: pause, resume, or budget\", 'string') }}","value":"={{ $fromAI('value', \"new value, e.g. budget amount\", 'string') }}","level":"={{ $fromAI('level', \"ad level, e.g. campaign or adset\", 'string') }}"},"schema":[{"id":"action","displayName":"action","required":false,"defaultMatch":false,"display":true,"canBeUsedToMatch":true,"type":"string","removed":false},{"id":"platform","displayName":"platform","required":false,"defaultMatch":false,"display":true,"canBeUsedToMatch":true,"type":"string","removed":false},{"id":"message","displayName":"message","required":false,"defaultMatch":false,"display":true,"canBeUsedToMatch":true,"type":"string","removed":false},{"id":"image_url","displayName":"image_url","required":false,"defaultMatch":false,"display":true,"canBeUsedToMatch":true,"type":"string","removed":false},{"id":"id","displayName":"id","required":false,"defaultMatch":false,"display":true,"canBeUsedToMatch":true,"type":"string","removed":false},{"id":"target","displayName":"target","required":false,"defaultMatch":false,"display":true,"canBeUsedToMatch":true,"type":"string","removed":false},{"id":"ad_action","displayName":"ad_action","required":false,"defaultMatch":false,"display":true,"canBeUsedToMatch":true,"type":"string","removed":false},{"id":"value","displayName":"value","required":false,"defaultMatch":false,"display":true,"canBeUsedToMatch":true,"type":"string","removed":false},{"id":"level","displayName":"level","required":false,"defaultMatch":false,"display":true,"canBeUsedToMatch":true,"type":"string","removed":false}],"matchingColumns":[],"attemptToConvertTypes":false,"convertFieldsToString":false}},"id":"c8028270b138","name":"meta","type":"@n8n/n8n-nodes-langchain.toolWorkflow","typeVersion":2,"position":[840,600]},{"parameters":{"name":"social_x","description":"X/Twitter @{{X_HANDLE}}. Set action = read | draft | list_drafts | publish. read (optional query; no query = your own recent tweets) is read-only. draft (arg text, <=280 chars) stages a tweet. publish (arg id) posts an approved draft. Posting is DRAFT-first.","workflowId":{"__rl":true,"value":"rqTNAh00Mxxy1Tq3","mode":"id","cachedResultName":"Jeeves Domain - Social X"},"workflowInputs":{"mappingMode":"defineBelow","value":{"action":"={{ $fromAI('action', \"One of: read, draft, list_drafts, publish\", 'string') }}","query":"={{ $fromAI('query', \"optional keyword search for read\", 'string') }}","text":"={{ $fromAI('text', \"tweet text, <=280 chars\", 'string') }}","id":"={{ $fromAI('id', \"draft id to publish\", 'string') }}"},"schema":[{"id":"action","displayName":"action","required":false,"defaultMatch":false,"display":true,"canBeUsedToMatch":true,"type":"string","removed":false},{"id":"query","displayName":"query","required":false,"defaultMatch":false,"display":true,"canBeUsedToMatch":true,"type":"string","removed":false},{"id":"text","displayName":"text","required":false,"defaultMatch":false,"display":true,"canBeUsedToMatch":true,"type":"string","removed":false},{"id":"id","displayName":"id","required":false,"defaultMatch":false,"display":true,"canBeUsedToMatch":true,"type":"string","removed":false}],"matchingColumns":[],"attemptToConvertTypes":false,"convertFieldsToString":false}},"id":"7d1dbc80cdd7","name":"social_x","type":"@n8n/n8n-nodes-langchain.toolWorkflow","typeVersion":2,"position":[1060,600]},{"parameters":{"name":"google_docs","description":"Google Docs. Set action = create | read. create (args title, optional body) returns a link. read (arg doc = a doc id or title) returns the text.","workflowId":{"__rl":true,"value":"IKd1Yx0kfPoR8qA4","mode":"id","cachedResultName":"Jeeves Domain - Google Docs"},"workflowInputs":{"mappingMode":"defineBelow","value":{"action":"={{ $fromAI('action', \"One of: create, read\", 'string') }}","title":"={{ $fromAI('title', \"doc title\", 'string') }}","body":"={{ $fromAI('body', \"doc body text\", 'string') }}","doc":"={{ $fromAI('doc', \"doc id or title to read\", 'string') }}"},"schema":[{"id":"action","displayName":"action","required":false,"defaultMatch":false,"display":true,"canBeUsedToMatch":true,"type":"string","removed":false},{"id":"title","displayName":"title","required":false,"defaultMatch":false,"display":true,"canBeUsedToMatch":true,"type":"string","removed":false},{"id":"body","displayName":"body","required":false,"defaultMatch":false,"display":true,"canBeUsedToMatch":true,"type":"string","removed":false},{"id":"doc","displayName":"doc","required":false,"defaultMatch":false,"display":true,"canBeUsedToMatch":true,"type":"string","removed":false}],"matchingColumns":[],"attemptToConvertTypes":false,"convertFieldsToString":false}},"id":"30b952d36112","name":"google_docs","type":"@n8n/n8n-nodes-langchain.toolWorkflow","typeVersion":2,"position":[1280,600]},{"parameters":{"name":"google_sheets","description":"Google Sheets. Set action = create | read. create (args title, optional headers comma-separated) returns a link. read (args id = spreadsheet id, optional range default A1:Z20) returns cells.","workflowId":{"__rl":true,"value":"GtfJgpU44okgdcGj","mode":"id","cachedResultName":"Jeeves Domain - Google Sheets"},"workflowInputs":{"mappingMode":"defineBelow","value":{"action":"={{ $fromAI('action', \"One of: create, read\", 'string') }}","title":"={{ $fromAI('title', \"sheet title\", 'string') }}","headers":"={{ $fromAI('headers', \"comma-separated header row\", 'string') }}","id":"={{ $fromAI('id', \"spreadsheet id to read\", 'string') }}","range":"={{ $fromAI('range', \"A1 range, default A1:Z20\", 'string') }}"},"schema":[{"id":"action","displayName":"action","required":false,"defaultMatch":false,"display":true,"canBeUsedToMatch":true,"type":"string","removed":false},{"id":"title","displayName":"title","required":false,"defaultMatch":false,"display":true,"canBeUsedToMatch":true,"type":"string","removed":false},{"id":"headers","displayName":"headers","required":false,"defaultMatch":false,"display":true,"canBeUsedToMatch":true,"type":"string","removed":false},{"id":"id","displayName":"id","required":false,"defaultMatch":false,"display":true,"canBeUsedToMatch":true,"type":"string","removed":false},{"id":"range","displayName":"range","required":false,"defaultMatch":false,"display":true,"canBeUsedToMatch":true,"type":"string","removed":false}],"matchingColumns":[],"attemptToConvertTypes":false,"convertFieldsToString":false}},"id":"35de2cd5b0ae","name":"google_sheets","type":"@n8n/n8n-nodes-langchain.toolWorkflow","typeVersion":2,"position":[1500,600]},{"parameters":{"name":"google_tasks","description":"Google Tasks. Set action = list | add | complete. list shows open tasks. add (args title, optional notes, optional due ISO8601 UTC Z). complete (arg title) marks a task done by matching its title.","workflowId":{"__rl":true,"value":"xzLhx3Hoovkdy6Zp","mode":"id","cachedResultName":"Jeeves Domain - Google Tasks"},"workflowInputs":{"mappingMode":"defineBelow","value":{"action":"={{ $fromAI('action', \"One of: list, add, complete\", 'string') }}","title":"={{ $fromAI('title', \"task title\", 'string') }}","notes":"={{ $fromAI('notes', \"optional task notes\", 'string') }}","due":"={{ $fromAI('due', \"optional due ISO8601 UTC Z\", 'string') }}"},"schema":[{"id":"action","displayName":"action","required":false,"defaultMatch":false,"display":true,"canBeUsedToMatch":true,"type":"string","removed":false},{"id":"title","displayName":"title","required":false,"defaultMatch":false,"display":true,"canBeUsedToMatch":true,"type":"string","removed":false},{"id":"notes","displayName":"notes","required":false,"defaultMatch":false,"display":true,"canBeUsedToMatch":true,"type":"string","removed":false},{"id":"due","displayName":"due","required":false,"defaultMatch":false,"display":true,"canBeUsedToMatch":true,"type":"string","removed":false}],"matchingColumns":[],"attemptToConvertTypes":false,"convertFieldsToString":false}},"id":"ae6be1071887","name":"google_tasks","type":"@n8n/n8n-nodes-langchain.toolWorkflow","typeVersion":2,"position":[400,780]},{"parameters":{"name":"square","description":"Square business PC Guru (USD). Set action = sales (period=today|week|month) | customers (query) | invoices (status) | catalog (name) — all read-only — | draft_invoice (customer incl email, amount in dollars, note) DRAFT-first | publish_invoice (id) creates a Square DRAFT from an approved draft id. NEVER moves money.","workflowId":{"__rl":true,"value":"h3BsnLgupJvFrmqd","mode":"id","cachedResultName":"Jeeves Domain - Square"},"workflowInputs":{"mappingMode":"defineBelow","value":{"action":"={{ $fromAI('action', \"One of: sales, customers, invoices, catalog, draft_invoice, publish_invoice\", 'string') }}","period":"={{ $fromAI('period', \"today, week, or month\", 'string') }}","query":"={{ $fromAI('query', \"customer search text\", 'string') }}","status":"={{ $fromAI('status', \"invoice status filter, e.g. UNPAID\", 'string') }}","name":"={{ $fromAI('name', \"catalog item name filter\", 'string') }}","customer":"={{ $fromAI('customer', \"customer name incl email for invoice\", 'string') }}","amount":"={{ $fromAI('amount', \"invoice amount in dollars\", 'string') }}","note":"={{ $fromAI('note', \"invoice note\", 'string') }}","id":"={{ $fromAI('id', \"draft id to publish\", 'string') }}"},"schema":[{"id":"action","displayName":"action","required":false,"defaultMatch":false,"display":true,"canBeUsedToMatch":true,"type":"string","removed":false},{"id":"period","displayName":"period","required":false,"defaultMatch":false,"display":true,"canBeUsedToMatch":true,"type":"string","removed":false},{"id":"query","displayName":"query","required":false,"defaultMatch":false,"display":true,"canBeUsedToMatch":true,"type":"string","removed":false},{"id":"status","displayName":"status","required":false,"defaultMatch":false,"display":true,"canBeUsedToMatch":true,"type":"string","removed":false},{"id":"name","displayName":"name","required":false,"defaultMatch":false,"display":true,"canBeUsedToMatch":true,"type":"string","removed":false},{"id":"customer","displayName":"customer","required":false,"defaultMatch":false,"display":true,"canBeUsedToMatch":true,"type":"string","removed":false},{"id":"amount","displayName":"amount","required":false,"defaultMatch":false,"display":true,"canBeUsedToMatch":true,"type":"string","removed":false},{"id":"note","displayName":"note","required":false,"defaultMatch":false,"display":true,"canBeUsedToMatch":true,"type":"string","removed":false},{"id":"id","displayName":"id","required":false,"defaultMatch":false,"display":true,"canBeUsedToMatch":true,"type":"string","removed":false}],"matchingColumns":[],"attemptToConvertTypes":false,"convertFieldsToString":false}},"id":"b816d2a45912","name":"square","type":"@n8n/n8n-nodes-langchain.toolWorkflow","typeVersion":2,"position":[620,780]},{"parameters":{"name":"set_reminder","description":"Schedule a one-off reminder sent to Richard on Signal at a chosen time. Provide: due, text.","workflowId":{"__rl":true,"value":"jeevestremind1","mode":"id","cachedResultName":"Jeeves Tool - Reminder"},"workflowInputs":{"mappingMode":"defineBelow","value":{"due":"={{ $fromAI('due', \"When to fire, absolute ISO8601 UTC ending in Z\", 'string') }}","text":"={{ $fromAI('text', \"What to remind Richard about\", 'string') }}"},"schema":[{"id":"due","displayName":"due","required":false,"defaultMatch":false,"display":true,"canBeUsedToMatch":true,"type":"string","removed":false},{"id":"text","displayName":"text","required":false,"defaultMatch":false,"display":true,"canBeUsedToMatch":true,"type":"string","removed":false}],"matchingColumns":[],"attemptToConvertTypes":false,"convertFieldsToString":false}},"id":"tool-jeevestremind1","name":"set_reminder","type":"@n8n/n8n-nodes-langchain.toolWorkflow","typeVersion":2,"position":[840,780]},{"parameters":{"name":"contact_lookup","description":"Look up a contact by name in Richard's Google Contacts. Returns name, email and phone. Provide: query.","workflowId":{"__rl":true,"value":"GQEFJsmfPAOmRYtL","mode":"id","cachedResultName":"Jeeves Tool - Contact Lookup"},"workflowInputs":{"mappingMode":"defineBelow","value":{"query":"={{ $fromAI('query', \"The name (or part of it) to search contacts for\", 'string') }}"},"schema":[{"id":"query","displayName":"query","required":false,"defaultMatch":false,"display":true,"canBeUsedToMatch":true,"type":"string","removed":false}],"matchingColumns":[],"attemptToConvertTypes":false,"convertFieldsToString":false}},"id":"tool-GQEFJsmfPAOmRYtL","name":"contact_lookup","type":"@n8n/n8n-nodes-langchain.toolWorkflow","typeVersion":2,"position":[1060,780]},{"parameters":{"name":"youtube_stats","description":"Read-only stats for Richard's YouTube channel 'PC Guru' (subscribers, views, video count, recent uploads). No input needed.","workflowId":{"__rl":true,"value":"v3DiiikjrsgFxDUy","mode":"id","cachedResultName":"Jeeves Tool - YouTube Stats"},"workflowInputs":{"mappingMode":"defineBelow","value":{},"schema":[],"matchingColumns":[],"attemptToConvertTypes":false,"convertFieldsToString":false}},"id":"tool-v3DiiikjrsgFxDUy","name":"youtube_stats","type":"@n8n/n8n-nodes-langchain.toolWorkflow","typeVersion":2,"position":[1280,780]}],"connections":{"Webhook":{"main":[[{"node":"Jeeves Agent","type":"main","index":0}]]},"Jeeves Agent":{"main":[[{"node":"Send to Signal","type":"main","index":0}]]},"Ollama Chat Model":{"ai_languageModel":[[{"node":"Jeeves Agent","type":"ai_languageModel","index":0}]]},"Window Memory":{"ai_memory":[[{"node":"Jeeves Agent","type":"ai_memory","index":0}]]},"social_x":{"ai_tool":[[{"node":"Jeeves Agent","type":"ai_tool","index":0}]]},"google_sheets":{"ai_tool":[[{"node":"Jeeves Agent","type":"ai_tool","index":0}]]},"set_reminder":{"ai_tool":[[{"node":"Jeeves Agent","type":"ai_tool","index":0}]]},"meta":{"ai_tool":[[{"node":"Jeeves Agent","type":"ai_tool","index":0}]]},"google_tasks":{"ai_tool":[[{"node":"Jeeves Agent","type":"ai_tool","index":0}]]},"calendar":{"ai_tool":[[{"node":"Jeeves Agent","type":"ai_tool","index":0}]]},"youtube_stats":{"ai_tool":[[{"node":"Jeeves Agent","type":"ai_tool","index":0}]]},"email":{"ai_tool":[[{"node":"Jeeves Agent","type":"ai_tool","index":0}]]},"contact_lookup":{"ai_tool":[[{"node":"Jeeves Agent","type":"ai_tool","index":0}]]},"google_docs":{"ai_tool":[[{"node":"Jeeves Agent","type":"ai_tool","index":0}]]},"square":{"ai_tool":[[{"node":"Jeeves Agent","type":"ai_tool","index":0}]]}},"settings":{"executionOrder":"v1"},"staticData":null,"meta":null,"nodeGroups":[],"pinData":null,"versionId":"21b34445-e0d9-4cce-a009-e3fabe0ea4a3","activeVersionId":"21b34445-e0d9-4cce-a009-e3fabe0ea4a3","versionCounter":13,"triggerCount":1,"sourceWorkflowId":null,"shared":[{"updatedAt":"2026-07-05T02:09:29.818Z","createdAt":"2026-07-05T02:09:29.818Z","role":"workflow:owner","workflowId":"jeevesagent2","projectId":"3zeb0nZhOgw0YQIO","project":{"updatedAt":"2026-06-22T21:50:39.765Z","createdAt":"2026-06-22T20:18:13.120Z","id":"3zeb0nZhOgw0YQIO","name":"Richard Vickers <{{OWNER_CALENDAR_EMAIL}}>","type":"personal","icon":null,"description":null,"customTelemetryTags":[],"creatorId":"c06e9f36-d5fe-4bba-a51c-dfbab46a64fe"}}],"tags":[],"activeVersion":{"updatedAt":"2026-07-06T03:23:08.200Z","createdAt":"2026-07-06T03:23:08.200Z","versionId":"21b34445-e0d9-4cce-a009-e3fabe0ea4a3","workflowId":"jeevesagent2","nodes":[{"parameters":{"httpMethod":"POST","path":"jeeves","responseMode":"onReceived","options":{}},"id":"b1111111-1111-4111-8111-111111111111","name":"Webhook","type":"n8n-nodes-base.webhook","typeVersion":2,"position":[0,300],"webhookId":"6c0cbdf3-cb5d-49b0-9ce5-57e9da9f9e7f"},{"parameters":{"promptType":"define","text":"={{ $json.body.message }}","options":{"systemMessage":"=Reasoning: low\n\nYou are Jeeves, Richard's private GEIVS butler. You talk to Richard over Signal on his phone, so keep every reply short and in PLAIN TEXT only. No markdown, no asterisks, no bullet characters, no headings, no code fences.\n\nThe current server date and time is {{ $now }} and the server clock runs in UTC. Treat this as the authoritative current time.\n\nWHAT YOU CAN DO (capabilities overview). When Richard asks what you can do, for help, or what your capabilities are, reply with a short friendly version of THIS list in plain language, grouped — do NOT call a tool to answer that:\n- Email: read, search, summarise, draft, and send his Gmail.\n- Calendar: check his schedule and create events.\n- Reminders: set reminders delivered to him on Signal.\n- Facebook & Instagram (PC Guru): performance insights, recent posts, comments, ad summaries; and draft posts / comments / ad changes for his approval.\n- X / Twitter (@{{X_HANDLE}}): read tweets, and draft tweets for his approval.\n- Google Docs & Sheets: create and read documents and spreadsheets.\n- Google Tasks: list, add, and complete his to-dos.\n- Google Contacts: look people up by name (email & phone).\n- YouTube: report his channel stats.\n- Square (PC Guru): sales & revenue reports, customer lookup, invoice status, and catalog; and draft invoices for your approval — he can never refund, charge, or send money.\nPost/comment/tweet/ad actions are always DRAFT-first and need his approval; email/calendar/tasks/docs act directly. If asked for something with no tool, say so honestly.\n\nHOW YOUR TOOLS WORK: each tool covers a whole domain and takes an \"action\" argument that selects what to do, plus the arguments that action needs. Always set action to one of the listed values, then supply that action's arguments.\n\nYour tools:\n- email — action = search | read | draft | send.\n    search (arg q, e.g. is:unread or newer_than:1d): returns matching messages WITH sender and subject already, usually enough to answer in one call.\n    read (arg id): read one message's sender and subject by id.\n    draft (args to, subject, body): create a DRAFT email. Use by DEFAULT when Richard asks to write or compose an email.\n    send (args to, subject, body): actually SEND. Only use when Richard EXPLICITLY says to send it.\n- calendar — action = list | create.\n    list (args timeMin, timeMax in ISO8601 UTC ending in Z): look up events in that window.\n    create (args summary, start, end in ISO8601 UTC ending in Z): add an event.\n- set_reminder (args due, text): schedule a one-off Signal reminder. due is absolute ISO8601 UTC ending in Z; convert natural-language times to absolute UTC first.\n- meta — Facebook Page \"PC guru\" + Instagram @{{INSTAGRAM_HANDLE}}. action = insights | recent_posts | read_comments | ads_summary | draft_post | list_drafts | publish_draft | draft_reply | draft_ad_change.\n    insights: performance summary (followers, page views, engagement, ad spend). Read-only.\n    recent_posts: the latest Facebook and Instagram posts. Read-only.\n    read_comments: recent comments on the latest FB/IG posts. Read-only.\n    ads_summary: current ad campaigns and spend. Read-only.\n    draft_post (args platform = facebook|instagram|both, message, optional image_url): STAGE a post as a pending draft. Does NOT publish.\n    list_drafts: list pending drafts with their ids.\n    publish_draft (arg id): publish a specific staged draft by id.\n    draft_reply (args platform, target, message): STAGE a reply to a comment/post. Does not publish.\n    draft_ad_change (args ad_action = pause|resume|budget, target, value, level): STAGE an ad change. Does not apply until approved.\n- social_x — X (Twitter) account @{{X_HANDLE}}. action = read | draft | list_drafts | publish.\n    read (optional arg query): no query = your own recent tweets; a query = keyword search. Read-only.\n    draft (arg text, <=280 chars): STAGE a tweet as a pending draft. Does NOT post.\n    list_drafts: list pending tweet drafts with their ids.\n    publish (arg id): post a specific staged draft by id.\n- google_docs — action = create | read.\n    create (args title, optional body): create a Google Doc; always give Richard the returned link.\n    read (arg doc = a doc id or title): read a Google Doc's text.\n- google_sheets — action = create | read.\n    create (args title, optional headers = comma-separated): create a Google Sheet; always give Richard the returned link.\n    read (args id = spreadsheet id, optional range = A1 range, default A1:Z20): read a sheet's cells.\n- google_tasks — action = list | add | complete.\n    list: list Richard's open Google Tasks with due dates.\n    add (args title, optional notes, optional due as ISO8601 UTC ending in Z): add a task.\n    complete (arg title): mark an open task complete by matching its title.\n- contact_lookup (arg query): look up a contact by name; returns name, email and phone.\n- youtube_stats: read-only stats for Richard's YouTube channel \"PC Guru\". No arguments.\n- square — business \"PC Guru\", USD. action = sales | customers | invoices | catalog | draft_invoice | publish_invoice.\n    sales (arg period = today|week|month): sales/revenue. Read-only.\n    customers (arg query): find a customer by name/email/phone. Read-only.\n    invoices (optional arg status): list invoices and their statuses. Read-only.\n    catalog (optional arg name): list catalog items and prices. Read-only.\n    draft_invoice (args customer incl. email, amount in dollars, note): STAGE an invoice as a pending draft. Does NOT create anything in Square.\n    publish_invoice (arg id): create a specific staged draft in Square as a DRAFT, by id.\n\nOnly say you have done something after the matching tool call has actually succeeded and returned data. If a tool returns no useful answer, be honest and say so rather than inventing a result. If asked for something you have no tool for, say honestly that you cannot do that yet. Be warm but brief. Never print the words 'Calling <tool>' or raw tool JSON to the user — either use a tool or reply in plain language.\n\nEMAIL RULES (follow exactly):\n- To answer ANY email question (today's mail, recent, unread, from someone), you MUST call email with action=search FIRST. Use q like \"newer_than:1d\" for today, \"is:unread\" for unread, \"from:name\" for a sender.\n- NEVER call email action=read with an id you did not just receive from a search result. NEVER invent, guess, or reuse an example id. Real Gmail ids are short hex (e.g. 19f292ddd38fa947), never UUIDs.\n- If a search returns no ids, say so plainly; do not fabricate a read.\n- Map time words to the search q EXACTLY: \"today\"->q=\"newer_than:1d\", \"recent\"/\"lately\"->q=\"newer_than:3d\", \"this week\"->q=\"newer_than:7d\", \"unread\"->q=\"is:unread\". Do NOT use date: or after: queries.\n- Email is draft by default: use action=draft, never action=send unless Richard explicitly says send. Before drafting or sending, confirm the recipient, subject and a short body back to Richard in your reply.\n\nSOCIAL RULE — META (follow exactly): NEVER publish a post or comment, and NEVER change an ad, without Richard explicitly approving a specific draft id. When Richard asks to post, comment, or change an ad, use meta with the matching draft_* action, then tell him the draft is staged and give him the draft id to approve. Only use meta action=publish_draft with a draft id Richard has explicitly approved. Reads (insights, recent_posts, read_comments, ads_summary) need no approval.\n\nSOCIAL RULE — X (follow exactly): NEVER post a tweet (or any public content) without Richard explicitly approving a specific draft id. When Richard asks to tweet or post, use social_x action=draft, then tell him the draft is staged and give him the draft id to approve. Only use social_x action=publish with a draft id Richard has explicitly approved. Reads (action=read) need no approval.\n\nGOOGLE RULE (follow exactly): google_docs, google_sheets, google_tasks and contact_lookup are Richard's own private data — act on them directly with NO approval and NO draft step. After creating a Doc or Sheet, always give Richard the link. youtube_stats is read-only.\n\nSQUARE RULE (follow exactly): sales, customers, invoices and catalog reads are direct and need no approval. Invoicing is draft-then-approve: when Richard wants to invoice/bill someone, ALWAYS use square action=draft_invoice first, then tell him the draft is staged and give him the draft id. Only use square action=publish_invoice with a draft id Richard has EXPLICITLY approved; it only ever creates a Square DRAFT that Richard reviews and sends himself. You can NEVER refund, charge, capture, take a payment, or send money or an invoice — if asked, say so plainly and tell Richard to do it himself in Square.\n","maxIterations":10}},"id":"b2222222-2222-4222-8222-222222222222","name":"Jeeves Agent","type":"@n8n/n8n-nodes-langchain.agent","typeVersion":3.1,"position":[280,300]},{"parameters":{"model":"gpt-oss:20b","options":{"temperature":0.3}},"id":"b3333333-3333-4333-8333-333333333333","name":"Ollama Chat Model","type":"@n8n/n8n-nodes-langchain.lmChatOllama","typeVersion":1,"position":[120,540],"credentials":{"ollamaApi":{"id":"jeevesollama1","name":"Jeeves Ollama (172.17.0.1 bridge)"}}},{"parameters":{"sessionIdType":"customKey","sessionKey":"={{ $json.body.sender }}","contextWindowLength":10},"id":"b4444444-4444-4444-8444-444444444444","name":"Window Memory","type":"@n8n/n8n-nodes-langchain.memoryBufferWindow","typeVersion":1.4,"position":[320,540]},{"parameters":{"method":"POST","url":"http://172.17.0.1:8765/send","sendBody":true,"specifyBody":"json","jsonBody":"={{ JSON.stringify({ message: $json.output }) }}","options":{}},"id":"bc222222-2222-4222-8222-222222222222","name":"Send to Signal","type":"n8n-nodes-base.httpRequest","typeVersion":4.2,"position":[620,300]},{"parameters":{"name":"email","description":"Richard's Gmail. Set action = search | read | draft | send. search (arg q, e.g. is:unread or newer_than:1d) returns matching messages WITH sender+subject (usually enough to answer in one call). read (arg id). draft (args to, subject, body) is the DEFAULT for composing email. send (args to, subject, body) only when Richard explicitly says send.","workflowId":{"__rl":true,"value":"Biiz4PiKMFGGmOuI","mode":"id","cachedResultName":"Jeeves Domain - Email"},"workflowInputs":{"mappingMode":"defineBelow","value":{"action":"={{ $fromAI('action', \"One of: search, read, draft, send\", 'string') }}","q":"={{ $fromAI('q', \"Gmail search query, e.g. is:unread or newer_than:1d\", 'string') }}","id":"={{ $fromAI('id', \"Gmail message id from a prior search\", 'string') }}","to":"={{ $fromAI('to', \"recipient email\", 'string') }}","subject":"={{ $fromAI('subject', \"email subject\", 'string') }}","body":"={{ $fromAI('body', \"email body\", 'string') }}"},"schema":[{"id":"action","displayName":"action","required":false,"defaultMatch":false,"display":true,"canBeUsedToMatch":true,"type":"string","removed":false},{"id":"q","displayName":"q","required":false,"defaultMatch":false,"display":true,"canBeUsedToMatch":true,"type":"string","removed":false},{"id":"id","displayName":"id","required":false,"defaultMatch":false,"display":true,"canBeUsedToMatch":true,"type":"string","removed":false},{"id":"to","displayName":"to","required":false,"defaultMatch":false,"display":true,"canBeUsedToMatch":true,"type":"string","removed":false},{"id":"subject","displayName":"subject","required":false,"defaultMatch":false,"display":true,"canBeUsedToMatch":true,"type":"string","removed":false},{"id":"body","displayName":"body","required":false,"defaultMatch":false,"display":true,"canBeUsedToMatch":true,"type":"string","removed":false}],"matchingColumns":[],"attemptToConvertTypes":false,"convertFieldsToString":false}},"id":"eea40931d3c5","name":"email","type":"@n8n/n8n-nodes-langchain.toolWorkflow","typeVersion":2,"position":[400,600]},{"parameters":{"name":"calendar","description":"Google Calendar. Set action = list | create. list (args timeMin, timeMax as ISO8601 UTC ending in Z) looks up events. create (args summary, start, end as ISO8601 UTC ending in Z) adds an event.","workflowId":{"__rl":true,"value":"KzWdcShOrjbkZi3k","mode":"id","cachedResultName":"Jeeves Domain - Calendar"},"workflowInputs":{"mappingMode":"defineBelow","value":{"action":"={{ $fromAI('action', \"One of: list, create\", 'string') }}","timeMin":"={{ $fromAI('timeMin', \"window start ISO8601 UTC Z\", 'string') }}","timeMax":"={{ $fromAI('timeMax', \"window end ISO8601 UTC Z\", 'string') }}","summary":"={{ $fromAI('summary', \"event title\", 'string') }}","start":"={{ $fromAI('start', \"event start ISO8601 UTC Z\", 'string') }}","end":"={{ $fromAI('end', \"event end ISO8601 UTC Z\", 'string') }}"},"schema":[{"id":"action","displayName":"action","required":false,"defaultMatch":false,"display":true,"canBeUsedToMatch":true,"type":"string","removed":false},{"id":"timeMin","displayName":"timeMin","required":false,"defaultMatch":false,"display":true,"canBeUsedToMatch":true,"type":"string","removed":false},{"id":"timeMax","displayName":"timeMax","required":false,"defaultMatch":false,"display":true,"canBeUsedToMatch":true,"type":"string","removed":false},{"id":"summary","displayName":"summary","required":false,"defaultMatch":false,"display":true,"canBeUsedToMatch":true,"type":"string","removed":false},{"id":"start","displayName":"start","required":false,"defaultMatch":false,"display":true,"canBeUsedToMatch":true,"type":"string","removed":false},{"id":"end","displayName":"end","required":false,"defaultMatch":false,"display":true,"canBeUsedToMatch":true,"type":"string","removed":false}],"matchingColumns":[],"attemptToConvertTypes":false,"convertFieldsToString":false}},"id":"8167a40ea7fe","name":"calendar","type":"@n8n/n8n-nodes-langchain.toolWorkflow","typeVersion":2,"position":[620,600]},{"parameters":{"name":"meta","description":"Facebook Page + Instagram (PC Guru). Set action = insights | recent_posts | read_comments | ads_summary (all read-only) | draft_post (platform=facebook|instagram|both, message, image_url) | list_drafts | publish_draft (id) | draft_reply (platform, target, message) | draft_ad_change (ad_action=pause|resume|budget, target, value, level). Posting/replies/ad changes are DRAFT-first; only publish_draft an id Richard approved.","workflowId":{"__rl":true,"value":"LIhJejhMTgvgAaPv","mode":"id","cachedResultName":"Jeeves Domain - Meta"},"workflowInputs":{"mappingMode":"defineBelow","value":{"action":"={{ $fromAI('action', \"One of: insights, recent_posts, read_comments, ads_summary, draft_post, list_drafts, publish_draft, draft_reply, draft_ad_change\", 'string') }}","platform":"={{ $fromAI('platform', \"facebook, instagram, or both\", 'string') }}","message":"={{ $fromAI('message', \"post or reply text\", 'string') }}","image_url":"={{ $fromAI('image_url', \"optional image url for a post\", 'string') }}","id":"={{ $fromAI('id', \"draft id to publish\", 'string') }}","target":"={{ $fromAI('target', \"comment/post id or ad target\", 'string') }}","ad_action":"={{ $fromAI('ad_action', \"for draft_ad_change: pause, resume, or budget\", 'string') }}","value":"={{ $fromAI('value', \"new value, e.g. budget amount\", 'string') }}","level":"={{ $fromAI('level', \"ad level, e.g. campaign or adset\", 'string') }}"},"schema":[{"id":"action","displayName":"action","required":false,"defaultMatch":false,"display":true,"canBeUsedToMatch":true,"type":"string","removed":false},{"id":"platform","displayName":"platform","required":false,"defaultMatch":false,"display":true,"canBeUsedToMatch":true,"type":"string","removed":false},{"id":"message","displayName":"message","required":false,"defaultMatch":false,"display":true,"canBeUsedToMatch":true,"type":"string","removed":false},{"id":"image_url","displayName":"image_url","required":false,"defaultMatch":false,"display":true,"canBeUsedToMatch":true,"type":"string","removed":false},{"id":"id","displayName":"id","required":false,"defaultMatch":false,"display":true,"canBeUsedToMatch":true,"type":"string","removed":false},{"id":"target","displayName":"target","required":false,"defaultMatch":false,"display":true,"canBeUsedToMatch":true,"type":"string","removed":false},{"id":"ad_action","displayName":"ad_action","required":false,"defaultMatch":false,"display":true,"canBeUsedToMatch":true,"type":"string","removed":false},{"id":"value","displayName":"value","required":false,"defaultMatch":false,"display":true,"canBeUsedToMatch":true,"type":"string","removed":false},{"id":"level","displayName":"level","required":false,"defaultMatch":false,"display":true,"canBeUsedToMatch":true,"type":"string","removed":false}],"matchingColumns":[],"attemptToConvertTypes":false,"convertFieldsToString":false}},"id":"c8028270b138","name":"meta","type":"@n8n/n8n-nodes-langchain.toolWorkflow","typeVersion":2,"position":[840,600]},{"parameters":{"name":"social_x","description":"X/Twitter @{{X_HANDLE}}. Set action = read | draft | list_drafts | publish. read (optional query; no query = your own recent tweets) is read-only. draft (arg text, <=280 chars) stages a tweet. publish (arg id) posts an approved draft. Posting is DRAFT-first.","workflowId":{"__rl":true,"value":"rqTNAh00Mxxy1Tq3","mode":"id","cachedResultName":"Jeeves Domain - Social X"},"workflowInputs":{"mappingMode":"defineBelow","value":{"action":"={{ $fromAI('action', \"One of: read, draft, list_drafts, publish\", 'string') }}","query":"={{ $fromAI('query', \"optional keyword search for read\", 'string') }}","text":"={{ $fromAI('text', \"tweet text, <=280 chars\", 'string') }}","id":"={{ $fromAI('id', \"draft id to publish\", 'string') }}"},"schema":[{"id":"action","displayName":"action","required":false,"defaultMatch":false,"display":true,"canBeUsedToMatch":true,"type":"string","removed":false},{"id":"query","displayName":"query","required":false,"defaultMatch":false,"display":true,"canBeUsedToMatch":true,"type":"string","removed":false},{"id":"text","displayName":"text","required":false,"defaultMatch":false,"display":true,"canBeUsedToMatch":true,"type":"string","removed":false},{"id":"id","displayName":"id","required":false,"defaultMatch":false,"display":true,"canBeUsedToMatch":true,"type":"string","removed":false}],"matchingColumns":[],"attemptToConvertTypes":false,"convertFieldsToString":false}},"id":"7d1dbc80cdd7","name":"social_x","type":"@n8n/n8n-nodes-langchain.toolWorkflow","typeVersion":2,"position":[1060,600]},{"parameters":{"name":"google_docs","description":"Google Docs. Set action = create | read. create (args title, optional body) returns a link. read (arg doc = a doc id or title) returns the text.","workflowId":{"__rl":true,"value":"IKd1Yx0kfPoR8qA4","mode":"id","cachedResultName":"Jeeves Domain - Google Docs"},"workflowInputs":{"mappingMode":"defineBelow","value":{"action":"={{ $fromAI('action', \"One of: create, read\", 'string') }}","title":"={{ $fromAI('title', \"doc title\", 'string') }}","body":"={{ $fromAI('body', \"doc body text\", 'string') }}","doc":"={{ $fromAI('doc', \"doc id or title to read\", 'string') }}"},"schema":[{"id":"action","displayName":"action","required":false,"defaultMatch":false,"display":true,"canBeUsedToMatch":true,"type":"string","removed":false},{"id":"title","displayName":"title","required":false,"defaultMatch":false,"display":true,"canBeUsedToMatch":true,"type":"string","removed":false},{"id":"body","displayName":"body","required":false,"defaultMatch":false,"display":true,"canBeUsedToMatch":true,"type":"string","removed":false},{"id":"doc","displayName":"doc","required":false,"defaultMatch":false,"display":true,"canBeUsedToMatch":true,"type":"string","removed":false}],"matchingColumns":[],"attemptToConvertTypes":false,"convertFieldsToString":false}},"id":"30b952d36112","name":"google_docs","type":"@n8n/n8n-nodes-langchain.toolWorkflow","typeVersion":2,"position":[1280,600]},{"parameters":{"name":"google_sheets","description":"Google Sheets. Set action = create | read. create (args title, optional headers comma-separated) returns a link. read (args id = spreadsheet id, optional range default A1:Z20) returns cells.","workflowId":{"__rl":true,"value":"GtfJgpU44okgdcGj","mode":"id","cachedResultName":"Jeeves Domain - Google Sheets"},"workflowInputs":{"mappingMode":"defineBelow","value":{"action":"={{ $fromAI('action', \"One of: create, read\", 'string') }}","title":"={{ $fromAI('title', \"sheet title\", 'string') }}","headers":"={{ $fromAI('headers', \"comma-separated header row\", 'string') }}","id":"={{ $fromAI('id', \"spreadsheet id to read\", 'string') }}","range":"={{ $fromAI('range', \"A1 range, default A1:Z20\", 'string') }}"},"schema":[{"id":"action","displayName":"action","required":false,"defaultMatch":false,"display":true,"canBeUsedToMatch":true,"type":"string","removed":false},{"id":"title","displayName":"title","required":false,"defaultMatch":false,"display":true,"canBeUsedToMatch":true,"type":"string","removed":false},{"id":"headers","displayName":"headers","required":false,"defaultMatch":false,"display":true,"canBeUsedToMatch":true,"type":"string","removed":false},{"id":"id","displayName":"id","required":false,"defaultMatch":false,"display":true,"canBeUsedToMatch":true,"type":"string","removed":false},{"id":"range","displayName":"range","required":false,"defaultMatch":false,"display":true,"canBeUsedToMatch":true,"type":"string","removed":false}],"matchingColumns":[],"attemptToConvertTypes":false,"convertFieldsToString":false}},"id":"35de2cd5b0ae","name":"google_sheets","type":"@n8n/n8n-nodes-langchain.toolWorkflow","typeVersion":2,"position":[1500,600]},{"parameters":{"name":"google_tasks","description":"Google Tasks. Set action = list | add | complete. list shows open tasks. add (args title, optional notes, optional due ISO8601 UTC Z). complete (arg title) marks a task done by matching its title.","workflowId":{"__rl":true,"value":"xzLhx3Hoovkdy6Zp","mode":"id","cachedResultName":"Jeeves Domain - Google Tasks"},"workflowInputs":{"mappingMode":"defineBelow","value":{"action":"={{ $fromAI('action', \"One of: list, add, complete\", 'string') }}","title":"={{ $fromAI('title', \"task title\", 'string') }}","notes":"={{ $fromAI('notes', \"optional task notes\", 'string') }}","due":"={{ $fromAI('due', \"optional due ISO8601 UTC Z\", 'string') }}"},"schema":[{"id":"action","displayName":"action","required":false,"defaultMatch":false,"display":true,"canBeUsedToMatch":true,"type":"string","removed":false},{"id":"title","displayName":"title","required":false,"defaultMatch":false,"display":true,"canBeUsedToMatch":true,"type":"string","removed":false},{"id":"notes","displayName":"notes","required":false,"defaultMatch":false,"display":true,"canBeUsedToMatch":true,"type":"string","removed":false},{"id":"due","displayName":"due","required":false,"defaultMatch":false,"display":true,"canBeUsedToMatch":true,"type":"string","removed":false}],"matchingColumns":[],"attemptToConvertTypes":false,"convertFieldsToString":false}},"id":"ae6be1071887","name":"google_tasks","type":"@n8n/n8n-nodes-langchain.toolWorkflow","typeVersion":2,"position":[400,780]},{"parameters":{"name":"square","description":"Square business PC Guru (USD). Set action = sales (period=today|week|month) | customers (query) | invoices (status) | catalog (name) — all read-only — | draft_invoice (customer incl email, amount in dollars, note) DRAFT-first | publish_invoice (id) creates a Square DRAFT from an approved draft id. NEVER moves money.","workflowId":{"__rl":true,"value":"h3BsnLgupJvFrmqd","mode":"id","cachedResultName":"Jeeves Domain - Square"},"workflowInputs":{"mappingMode":"defineBelow","value":{"action":"={{ $fromAI('action', \"One of: sales, customers, invoices, catalog, draft_invoice, publish_invoice\", 'string') }}","period":"={{ $fromAI('period', \"today, week, or month\", 'string') }}","query":"={{ $fromAI('query', \"customer search text\", 'string') }}","status":"={{ $fromAI('status', \"invoice status filter, e.g. UNPAID\", 'string') }}","name":"={{ $fromAI('name', \"catalog item name filter\", 'string') }}","customer":"={{ $fromAI('customer', \"customer name incl email for invoice\", 'string') }}","amount":"={{ $fromAI('amount', \"invoice amount in dollars\", 'string') }}","note":"={{ $fromAI('note', \"invoice note\", 'string') }}","id":"={{ $fromAI('id', \"draft id to publish\", 'string') }}"},"schema":[{"id":"action","displayName":"action","required":false,"defaultMatch":false,"display":true,"canBeUsedToMatch":true,"type":"string","removed":false},{"id":"period","displayName":"period","required":false,"defaultMatch":false,"display":true,"canBeUsedToMatch":true,"type":"string","removed":false},{"id":"query","displayName":"query","required":false,"defaultMatch":false,"display":true,"canBeUsedToMatch":true,"type":"string","removed":false},{"id":"status","displayName":"status","required":false,"defaultMatch":false,"display":true,"canBeUsedToMatch":true,"type":"string","removed":false},{"id":"name","displayName":"name","required":false,"defaultMatch":false,"display":true,"canBeUsedToMatch":true,"type":"string","removed":false},{"id":"customer","displayName":"customer","required":false,"defaultMatch":false,"display":true,"canBeUsedToMatch":true,"type":"string","removed":false},{"id":"amount","displayName":"amount","required":false,"defaultMatch":false,"display":true,"canBeUsedToMatch":true,"type":"string","removed":false},{"id":"note","displayName":"note","required":false,"defaultMatch":false,"display":true,"canBeUsedToMatch":true,"type":"string","removed":false},{"id":"id","displayName":"id","required":false,"defaultMatch":false,"display":true,"canBeUsedToMatch":true,"type":"string","removed":false}],"matchingColumns":[],"attemptToConvertTypes":false,"convertFieldsToString":false}},"id":"b816d2a45912","name":"square","type":"@n8n/n8n-nodes-langchain.toolWorkflow","typeVersion":2,"position":[620,780]},{"parameters":{"name":"set_reminder","description":"Schedule a one-off reminder sent to Richard on Signal at a chosen time. Provide: due, text.","workflowId":{"__rl":true,"value":"jeevestremind1","mode":"id","cachedResultName":"Jeeves Tool - Reminder"},"workflowInputs":{"mappingMode":"defineBelow","value":{"due":"={{ $fromAI('due', \"When to fire, absolute ISO8601 UTC ending in Z\", 'string') }}","text":"={{ $fromAI('text', \"What to remind Richard about\", 'string') }}"},"schema":[{"id":"due","displayName":"due","required":false,"defaultMatch":false,"display":true,"canBeUsedToMatch":true,"type":"string","removed":false},{"id":"text","displayName":"text","required":false,"defaultMatch":false,"display":true,"canBeUsedToMatch":true,"type":"string","removed":false}],"matchingColumns":[],"attemptToConvertTypes":false,"convertFieldsToString":false}},"id":"tool-jeevestremind1","name":"set_reminder","type":"@n8n/n8n-nodes-langchain.toolWorkflow","typeVersion":2,"position":[840,780]},{"parameters":{"name":"contact_lookup","description":"Look up a contact by name in Richard's Google Contacts. Returns name, email and phone. Provide: query.","workflowId":{"__rl":true,"value":"GQEFJsmfPAOmRYtL","mode":"id","cachedResultName":"Jeeves Tool - Contact Lookup"},"workflowInputs":{"mappingMode":"defineBelow","value":{"query":"={{ $fromAI('query', \"The name (or part of it) to search contacts for\", 'string') }}"},"schema":[{"id":"query","displayName":"query","required":false,"defaultMatch":false,"display":true,"canBeUsedToMatch":true,"type":"string","removed":false}],"matchingColumns":[],"attemptToConvertTypes":false,"convertFieldsToString":false}},"id":"tool-GQEFJsmfPAOmRYtL","name":"contact_lookup","type":"@n8n/n8n-nodes-langchain.toolWorkflow","typeVersion":2,"position":[1060,780]},{"parameters":{"name":"youtube_stats","description":"Read-only stats for Richard's YouTube channel 'PC Guru' (subscribers, views, video count, recent uploads). No input needed.","workflowId":{"__rl":true,"value":"v3DiiikjrsgFxDUy","mode":"id","cachedResultName":"Jeeves Tool - YouTube Stats"},"workflowInputs":{"mappingMode":"defineBelow","value":{},"schema":[],"matchingColumns":[],"attemptToConvertTypes":false,"convertFieldsToString":false}},"id":"tool-v3DiiikjrsgFxDUy","name":"youtube_stats","type":"@n8n/n8n-nodes-langchain.toolWorkflow","typeVersion":2,"position":[1280,780]}],"connections":{"Webhook":{"main":[[{"node":"Jeeves Agent","type":"main","index":0}]]},"Jeeves Agent":{"main":[[{"node":"Send to Signal","type":"main","index":0}]]},"Ollama Chat Model":{"ai_languageModel":[[{"node":"Jeeves Agent","type":"ai_languageModel","index":0}]]},"Window Memory":{"ai_memory":[[{"node":"Jeeves Agent","type":"ai_memory","index":0}]]},"social_x":{"ai_tool":[[{"node":"Jeeves Agent","type":"ai_tool","index":0}]]},"google_sheets":{"ai_tool":[[{"node":"Jeeves Agent","type":"ai_tool","index":0}]]},"set_reminder":{"ai_tool":[[{"node":"Jeeves Agent","type":"ai_tool","index":0}]]},"meta":{"ai_tool":[[{"node":"Jeeves Agent","type":"ai_tool","index":0}]]},"google_tasks":{"ai_tool":[[{"node":"Jeeves Agent","type":"ai_tool","index":0}]]},"calendar":{"ai_tool":[[{"node":"Jeeves Agent","type":"ai_tool","index":0}]]},"youtube_stats":{"ai_tool":[[{"node":"Jeeves Agent","type":"ai_tool","index":0}]]},"email":{"ai_tool":[[{"node":"Jeeves Agent","type":"ai_tool","index":0}]]},"contact_lookup":{"ai_tool":[[{"node":"Jeeves Agent","type":"ai_tool","index":0}]]},"google_docs":{"ai_tool":[[{"node":"Jeeves Agent","type":"ai_tool","index":0}]]},"square":{"ai_tool":[[{"node":"Jeeves Agent","type":"ai_tool","index":0}]]}},"nodeGroups":[],"authors":"Richard Vickers","name":null,"description":null,"autosaved":false,"workflowPublishHistory":[{"createdAt":"2026-07-06T03:23:08.231Z","id":184,"workflowId":"jeevesagent2","versionId":"21b34445-e0d9-4cce-a009-e3fabe0ea4a3","event":"activated","userId":"c06e9f36-d5fe-4bba-a51c-dfbab46a64fe"},{"createdAt":"2026-07-06T03:23:08.220Z","id":183,"workflowId":"jeevesagent2","versionId":"21b34445-e0d9-4cce-a009-e3fabe0ea4a3","event":"deactivated","userId":"c06e9f36-d5fe-4bba-a51c-dfbab46a64fe"}]}}
+{
+  "id": "jeevesagent2",
+  "name": "Jeeves - Agent v2",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "jeeves",
+        "responseMode": "onReceived",
+        "options": {}
+      },
+      "id": "b1111111-1111-4111-8111-111111111111",
+      "name": "Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        0,
+        300
+      ],
+      "webhookId": "6c0cbdf3-cb5d-49b0-9ce5-57e9da9f9e7f"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $json.body.message }}",
+        "options": {
+          "systemMessage": "=Reasoning: low\n\nYou are Jeeves, Richard's private GEIVS butler. You talk to Richard over Signal on his phone, so keep every reply short and in PLAIN TEXT only. No markdown, no asterisks, no bullet characters, no headings, no code fences.\n\nThe current server date and time is {{ $now }} and the server clock runs in UTC. Treat this as the authoritative current time.\n\nWHAT YOU CAN DO (capabilities overview). When Richard asks what you can do, for help, or what your capabilities are, reply with a short friendly version of THIS list in plain language, grouped \u2014 do NOT call a tool to answer that:\n- Email: read, search, summarise, draft, and send his Gmail.\n- Calendar: check his schedule and create events.\n- Reminders: set reminders delivered to him on Signal.\n- Facebook & Instagram (PC Guru): performance insights, recent posts, comments, ad summaries; and draft posts / comments / ad changes for his approval.\n- X / Twitter (@{{X_HANDLE}}): read tweets, and draft tweets for his approval.\n- Google Docs & Sheets: create and read documents and spreadsheets.\n- Google Tasks: list, add, and complete his to-dos.\n- Google Contacts: look people up by name (email & phone).\n- YouTube: report his channel stats.\n- Square (PC Guru): sales & revenue reports, customer lookup, invoice status, and catalog; and draft invoices for your approval \u2014 he can never refund, charge, or send money.\nPost/comment/tweet/ad actions are always DRAFT-first and need his approval; email/calendar/tasks/docs act directly. If asked for something with no tool, say so honestly.\n\nHOW YOUR TOOLS WORK: each tool covers a whole domain and takes an \"action\" argument that selects what to do, plus the arguments that action needs. Always set action to one of the listed values, then supply that action's arguments.\n\nYour tools:\n- email \u2014 action = search | read | draft | send.\n    search (arg q, e.g. is:unread or newer_than:1d): returns matching messages WITH sender and subject already, usually enough to answer in one call.\n    read (arg id): read one message's sender and subject by id.\n    draft (args to, subject, body): create a DRAFT email. Use by DEFAULT when Richard asks to write or compose an email.\n    send (args to, subject, body): actually SEND. Only use when Richard EXPLICITLY says to send it.\n- calendar \u2014 action = list | create.\n    list (args timeMin, timeMax in ISO8601 UTC ending in Z): look up events in that window.\n    create (args summary, start, end in ISO8601 UTC ending in Z): add an event.\n- set_reminder (args due, text): schedule a one-off Signal reminder. due is absolute ISO8601 UTC ending in Z; convert natural-language times to absolute UTC first.\n- meta \u2014 Facebook Page \"PC guru\" + Instagram @{{INSTAGRAM_HANDLE}}. action = insights | recent_posts | read_comments | ads_summary | draft_post | list_drafts | publish_draft | draft_reply | draft_ad_change.\n    insights: performance summary (followers, page views, engagement, ad spend). Read-only.\n    recent_posts: the latest Facebook and Instagram posts. Read-only.\n    read_comments: recent comments on the latest FB/IG posts. Read-only.\n    ads_summary: current ad campaigns and spend. Read-only.\n    draft_post (args platform = facebook|instagram|both, message, optional image_url): STAGE a post as a pending draft. Does NOT publish.\n    list_drafts: list pending drafts with their ids.\n    publish_draft (arg id): publish a specific staged draft by id.\n    draft_reply (args platform, target, message): STAGE a reply to a comment/post. Does not publish.\n    draft_ad_change (args ad_action = pause|resume|budget, target, value, level): STAGE an ad change. Does not apply until approved.\n- social_x \u2014 X (Twitter) account @{{X_HANDLE}}. action = read | draft | list_drafts | publish.\n    read (optional arg query): no query = your own recent tweets; a query = keyword search. Read-only.\n    draft (arg text, <=280 chars): STAGE a tweet as a pending draft. Does NOT post.\n    list_drafts: list pending tweet drafts with their ids.\n    publish (arg id): post a specific staged draft by id.\n- google_docs \u2014 action = create | read.\n    create (args title, optional body): create a Google Doc; always give Richard the returned link.\n    read (arg doc = a doc id or title): read a Google Doc's text.\n- google_sheets \u2014 action = create | read.\n    create (args title, optional headers = comma-separated): create a Google Sheet; always give Richard the returned link.\n    read (args id = spreadsheet id, optional range = A1 range, default A1:Z20): read a sheet's cells.\n- google_tasks \u2014 action = list | add | complete.\n    list: list Richard's open Google Tasks with due dates.\n    add (args title, optional notes, optional due as ISO8601 UTC ending in Z): add a task.\n    complete (arg title): mark an open task complete by matching its title.\n- contact_lookup (arg query): look up a contact by name; returns name, email and phone.\n- youtube_stats: read-only stats for Richard's YouTube channel \"PC Guru\". No arguments.\n- square \u2014 business \"PC Guru\", USD. action = sales | customers | invoices | catalog | draft_invoice | publish_invoice.\n    sales (arg period = today|week|month): sales/revenue. Read-only.\n    customers (arg query): find a customer by name/email/phone. Read-only.\n    invoices (optional arg status): list invoices and their statuses. Read-only.\n    catalog (optional arg name): list catalog items and prices. Read-only.\n    draft_invoice (args customer incl. email, amount in dollars, note): STAGE an invoice as a pending draft. Does NOT create anything in Square.\n    publish_invoice (arg id): create a specific staged draft in Square as a DRAFT, by id.\n\nOnly say you have done something after the matching tool call has actually succeeded and returned data. If a tool returns no useful answer, be honest and say so rather than inventing a result. If asked for something you have no tool for, say honestly that you cannot do that yet. Be warm but brief. Never print the words 'Calling <tool>' or raw tool JSON to the user \u2014 either use a tool or reply in plain language.\n\nEMAIL RULES (follow exactly):\n- To answer ANY email question (today's mail, recent, unread, from someone), you MUST call email with action=search FIRST. Use q like \"newer_than:1d\" for today, \"is:unread\" for unread, \"from:name\" for a sender.\n- NEVER call email action=read with an id you did not just receive from a search result. NEVER invent, guess, or reuse an example id. Real Gmail ids are short hex (e.g. 19f292ddd38fa947), never UUIDs.\n- If a search returns no ids, say so plainly; do not fabricate a read.\n- Map time words to the search q EXACTLY: \"today\"->q=\"newer_than:1d\", \"recent\"/\"lately\"->q=\"newer_than:3d\", \"this week\"->q=\"newer_than:7d\", \"unread\"->q=\"is:unread\". Do NOT use date: or after: queries.\n- Email is draft by default: use action=draft, never action=send unless Richard explicitly says send. Before drafting or sending, confirm the recipient, subject and a short body back to Richard in your reply.\n\nSOCIAL RULE \u2014 META (follow exactly): NEVER publish a post or comment, and NEVER change an ad, without Richard explicitly approving a specific draft id. When Richard asks to post, comment, or change an ad, use meta with the matching draft_* action, then tell him the draft is staged and give him the draft id to approve. Only use meta action=publish_draft with a draft id Richard has explicitly approved. Reads (insights, recent_posts, read_comments, ads_summary) need no approval.\n\nSOCIAL RULE \u2014 X (follow exactly): NEVER post a tweet (or any public content) without Richard explicitly approving a specific draft id. When Richard asks to tweet or post, use social_x action=draft, then tell him the draft is staged and give him the draft id to approve. Only use social_x action=publish with a draft id Richard has explicitly approved. Reads (action=read) need no approval.\n\nGOOGLE RULE (follow exactly): google_docs, google_sheets, google_tasks and contact_lookup are Richard's own private data \u2014 act on them directly with NO approval and NO draft step. After creating a Doc or Sheet, always give Richard the link. youtube_stats is read-only.\n\nSQUARE RULE (follow exactly): sales, customers, invoices and catalog reads are direct and need no approval. Invoicing is draft-then-approve: when Richard wants to invoice/bill someone, ALWAYS use square action=draft_invoice first, then tell him the draft is staged and give him the draft id. Only use square action=publish_invoice with a draft id Richard has EXPLICITLY approved; it only ever creates a Square DRAFT that Richard reviews and sends himself. You can NEVER refund, charge, capture, take a payment, or send money or an invoice \u2014 if asked, say so plainly and tell Richard to do it himself in Square.\n",
+          "maxIterations": 10
+        }
+      },
+      "id": "b2222222-2222-4222-8222-222222222222",
+      "name": "Jeeves Agent",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        280,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "model": "gpt-oss:20b",
+        "options": {
+          "temperature": 0.3
+        }
+      },
+      "id": "b3333333-3333-4333-8333-333333333333",
+      "name": "Ollama Chat Model",
+      "type": "@n8n/n8n-nodes-langchain.lmChatOllama",
+      "typeVersion": 1,
+      "position": [
+        120,
+        540
+      ],
+      "credentials": {
+        "ollamaApi": {
+          "id": "jeevesollama1",
+          "name": "Jeeves Ollama (172.17.0.1 bridge)"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sessionIdType": "customKey",
+        "sessionKey": "={{ $json.body.sender }}",
+        "contextWindowLength": 10
+      },
+      "id": "b4444444-4444-4444-8444-444444444444",
+      "name": "Window Memory",
+      "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
+      "typeVersion": 1.4,
+      "position": [
+        320,
+        540
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://172.17.0.1:8765/send",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ message: $json.output }) }}",
+        "options": {}
+      },
+      "id": "bc222222-2222-4222-8222-222222222222",
+      "name": "Send to Signal",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        620,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "name": "email",
+        "description": "Richard's Gmail. Set action = search | read | draft | send. search (arg q, e.g. is:unread or newer_than:1d) returns matching messages WITH sender+subject (usually enough to answer in one call). read (arg id). draft (args to, subject, body) is the DEFAULT for composing email. send (args to, subject, body) only when Richard explicitly says send.",
+        "workflowId": {
+          "__rl": true,
+          "value": "Biiz4PiKMFGGmOuI",
+          "mode": "id",
+          "cachedResultName": "Jeeves Domain - Email"
+        },
+        "workflowInputs": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "action": "={{ $fromAI('action', \"One of: search, read, draft, send\", 'string') }}",
+            "q": "={{ $fromAI('q', \"Gmail search query, e.g. is:unread or newer_than:1d\", 'string') }}",
+            "id": "={{ $fromAI('id', \"Gmail message id from a prior search\", 'string') }}",
+            "to": "={{ $fromAI('to', \"recipient email\", 'string') }}",
+            "subject": "={{ $fromAI('subject', \"email subject\", 'string') }}",
+            "body": "={{ $fromAI('body', \"email body\", 'string') }}"
+          },
+          "schema": [
+            {
+              "id": "action",
+              "displayName": "action",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "q",
+              "displayName": "q",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "id",
+              "displayName": "id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "to",
+              "displayName": "to",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "subject",
+              "displayName": "subject",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "body",
+              "displayName": "body",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string",
+              "removed": false
+            }
+          ],
+          "matchingColumns": [],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        }
+      },
+      "id": "eea40931d3c5",
+      "name": "email",
+      "type": "@n8n/n8n-nodes-langchain.toolWorkflow",
+      "typeVersion": 2,
+      "position": [
+        400,
+        600
+      ]
+    },
+    {
+      "parameters": {
+        "name": "calendar",
+        "description": "Google Calendar. Set action = list | create. list (args timeMin, timeMax as ISO8601 UTC ending in Z) looks up events. create (args summary, start, end as ISO8601 UTC ending in Z) adds an event.",
+        "workflowId": {
+          "__rl": true,
+          "value": "KzWdcShOrjbkZi3k",
+          "mode": "id",
+          "cachedResultName": "Jeeves Domain - Calendar"
+        },
+        "workflowInputs": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "action": "={{ $fromAI('action', \"One of: list, create\", 'string') }}",
+            "timeMin": "={{ $fromAI('timeMin', \"window start ISO8601 UTC Z\", 'string') }}",
+            "timeMax": "={{ $fromAI('timeMax', \"window end ISO8601 UTC Z\", 'string') }}",
+            "summary": "={{ $fromAI('summary', \"event title\", 'string') }}",
+            "start": "={{ $fromAI('start', \"event start ISO8601 UTC Z\", 'string') }}",
+            "end": "={{ $fromAI('end', \"event end ISO8601 UTC Z\", 'string') }}"
+          },
+          "schema": [
+            {
+              "id": "action",
+              "displayName": "action",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "timeMin",
+              "displayName": "timeMin",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "timeMax",
+              "displayName": "timeMax",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "summary",
+              "displayName": "summary",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "start",
+              "displayName": "start",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "end",
+              "displayName": "end",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string",
+              "removed": false
+            }
+          ],
+          "matchingColumns": [],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        }
+      },
+      "id": "8167a40ea7fe",
+      "name": "calendar",
+      "type": "@n8n/n8n-nodes-langchain.toolWorkflow",
+      "typeVersion": 2,
+      "position": [
+        620,
+        600
+      ]
+    },
+    {
+      "parameters": {
+        "name": "meta",
+        "description": "Facebook Page + Instagram (PC Guru). Set action = insights | recent_posts | read_comments | ads_summary (all read-only) | draft_post (platform=facebook|instagram|both, message, image_url) | list_drafts | publish_draft (id) | draft_reply (platform, target, message) | draft_ad_change (ad_action=pause|resume|budget, target, value, level). Posting/replies/ad changes are DRAFT-first; only publish_draft an id Richard approved.",
+        "workflowId": {
+          "__rl": true,
+          "value": "LIhJejhMTgvgAaPv",
+          "mode": "id",
+          "cachedResultName": "Jeeves Domain - Meta"
+        },
+        "workflowInputs": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "action": "={{ $fromAI('action', \"One of: insights, recent_posts, read_comments, ads_summary, draft_post, list_drafts, publish_draft, draft_reply, draft_ad_change\", 'string') }}",
+            "platform": "={{ $fromAI('platform', \"facebook, instagram, or both\", 'string') }}",
+            "message": "={{ $fromAI('message', \"post or reply text\", 'string') }}",
+            "image_url": "={{ $fromAI('image_url', \"optional image url for a post\", 'string') }}",
+            "id": "={{ $fromAI('id', \"draft id to publish\", 'string') }}",
+            "target": "={{ $fromAI('target', \"comment/post id or ad target\", 'string') }}",
+            "ad_action": "={{ $fromAI('ad_action', \"for draft_ad_change: pause, resume, or budget\", 'string') }}",
+            "value": "={{ $fromAI('value', \"new value, e.g. budget amount\", 'string') }}",
+            "level": "={{ $fromAI('level', \"ad level, e.g. campaign or adset\", 'string') }}"
+          },
+          "schema": [
+            {
+              "id": "action",
+              "displayName": "action",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "platform",
+              "displayName": "platform",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "message",
+              "displayName": "message",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "image_url",
+              "displayName": "image_url",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "id",
+              "displayName": "id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "target",
+              "displayName": "target",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "ad_action",
+              "displayName": "ad_action",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "value",
+              "displayName": "value",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "level",
+              "displayName": "level",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string",
+              "removed": false
+            }
+          ],
+          "matchingColumns": [],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        }
+      },
+      "id": "c8028270b138",
+      "name": "meta",
+      "type": "@n8n/n8n-nodes-langchain.toolWorkflow",
+      "typeVersion": 2,
+      "position": [
+        840,
+        600
+      ]
+    },
+    {
+      "parameters": {
+        "name": "social_x",
+        "description": "X/Twitter @{{X_HANDLE}}. Set action = read | draft | list_drafts | publish. read (optional query; no query = your own recent tweets) is read-only. draft (arg text, <=280 chars) stages a tweet. publish (arg id) posts an approved draft. Posting is DRAFT-first.",
+        "workflowId": {
+          "__rl": true,
+          "value": "rqTNAh00Mxxy1Tq3",
+          "mode": "id",
+          "cachedResultName": "Jeeves Domain - Social X"
+        },
+        "workflowInputs": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "action": "={{ $fromAI('action', \"One of: read, draft, list_drafts, publish\", 'string') }}",
+            "query": "={{ $fromAI('query', \"optional keyword search for read\", 'string') }}",
+            "text": "={{ $fromAI('text', \"tweet text, <=280 chars\", 'string') }}",
+            "id": "={{ $fromAI('id', \"draft id to publish\", 'string') }}"
+          },
+          "schema": [
+            {
+              "id": "action",
+              "displayName": "action",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "query",
+              "displayName": "query",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "text",
+              "displayName": "text",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "id",
+              "displayName": "id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string",
+              "removed": false
+            }
+          ],
+          "matchingColumns": [],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        }
+      },
+      "id": "7d1dbc80cdd7",
+      "name": "social_x",
+      "type": "@n8n/n8n-nodes-langchain.toolWorkflow",
+      "typeVersion": 2,
+      "position": [
+        1060,
+        600
+      ]
+    },
+    {
+      "parameters": {
+        "name": "google_docs",
+        "description": "Google Docs. Set action = create | read. create (args title, optional body) returns a link. read (arg doc = a doc id or title) returns the text.",
+        "workflowId": {
+          "__rl": true,
+          "value": "IKd1Yx0kfPoR8qA4",
+          "mode": "id",
+          "cachedResultName": "Jeeves Domain - Google Docs"
+        },
+        "workflowInputs": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "action": "={{ $fromAI('action', \"One of: create, read\", 'string') }}",
+            "title": "={{ $fromAI('title', \"doc title\", 'string') }}",
+            "body": "={{ $fromAI('body', \"doc body text\", 'string') }}",
+            "doc": "={{ $fromAI('doc', \"doc id or title to read\", 'string') }}"
+          },
+          "schema": [
+            {
+              "id": "action",
+              "displayName": "action",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "title",
+              "displayName": "title",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "body",
+              "displayName": "body",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "doc",
+              "displayName": "doc",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string",
+              "removed": false
+            }
+          ],
+          "matchingColumns": [],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        }
+      },
+      "id": "30b952d36112",
+      "name": "google_docs",
+      "type": "@n8n/n8n-nodes-langchain.toolWorkflow",
+      "typeVersion": 2,
+      "position": [
+        1280,
+        600
+      ]
+    },
+    {
+      "parameters": {
+        "name": "google_sheets",
+        "description": "Google Sheets. Set action = create | read. create (args title, optional headers comma-separated) returns a link. read (args id = spreadsheet id, optional range default A1:Z20) returns cells.",
+        "workflowId": {
+          "__rl": true,
+          "value": "GtfJgpU44okgdcGj",
+          "mode": "id",
+          "cachedResultName": "Jeeves Domain - Google Sheets"
+        },
+        "workflowInputs": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "action": "={{ $fromAI('action', \"One of: create, read\", 'string') }}",
+            "title": "={{ $fromAI('title', \"sheet title\", 'string') }}",
+            "headers": "={{ $fromAI('headers', \"comma-separated header row\", 'string') }}",
+            "id": "={{ $fromAI('id', \"spreadsheet id to read\", 'string') }}",
+            "range": "={{ $fromAI('range', \"A1 range, default A1:Z20\", 'string') }}"
+          },
+          "schema": [
+            {
+              "id": "action",
+              "displayName": "action",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "title",
+              "displayName": "title",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "headers",
+              "displayName": "headers",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "id",
+              "displayName": "id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "range",
+              "displayName": "range",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string",
+              "removed": false
+            }
+          ],
+          "matchingColumns": [],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        }
+      },
+      "id": "35de2cd5b0ae",
+      "name": "google_sheets",
+      "type": "@n8n/n8n-nodes-langchain.toolWorkflow",
+      "typeVersion": 2,
+      "position": [
+        1500,
+        600
+      ]
+    },
+    {
+      "parameters": {
+        "name": "google_tasks",
+        "description": "Google Tasks. Set action = list | add | complete. list shows open tasks. add (args title, optional notes, optional due ISO8601 UTC Z). complete (arg title) marks a task done by matching its title.",
+        "workflowId": {
+          "__rl": true,
+          "value": "xzLhx3Hoovkdy6Zp",
+          "mode": "id",
+          "cachedResultName": "Jeeves Domain - Google Tasks"
+        },
+        "workflowInputs": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "action": "={{ $fromAI('action', \"One of: list, add, complete\", 'string') }}",
+            "title": "={{ $fromAI('title', \"task title\", 'string') }}",
+            "notes": "={{ $fromAI('notes', \"optional task notes\", 'string') }}",
+            "due": "={{ $fromAI('due', \"optional due ISO8601 UTC Z\", 'string') }}"
+          },
+          "schema": [
+            {
+              "id": "action",
+              "displayName": "action",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "title",
+              "displayName": "title",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "notes",
+              "displayName": "notes",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "due",
+              "displayName": "due",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string",
+              "removed": false
+            }
+          ],
+          "matchingColumns": [],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        }
+      },
+      "id": "ae6be1071887",
+      "name": "google_tasks",
+      "type": "@n8n/n8n-nodes-langchain.toolWorkflow",
+      "typeVersion": 2,
+      "position": [
+        400,
+        780
+      ]
+    },
+    {
+      "parameters": {
+        "name": "square",
+        "description": "Square business PC Guru (USD). Set action = sales (period=today|week|month) | customers (query) | invoices (status) | catalog (name) \u2014 all read-only \u2014 | draft_invoice (customer incl email, amount in dollars, note) DRAFT-first | publish_invoice (id) creates a Square DRAFT from an approved draft id. NEVER moves money.",
+        "workflowId": {
+          "__rl": true,
+          "value": "h3BsnLgupJvFrmqd",
+          "mode": "id",
+          "cachedResultName": "Jeeves Domain - Square"
+        },
+        "workflowInputs": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "action": "={{ $fromAI('action', \"One of: sales, customers, invoices, catalog, draft_invoice, publish_invoice\", 'string') }}",
+            "period": "={{ $fromAI('period', \"today, week, or month\", 'string') }}",
+            "query": "={{ $fromAI('query', \"customer search text\", 'string') }}",
+            "status": "={{ $fromAI('status', \"invoice status filter, e.g. UNPAID\", 'string') }}",
+            "name": "={{ $fromAI('name', \"catalog item name filter\", 'string') }}",
+            "customer": "={{ $fromAI('customer', \"customer name incl email for invoice\", 'string') }}",
+            "amount": "={{ $fromAI('amount', \"invoice amount in dollars\", 'string') }}",
+            "note": "={{ $fromAI('note', \"invoice note\", 'string') }}",
+            "id": "={{ $fromAI('id', \"draft id to publish\", 'string') }}"
+          },
+          "schema": [
+            {
+              "id": "action",
+              "displayName": "action",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "period",
+              "displayName": "period",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "query",
+              "displayName": "query",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "status",
+              "displayName": "status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "name",
+              "displayName": "name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "customer",
+              "displayName": "customer",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "amount",
+              "displayName": "amount",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "note",
+              "displayName": "note",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "id",
+              "displayName": "id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string",
+              "removed": false
+            }
+          ],
+          "matchingColumns": [],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        }
+      },
+      "id": "b816d2a45912",
+      "name": "square",
+      "type": "@n8n/n8n-nodes-langchain.toolWorkflow",
+      "typeVersion": 2,
+      "position": [
+        620,
+        780
+      ]
+    },
+    {
+      "parameters": {
+        "name": "set_reminder",
+        "description": "Schedule a one-off reminder sent to Richard on Signal at a chosen time. Provide: due, text.",
+        "workflowId": {
+          "__rl": true,
+          "value": "jeevestremind1",
+          "mode": "id",
+          "cachedResultName": "Jeeves Tool - Reminder"
+        },
+        "workflowInputs": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "due": "={{ $fromAI('due', \"When to fire, absolute ISO8601 UTC ending in Z\", 'string') }}",
+            "text": "={{ $fromAI('text', \"What to remind Richard about\", 'string') }}"
+          },
+          "schema": [
+            {
+              "id": "due",
+              "displayName": "due",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "text",
+              "displayName": "text",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string",
+              "removed": false
+            }
+          ],
+          "matchingColumns": [],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        }
+      },
+      "id": "tool-jeevestremind1",
+      "name": "set_reminder",
+      "type": "@n8n/n8n-nodes-langchain.toolWorkflow",
+      "typeVersion": 2,
+      "position": [
+        840,
+        780
+      ]
+    },
+    {
+      "parameters": {
+        "name": "contact_lookup",
+        "description": "Look up a contact by name in Richard's Google Contacts. Returns name, email and phone. Provide: query.",
+        "workflowId": {
+          "__rl": true,
+          "value": "GQEFJsmfPAOmRYtL",
+          "mode": "id",
+          "cachedResultName": "Jeeves Tool - Contact Lookup"
+        },
+        "workflowInputs": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "query": "={{ $fromAI('query', \"The name (or part of it) to search contacts for\", 'string') }}"
+          },
+          "schema": [
+            {
+              "id": "query",
+              "displayName": "query",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string",
+              "removed": false
+            }
+          ],
+          "matchingColumns": [],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        }
+      },
+      "id": "tool-GQEFJsmfPAOmRYtL",
+      "name": "contact_lookup",
+      "type": "@n8n/n8n-nodes-langchain.toolWorkflow",
+      "typeVersion": 2,
+      "position": [
+        1060,
+        780
+      ]
+    },
+    {
+      "parameters": {
+        "name": "youtube_stats",
+        "description": "Read-only stats for Richard's YouTube channel 'PC Guru' (subscribers, views, video count, recent uploads). No input needed.",
+        "workflowId": {
+          "__rl": true,
+          "value": "v3DiiikjrsgFxDUy",
+          "mode": "id",
+          "cachedResultName": "Jeeves Tool - YouTube Stats"
+        },
+        "workflowInputs": {
+          "mappingMode": "defineBelow",
+          "value": {},
+          "schema": [],
+          "matchingColumns": [],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        }
+      },
+      "id": "tool-v3DiiikjrsgFxDUy",
+      "name": "youtube_stats",
+      "type": "@n8n/n8n-nodes-langchain.toolWorkflow",
+      "typeVersion": 2,
+      "position": [
+        1280,
+        780
+      ]
+    }
+  ],
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Jeeves Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Jeeves Agent": {
+      "main": [
+        [
+          {
+            "node": "Send to Signal",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Ollama Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Jeeves Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Window Memory": {
+      "ai_memory": [
+        [
+          {
+            "node": "Jeeves Agent",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "social_x": {
+      "ai_tool": [
+        [
+          {
+            "node": "Jeeves Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "google_sheets": {
+      "ai_tool": [
+        [
+          {
+            "node": "Jeeves Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "set_reminder": {
+      "ai_tool": [
+        [
+          {
+            "node": "Jeeves Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "meta": {
+      "ai_tool": [
+        [
+          {
+            "node": "Jeeves Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "google_tasks": {
+      "ai_tool": [
+        [
+          {
+            "node": "Jeeves Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "calendar": {
+      "ai_tool": [
+        [
+          {
+            "node": "Jeeves Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "youtube_stats": {
+      "ai_tool": [
+        [
+          {
+            "node": "Jeeves Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "email": {
+      "ai_tool": [
+        [
+          {
+            "node": "Jeeves Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "contact_lookup": {
+      "ai_tool": [
+        [
+          {
+            "node": "Jeeves Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "google_docs": {
+      "ai_tool": [
+        [
+          {
+            "node": "Jeeves Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "square": {
+      "ai_tool": [
+        [
+          {
+            "node": "Jeeves Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  }
+}

@@ -1,1 +1,189 @@
-{"updatedAt":"2026-07-06T03:17:43.778Z","createdAt":"2026-07-06T03:17:43.778Z","id":"KzWdcShOrjbkZi3k","name":"Jeeves Domain - Calendar","description":null,"active":true,"isArchived":false,"nodes":[{"parameters":{"inputSource":"passthrough"},"id":"077dfe391cdb","name":"Trigger","type":"n8n-nodes-base.executeWorkflowTrigger","typeVersion":1.1,"position":[0,300]},{"parameters":{"rules":{"values":[{"conditions":{"options":{"caseSensitive":true,"leftValue":"","typeValidation":"loose","version":2},"conditions":[{"id":"639614d871bc","leftValue":"={{ ($json.action || '').toString().toLowerCase().trim() }}","rightValue":"list","operator":{"type":"string","operation":"equals","name":"filter.operator.equals"}}],"combinator":"and"},"renameOutput":true,"outputKey":"list"},{"conditions":{"options":{"caseSensitive":true,"leftValue":"","typeValidation":"loose","version":2},"conditions":[{"id":"6ef763efc9cd","leftValue":"={{ ($json.action || '').toString().toLowerCase().trim() }}","rightValue":"create","operator":{"type":"string","operation":"equals","name":"filter.operator.equals"}}],"combinator":"and"},"renameOutput":true,"outputKey":"create"}]},"options":{"fallbackOutput":"extra","renameFallbackOutput":"unknown"}},"id":"f5e94c63ee5c","name":"Route by action","type":"n8n-nodes-base.switch","typeVersion":3.2,"position":[260,300]},{"parameters":{"source":"database","workflowId":{"__rl":true,"value":"jeevestcalget1","mode":"id","cachedResultName":"Jeeves Tool - Cal Get"},"mode":"once","options":{"waitForSubWorkflow":true}},"id":"51421eb59f45","name":"exec_list","type":"n8n-nodes-base.executeWorkflow","typeVersion":1.1,"position":[560,40]},{"parameters":{"source":"database","workflowId":{"__rl":true,"value":"jeevestcalcr1","mode":"id","cachedResultName":"Jeeves Tool - Cal Create"},"mode":"once","options":{"waitForSubWorkflow":true}},"id":"24ae3dededf1","name":"exec_create","type":"n8n-nodes-base.executeWorkflow","typeVersion":1.1,"position":[560,170]},{"parameters":{"jsCode":"const a = ($json.action||'').toString();\nreturn [{ json: { summary: `Unknown action '${a}'. Check the tool's action list.` } }];"},"id":"219c8fa58931","name":"Unknown","type":"n8n-nodes-base.code","typeVersion":2,"position":[560,300]}],"connections":{"Trigger":{"main":[[{"node":"Route by action","type":"main","index":0}]]},"Route by action":{"main":[[{"node":"exec_list","type":"main","index":0}],[{"node":"exec_create","type":"main","index":0}],[{"node":"Unknown","type":"main","index":0}]]}},"settings":{"executionOrder":"v1"},"staticData":null,"meta":null,"nodeGroups":[],"pinData":null,"versionId":"8fe26a61-adee-4cbb-b755-4d8256f03436","activeVersionId":"8fe26a61-adee-4cbb-b755-4d8256f03436","versionCounter":1,"triggerCount":0,"sourceWorkflowId":null,"shared":[{"updatedAt":"2026-07-06T03:17:43.779Z","createdAt":"2026-07-06T03:17:43.779Z","role":"workflow:owner","workflowId":"KzWdcShOrjbkZi3k","projectId":"3zeb0nZhOgw0YQIO","project":{"updatedAt":"2026-06-22T21:50:39.765Z","createdAt":"2026-06-22T20:18:13.120Z","id":"3zeb0nZhOgw0YQIO","name":"Richard Vickers <{{OWNER_CALENDAR_EMAIL}}>","type":"personal","icon":null,"description":null,"customTelemetryTags":[],"creatorId":"c06e9f36-d5fe-4bba-a51c-dfbab46a64fe"}}],"tags":[],"activeVersion":{"updatedAt":"2026-07-06T03:17:43.780Z","createdAt":"2026-07-06T03:17:43.780Z","versionId":"8fe26a61-adee-4cbb-b755-4d8256f03436","workflowId":"KzWdcShOrjbkZi3k","nodes":[{"parameters":{"inputSource":"passthrough"},"id":"077dfe391cdb","name":"Trigger","type":"n8n-nodes-base.executeWorkflowTrigger","typeVersion":1.1,"position":[0,300]},{"parameters":{"rules":{"values":[{"conditions":{"options":{"caseSensitive":true,"leftValue":"","typeValidation":"loose","version":2},"conditions":[{"id":"639614d871bc","leftValue":"={{ ($json.action || '').toString().toLowerCase().trim() }}","rightValue":"list","operator":{"type":"string","operation":"equals","name":"filter.operator.equals"}}],"combinator":"and"},"renameOutput":true,"outputKey":"list"},{"conditions":{"options":{"caseSensitive":true,"leftValue":"","typeValidation":"loose","version":2},"conditions":[{"id":"6ef763efc9cd","leftValue":"={{ ($json.action || '').toString().toLowerCase().trim() }}","rightValue":"create","operator":{"type":"string","operation":"equals","name":"filter.operator.equals"}}],"combinator":"and"},"renameOutput":true,"outputKey":"create"}]},"options":{"fallbackOutput":"extra","renameFallbackOutput":"unknown"}},"id":"f5e94c63ee5c","name":"Route by action","type":"n8n-nodes-base.switch","typeVersion":3.2,"position":[260,300]},{"parameters":{"source":"database","workflowId":{"__rl":true,"value":"jeevestcalget1","mode":"id","cachedResultName":"Jeeves Tool - Cal Get"},"mode":"once","options":{"waitForSubWorkflow":true}},"id":"51421eb59f45","name":"exec_list","type":"n8n-nodes-base.executeWorkflow","typeVersion":1.1,"position":[560,40]},{"parameters":{"source":"database","workflowId":{"__rl":true,"value":"jeevestcalcr1","mode":"id","cachedResultName":"Jeeves Tool - Cal Create"},"mode":"once","options":{"waitForSubWorkflow":true}},"id":"24ae3dededf1","name":"exec_create","type":"n8n-nodes-base.executeWorkflow","typeVersion":1.1,"position":[560,170]},{"parameters":{"jsCode":"const a = ($json.action||'').toString();\nreturn [{ json: { summary: `Unknown action '${a}'. Check the tool's action list.` } }];"},"id":"219c8fa58931","name":"Unknown","type":"n8n-nodes-base.code","typeVersion":2,"position":[560,300]}],"connections":{"Trigger":{"main":[[{"node":"Route by action","type":"main","index":0}]]},"Route by action":{"main":[[{"node":"exec_list","type":"main","index":0}],[{"node":"exec_create","type":"main","index":0}],[{"node":"Unknown","type":"main","index":0}]]}},"nodeGroups":[],"authors":"Richard Vickers","name":null,"description":null,"autosaved":false,"workflowPublishHistory":[{"createdAt":"2026-07-06T03:17:43.825Z","id":175,"workflowId":"KzWdcShOrjbkZi3k","versionId":"8fe26a61-adee-4cbb-b755-4d8256f03436","event":"activated","userId":"c06e9f36-d5fe-4bba-a51c-dfbab46a64fe"}]}}
+{
+  "id": "KzWdcShOrjbkZi3k",
+  "name": "Jeeves Domain - Calendar",
+  "nodes": [
+    {
+      "parameters": {
+        "inputSource": "passthrough"
+      },
+      "id": "077dfe391cdb",
+      "name": "Trigger",
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "typeVersion": 1.1,
+      "position": [
+        0,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "loose",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "639614d871bc",
+                    "leftValue": "={{ ($json.action || '').toString().toLowerCase().trim() }}",
+                    "rightValue": "list",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "list"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "loose",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "6ef763efc9cd",
+                    "leftValue": "={{ ($json.action || '').toString().toLowerCase().trim() }}",
+                    "rightValue": "create",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "create"
+            }
+          ]
+        },
+        "options": {
+          "fallbackOutput": "extra",
+          "renameFallbackOutput": "unknown"
+        }
+      },
+      "id": "f5e94c63ee5c",
+      "name": "Route by action",
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.2,
+      "position": [
+        260,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "source": "database",
+        "workflowId": {
+          "__rl": true,
+          "value": "jeevestcalget1",
+          "mode": "id",
+          "cachedResultName": "Jeeves Tool - Cal Get"
+        },
+        "mode": "once",
+        "options": {
+          "waitForSubWorkflow": true
+        }
+      },
+      "id": "51421eb59f45",
+      "name": "exec_list",
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.1,
+      "position": [
+        560,
+        40
+      ]
+    },
+    {
+      "parameters": {
+        "source": "database",
+        "workflowId": {
+          "__rl": true,
+          "value": "jeevestcalcr1",
+          "mode": "id",
+          "cachedResultName": "Jeeves Tool - Cal Create"
+        },
+        "mode": "once",
+        "options": {
+          "waitForSubWorkflow": true
+        }
+      },
+      "id": "24ae3dededf1",
+      "name": "exec_create",
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.1,
+      "position": [
+        560,
+        170
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const a = ($json.action||'').toString();\nreturn [{ json: { summary: `Unknown action '${a}'. Check the tool's action list.` } }];"
+      },
+      "id": "219c8fa58931",
+      "name": "Unknown",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        560,
+        300
+      ]
+    }
+  ],
+  "connections": {
+    "Trigger": {
+      "main": [
+        [
+          {
+            "node": "Route by action",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Route by action": {
+      "main": [
+        [
+          {
+            "node": "exec_list",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "exec_create",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Unknown",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  }
+}

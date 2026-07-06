@@ -1,0 +1,156 @@
+{
+  "id": "jeevestgsrch1",
+  "name": "Jeeves Tool - Gmail Search",
+  "nodes": [
+    {
+      "parameters": {
+        "inputSource": "passthrough"
+      },
+      "id": "jeevestgsrch1-trg",
+      "name": "Trigger",
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "typeVersion": 1.1,
+      "position": [
+        0,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "url": "https://gmail.googleapis.com/gmail/v1/users/me/messages",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "gmailOAuth2",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "q",
+              "value": "={{ $json.q }}"
+            },
+            {
+              "name": "maxResults",
+              "value": "5"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "jeevestgsrch1-api",
+      "name": "Gmail Search",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        260,
+        0
+      ],
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "IulSQ6PPXKxOzPfN",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const j = $input.first().json;\nconst msgs = j.messages || [];\nconst total = j.resultSizeEstimate || 0;\nif (!msgs.length) return [{ json: { __none: true, total } }];\nreturn msgs.slice(0,5).map(m => ({ json: { id: m.id, total } }));"
+      },
+      "id": "rich-explode-01",
+      "name": "Explode IDs",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        480,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "url": "=https://gmail.googleapis.com/gmail/v1/users/me/messages/{{ $json.id }}?format=metadata&metadataHeaders=From&metadataHeaders=Subject",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "gmailOAuth2",
+        "options": {}
+      },
+      "id": "rich-getmeta-01",
+      "name": "Get Metadata",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        700,
+        0
+      ],
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "IulSQ6PPXKxOzPfN",
+          "name": "Gmail account"
+        }
+      },
+      "onError": "continueRegularOutput",
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const meta = $input.all();\nlet total = 0;\ntry { total = $('Gmail Search').first().json.resultSizeEstimate || 0; } catch(e) {}\nconst lines = [];\nfor (const it of meta) {\n  const p = it.json.payload;\n  if (!p || !p.headers) continue;\n  const h = n => (p.headers.find(x => (x.name||'').toLowerCase() === n) || {}).value || '';\n  lines.push(`From: ${h('from')} | Subject: ${h('subject')}`);\n}\nlet summary;\nif (!lines.length) summary = `No matching messages (approx total ${total}).`;\nelse summary = `${total} match(es); showing ${lines.length}:\\n` + lines.map((l,i)=>`${i+1}. ${l}`).join('\\n');\nreturn [{ json: { summary } }];"
+      },
+      "id": "rich-format-01",
+      "name": "Format",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        920,
+        0
+      ],
+      "alwaysOutputData": true
+    }
+  ],
+  "connections": {
+    "Trigger": {
+      "main": [
+        [
+          {
+            "node": "Gmail Search",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Gmail Search": {
+      "main": [
+        [
+          {
+            "node": "Explode IDs",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Explode IDs": {
+      "main": [
+        [
+          {
+            "node": "Get Metadata",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Metadata": {
+      "main": [
+        [
+          {
+            "node": "Format",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  }
+}
