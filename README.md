@@ -164,6 +164,51 @@ All services route through nginx on port 80.
 
 ---
 
+## Jeeves Assistant Layer (n8n-workflows/jeeves-assistant/)
+
+A conversational agent layer on top of the base install. Two front doors — Signal chat and a web chat endpoint — both drive the same tool-using agent over your local model, so the assistant can take actions during a conversation instead of just answering questions.
+
+**Agent front doors**
+
+| Workflow | Function |
+|----------|---------|
+| jeeves-agent-signal | Signal-facing conversational agent (LangChain agent + tool router) |
+| jeeves-agent-http | Same agent exposed over a webhook for web/embedded chat front-ends |
+
+**Domain tools** — each is a self-contained dispatcher the agent calls with an `action` argument, so adding a capability to a domain doesn't add a new tool slot to the agent's context:
+
+| Workflow | Domain | Example actions |
+|----------|--------|-----------------|
+| jeeves-domain-email | Email | search, read, draft, send |
+| jeeves-domain-calendar | Calendar | get events, create event |
+| jeeves-domain-meta | Facebook / Instagram | insights, recent posts, read comments, ads summary, draft post/reply (approve-before-publish) |
+| jeeves-domain-social-x | X (Twitter) | read, draft post, list/publish drafts (approve-before-publish) |
+| jeeves-domain-google-docs | Google Docs | create, read |
+| jeeves-domain-google-sheets | Google Sheets | create, read |
+| jeeves-domain-google-tasks | Google Tasks | list, add, complete |
+| jeeves-domain-square | Square (payments/POS) | sales summary, customer lookup, catalog lookup, draft invoice (approve-before-send) — **read-only + draft; no refund/charge/send tooling** |
+
+**Standalone tools & backends**
+
+| Workflow | Function |
+|----------|---------|
+| jeeves-tool-reminder-set | Lets the agent schedule a reminder mid-conversation |
+| jeeves-tool-contact-lookup | Google Contacts lookup |
+| jeeves-tool-youtube-stats | Channel stats lookup (read-only) |
+| jeeves-reminder-add / jeeves-reminder-fire | Reminder queue + per-minute firing check |
+| jeeves-morning-briefing | Scheduled daily summary (calendar + unread email) delivered to Signal |
+| jeeves-bootstrap-data-table | One-time setup of the n8n data table the reminder queue uses |
+| jeeves-backend-gmail / jeeves-backend-calendar / jeeves-backend-meta / jeeves-backend-x / jeeves-backend-square | Internal webhooks the domain tools call — keeps service-account/API auth off the agent's direct tool path |
+
+**Setup notes**
+
+- Requires credentials created in your own n8n instance: Gmail (OAuth2), a Google service account or OAuth client for Calendar, a Google multi-scope OAuth client for Docs/Sheets/Tasks/Contacts/YouTube, a Facebook Graph System User token, an X OAuth 1.0a app, and a Square access token. None of these are bundled — the workflows reference credentials by name, so create matching ones after import and n8n will prompt you to reassign them.
+- Several workflows carry `{{PLACEHOLDER}}` values (`{{FACEBOOK_PAGE_ID}}`, `{{INSTAGRAM_BUSINESS_ID}}`, `{{META_AD_ACCOUNT_ID}}`, `{{SQUARE_LOCATION_ID}}`, `{{OWNER_CALENDAR_EMAIL}}`, `{{OWNER_CALENDAR_EMAIL_URLENC}}`, `{{X_ACCOUNT_ID}}`, `{{X_HANDLE}}`, `{{INSTAGRAM_HANDLE}}`, `{{GEIVS_SIGNAL_NUMBER}}`, `{{OWNER_SIGNAL_NUMBER}}`) — replace these with your own business's values before activating.
+- Anything that posts publicly or spends money (social posts, ad changes, invoices) is **draft-then-approve**: the agent creates a draft and only publishes/sends on an explicit follow-up confirmation.
+- This layer is new and was validated against a single reference deployment — treat it as a starting template, not a hardened multi-tenant product yet.
+
+---
+
 ## Models
 
 | Model | Size | Best for |
@@ -220,7 +265,30 @@ GEIVS/
     ├── geivs-signal-setup.json
     ├── geivs-calendar-setup.json
     ├── geivs-storage-setup.json
-    └── geivs-telegram-setup.json
+    ├── geivs-telegram-setup.json
+    └── jeeves-assistant/            # optional conversational agent layer, see below
+        ├── jeeves-agent-signal.json
+        ├── jeeves-agent-http.json
+        ├── jeeves-domain-email.json
+        ├── jeeves-domain-calendar.json
+        ├── jeeves-domain-meta.json
+        ├── jeeves-domain-social-x.json
+        ├── jeeves-domain-google-docs.json
+        ├── jeeves-domain-google-sheets.json
+        ├── jeeves-domain-google-tasks.json
+        ├── jeeves-domain-square.json
+        ├── jeeves-tool-reminder-set.json
+        ├── jeeves-tool-contact-lookup.json
+        ├── jeeves-tool-youtube-stats.json
+        ├── jeeves-reminder-add.json
+        ├── jeeves-reminder-fire.json
+        ├── jeeves-morning-briefing.json
+        ├── jeeves-bootstrap-data-table.json
+        ├── jeeves-backend-gmail.json
+        ├── jeeves-backend-calendar.json
+        ├── jeeves-backend-meta.json
+        ├── jeeves-backend-x.json
+        └── jeeves-backend-square.json
 ```
 
 ---
