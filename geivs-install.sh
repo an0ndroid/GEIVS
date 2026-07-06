@@ -547,7 +547,7 @@ step "Configuring email integration (IMAP/SMTP)"
 EMAIL_CONFIGURED=false
 
 echo ""
-echo -e "  ${BOLD}Email integration lets Jeeves send/receive email on your behalf.${NC}"
+echo -e "  ${BOLD}Email integration lets GEIVS send/receive email on your behalf.${NC}"
 read -rp "  Configure email now? [Y/n]: " DO_EMAIL < /dev/tty
 DO_EMAIL=${DO_EMAIL:-Y}
 
@@ -637,8 +637,8 @@ step "Configuring Signal integration"
 SIGNAL_CONFIGURED=false
 
 echo ""
-echo -e "  ${BOLD}Signal integration lets Jeeves send/receive Signal messages.${NC}"
-echo -e "  ${YELLOW}You need a phone number dedicated to Jeeves (not your personal number).${NC}"
+echo -e "  ${BOLD}Signal integration lets GEIVS send/receive Signal messages.${NC}"
+echo -e "  ${YELLOW}You need a phone number dedicated to GEIVS (not your personal number).${NC}"
 read -rp "  Configure Signal now? [Y/n]: " DO_SIGNAL < /dev/tty
 DO_SIGNAL=${DO_SIGNAL:-Y}
 
@@ -827,7 +827,7 @@ echo -e "${CYAN}║${NC}  ${YELLOW}○${NC} Social Media → http://${GEIVS_HOST
 echo -e "${CYAN}╠══════════════════════════════════════════════════════════╣${NC}"
 echo -e "${CYAN}║${NC}  ${BOLD}Next Steps${NC}                                              ${CYAN}║${NC}"
 echo -e "${CYAN}║${NC}  1. Wait for the AI model download to finish           ${CYAN}║${NC}"
-echo -e "${CYAN}║${NC}  2. Open the Web UI and start chatting with Jeeves     ${CYAN}║${NC}"
+echo -e "${CYAN}║${NC}  2. Open the Web UI and start chatting with GEIVS      ${CYAN}║${NC}"
 echo -e "${CYAN}║${NC}  3. Complete any ○ integrations listed above           ${CYAN}║${NC}"
 echo -e "${CYAN}╚══════════════════════════════════════════════════════════╝${NC}"
 echo ""

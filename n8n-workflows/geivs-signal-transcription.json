@@ -117,7 +117,7 @@
         "url": "http://signal-cli:8080/v2/send",
         "sendBody": true,
         "contentType": "json",
-        "body": "={\n  \"message\": \"📝 *Transcript*\\n\\n{{ $json.text }}\\n\\n_Transcribed by Jeeves — GEIVS AI Butler_\",\n  \"number\": \"{{ $env.SIGNAL_NUMBER }}\",\n  \"recipients\": [\"{{ $('Find Audio Attachment').item.json.sender }}\"]\n}",
+        "body": "={\n  \"message\": \"📝 *Transcript*\\n\\n{{ $json.text }}\\n\\n_Transcribed by GEIVS AI Butler_\",\n  \"number\": \"{{ $env.SIGNAL_NUMBER }}\",\n  \"recipients\": [\"{{ $('Find Audio Attachment').item.json.sender }}\"]\n}",
         "options": {}
       },
       "id": "node-reply",

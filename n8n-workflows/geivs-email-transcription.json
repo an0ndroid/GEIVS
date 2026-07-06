@@ -84,7 +84,7 @@
         "fromEmail": "={{ $env.SMTP_FROM || $env.IMAP_USER }}",
         "toEmail": "={{ $('Find Audio Attachment').item.json.replyTo }}",
         "subject": "=📝 Transcript: {{ $('Find Audio Attachment').item.json.subject }}",
-        "text": "=Good day,\n\nHere is the transcript of \"{{ $('Find Audio Attachment').item.json.audioFilename }}\":\n\n────────────────────────────────\n{{ $json.text }}\n────────────────────────────────\n\nKind regards,\nJeeves — GEIVS AI Butler",
+        "text": "=Good day,\n\nHere is the transcript of \"{{ $('Find Audio Attachment').item.json.audioFilename }}\":\n\n────────────────────────────────\n{{ $json.text }}\n────────────────────────────────\n\nKind regards,\nGEIVS AI Butler",
         "options": {}
       },
       "id": "node-reply",
