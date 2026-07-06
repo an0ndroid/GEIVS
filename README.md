@@ -1,5 +1,7 @@
 # GEIVS Pro
 
+<p align="center"><img src="dashboard/geivs-logo.png" alt="GEIVS" width="120"></p>
+
 **General Encrypted Intelligent Valet Software — Pro Edition**
 
 A fully self-hosted AI platform for small businesses. Private, local, no subscriptions, no cloud dependency.
