@@ -1,6 +1,6 @@
 {
-  "id": "GQEFJsmfPAOmRYtL",
-  "name": "Jeeves Tool - Contact Lookup",
+  "id": "v3DiiikjrsgFxDUy",
+  "name": "GEIVS Tool - YouTube Stats",
   "nodes": [
     {
       "parameters": {
@@ -17,7 +17,7 @@
     },
     {
       "parameters": {
-        "url": "https://people.googleapis.com/v1/people:searchContacts",
+        "url": "https://youtube.googleapis.com/youtube/v3/channels",
         "authentication": "predefinedCredentialType",
         "nodeCredentialType": "googleOAuth2Api",
         "options": {},
@@ -25,18 +25,18 @@
         "queryParameters": {
           "parameters": [
             {
-              "name": "query",
-              "value": ""
+              "name": "part",
+              "value": "snippet,statistics"
             },
             {
-              "name": "readMask",
-              "value": "names,emailAddresses,phoneNumbers"
+              "name": "mine",
+              "value": "true"
             }
           ]
         }
       },
-      "id": "cl-warm",
-      "name": "Warmup",
+      "id": "yt-ch",
+      "name": "Channels",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [
@@ -48,13 +48,11 @@
           "id": "googlemulti01",
           "name": "Google (Docs/Sheets/Tasks/Contacts/YouTube)"
         }
-      },
-      "onError": "continueRegularOutput",
-      "alwaysOutputData": true
+      }
     },
     {
       "parameters": {
-        "url": "https://people.googleapis.com/v1/people:searchContacts",
+        "url": "https://youtube.googleapis.com/youtube/v3/search",
         "authentication": "predefinedCredentialType",
         "nodeCredentialType": "googleOAuth2Api",
         "options": {},
@@ -62,22 +60,30 @@
         "queryParameters": {
           "parameters": [
             {
-              "name": "query",
-              "value": "={{ $('Trigger').first().json.query }}"
+              "name": "part",
+              "value": "snippet"
             },
             {
-              "name": "readMask",
-              "value": "names,emailAddresses,phoneNumbers"
+              "name": "forMine",
+              "value": "true"
             },
             {
-              "name": "pageSize",
-              "value": "5"
+              "name": "type",
+              "value": "video"
+            },
+            {
+              "name": "order",
+              "value": "date"
+            },
+            {
+              "name": "maxResults",
+              "value": "3"
             }
           ]
         }
       },
-      "id": "cl-search",
-      "name": "Search",
+      "id": "yt-rec",
+      "name": "Recent",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [
@@ -96,9 +102,9 @@
     {
       "parameters": {
         "mode": "runOnceForAllItems",
-        "jsCode": "const res=($input.first().json.results)||[];\nif(!res.length) return [{json:{summary:'No contact found matching that name.'}}];\nconst lines=res.slice(0,5).map((r,i)=>{\n  const p=r.person||{};\n  const name=(p.names&&p.names[0]&&p.names[0].displayName)||'(no name)';\n  const email=(p.emailAddresses&&p.emailAddresses[0]&&p.emailAddresses[0].value)||'no email';\n  const phone=(p.phoneNumbers&&p.phoneNumbers[0]&&p.phoneNumbers[0].value)||'';\n  return (i+1)+'. '+name+' \u2014 '+email+(phone?' \u2014 '+phone:'');\n});\nreturn [{json:{summary:res.length+' match(es):\\n'+lines.join('\\n')}}];"
+        "jsCode": "const ch=($('Channels').first().json.items)||[];\nif(!ch.length) return [{json:{summary:'Could not load your YouTube channel.'}}];\nconst c=ch[0]; const st=c.statistics||{}; const sn=c.snippet||{};\nlet s='YouTube channel \"'+(sn.title||'')+'\": '+(st.subscriberCount||'0')+' subscribers, '\n  +(st.viewCount||'0')+' total views, '+(st.videoCount||'0')+' videos.';\nlet recent=[];\ntry{ recent=(($input.first().json.items)||[]).slice(0,3)\n  .map(x=>x.snippet&&x.snippet.title).filter(Boolean); }catch(e){}\nif(recent.length) s+='\\nRecent uploads: '+recent.join('; ')+'.';\nreturn [{json:{summary:s}}];"
       },
-      "id": "cl-fmt",
+      "id": "yt-fmt",
       "name": "Format",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -114,25 +120,25 @@
       "main": [
         [
           {
-            "node": "Warmup",
+            "node": "Channels",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "Warmup": {
+    "Channels": {
       "main": [
         [
           {
-            "node": "Search",
+            "node": "Recent",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "Search": {
+    "Recent": {
       "main": [
         [
           {

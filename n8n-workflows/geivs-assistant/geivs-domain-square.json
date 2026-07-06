@@ -1,12 +1,12 @@
 {
-  "id": "rqTNAh00Mxxy1Tq3",
-  "name": "Jeeves Domain - Social X",
+  "id": "h3BsnLgupJvFrmqd",
+  "name": "GEIVS Domain - Square",
   "nodes": [
     {
       "parameters": {
         "inputSource": "passthrough"
       },
-      "id": "d1a051d3495b",
+      "id": "f4def9a64c5e",
       "name": "Trigger",
       "type": "n8n-nodes-base.executeWorkflowTrigger",
       "typeVersion": 1.1,
@@ -29,9 +29,9 @@
                 },
                 "conditions": [
                   {
-                    "id": "4012d4e1dd3d",
+                    "id": "afbb431d05f7",
                     "leftValue": "={{ ($json.action || '').toString().toLowerCase().trim() }}",
-                    "rightValue": "read",
+                    "rightValue": "sales",
                     "operator": {
                       "type": "string",
                       "operation": "equals",
@@ -42,7 +42,7 @@
                 "combinator": "and"
               },
               "renameOutput": true,
-              "outputKey": "read"
+              "outputKey": "sales"
             },
             {
               "conditions": {
@@ -54,9 +54,9 @@
                 },
                 "conditions": [
                   {
-                    "id": "501ade52e177",
+                    "id": "e4abb19d610e",
                     "leftValue": "={{ ($json.action || '').toString().toLowerCase().trim() }}",
-                    "rightValue": "draft",
+                    "rightValue": "customers",
                     "operator": {
                       "type": "string",
                       "operation": "equals",
@@ -67,7 +67,7 @@
                 "combinator": "and"
               },
               "renameOutput": true,
-              "outputKey": "draft"
+              "outputKey": "customers"
             },
             {
               "conditions": {
@@ -79,9 +79,9 @@
                 },
                 "conditions": [
                   {
-                    "id": "ed082166ffdc",
+                    "id": "867e4b3190ff",
                     "leftValue": "={{ ($json.action || '').toString().toLowerCase().trim() }}",
-                    "rightValue": "list_drafts",
+                    "rightValue": "invoices",
                     "operator": {
                       "type": "string",
                       "operation": "equals",
@@ -92,7 +92,7 @@
                 "combinator": "and"
               },
               "renameOutput": true,
-              "outputKey": "list_drafts"
+              "outputKey": "invoices"
             },
             {
               "conditions": {
@@ -104,9 +104,9 @@
                 },
                 "conditions": [
                   {
-                    "id": "50b97afab234",
+                    "id": "6c14082e3271",
                     "leftValue": "={{ ($json.action || '').toString().toLowerCase().trim() }}",
-                    "rightValue": "publish",
+                    "rightValue": "catalog",
                     "operator": {
                       "type": "string",
                       "operation": "equals",
@@ -117,7 +117,57 @@
                 "combinator": "and"
               },
               "renameOutput": true,
-              "outputKey": "publish"
+              "outputKey": "catalog"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "loose",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "701a2dbb90ba",
+                    "leftValue": "={{ ($json.action || '').toString().toLowerCase().trim() }}",
+                    "rightValue": "draft_invoice",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "draft_invoice"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "loose",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "a93094b972e3",
+                    "leftValue": "={{ ($json.action || '').toString().toLowerCase().trim() }}",
+                    "rightValue": "publish_invoice",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "publish_invoice"
             }
           ]
         },
@@ -126,7 +176,7 @@
           "renameFallbackOutput": "unknown"
         }
       },
-      "id": "0c0b6ce26723",
+      "id": "afd24262e84a",
       "name": "Route by action",
       "type": "n8n-nodes-base.switch",
       "typeVersion": 3.2,
@@ -140,17 +190,17 @@
         "source": "database",
         "workflowId": {
           "__rl": true,
-          "value": "BRzEFAgeNjZ4851E",
+          "value": "loTJ1xYsI1dFVINy",
           "mode": "id",
-          "cachedResultName": "Jeeves Tool - X Read"
+          "cachedResultName": "GEIVS Tool - Square Sales"
         },
         "mode": "once",
         "options": {
           "waitForSubWorkflow": true
         }
       },
-      "id": "b95455c2b987",
-      "name": "exec_read",
+      "id": "7cc17b745450",
+      "name": "exec_sales",
       "type": "n8n-nodes-base.executeWorkflow",
       "typeVersion": 1.1,
       "position": [
@@ -163,17 +213,17 @@
         "source": "database",
         "workflowId": {
           "__rl": true,
-          "value": "qjbwtXtwD4moFZzE",
+          "value": "DkWQLeHyZWBbgD1f",
           "mode": "id",
-          "cachedResultName": "Jeeves Tool - X Draft Post"
+          "cachedResultName": "GEIVS Tool - Square Customer Lookup"
         },
         "mode": "once",
         "options": {
           "waitForSubWorkflow": true
         }
       },
-      "id": "1c9bd2a5fda6",
-      "name": "exec_draft",
+      "id": "5e3d356710f9",
+      "name": "exec_customers",
       "type": "n8n-nodes-base.executeWorkflow",
       "typeVersion": 1.1,
       "position": [
@@ -186,17 +236,17 @@
         "source": "database",
         "workflowId": {
           "__rl": true,
-          "value": "R19TptPKcg8FQu6v",
+          "value": "BPN5vmaBCkG7KRKr",
           "mode": "id",
-          "cachedResultName": "Jeeves Tool - X List Drafts"
+          "cachedResultName": "GEIVS Tool - Square Invoice Status"
         },
         "mode": "once",
         "options": {
           "waitForSubWorkflow": true
         }
       },
-      "id": "b55d15a942ac",
-      "name": "exec_list_drafts",
+      "id": "a1f9529c9955",
+      "name": "exec_invoices",
       "type": "n8n-nodes-base.executeWorkflow",
       "typeVersion": 1.1,
       "position": [
@@ -209,17 +259,17 @@
         "source": "database",
         "workflowId": {
           "__rl": true,
-          "value": "bCeqH7P5elzBNfE9",
+          "value": "YdJXuIufiZWatU5T",
           "mode": "id",
-          "cachedResultName": "Jeeves Tool - X Publish Draft"
+          "cachedResultName": "GEIVS Tool - Square Catalog Lookup"
         },
         "mode": "once",
         "options": {
           "waitForSubWorkflow": true
         }
       },
-      "id": "6e8516df91a9",
-      "name": "exec_publish",
+      "id": "a84efb078f3e",
+      "name": "exec_catalog",
       "type": "n8n-nodes-base.executeWorkflow",
       "typeVersion": 1.1,
       "position": [
@@ -229,15 +279,61 @@
     },
     {
       "parameters": {
+        "source": "database",
+        "workflowId": {
+          "__rl": true,
+          "value": "np4keyUrfFbhAPgt",
+          "mode": "id",
+          "cachedResultName": "GEIVS Tool - Square Draft Invoice"
+        },
+        "mode": "once",
+        "options": {
+          "waitForSubWorkflow": true
+        }
+      },
+      "id": "537664d76b7d",
+      "name": "exec_draft_invoice",
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.1,
+      "position": [
+        560,
+        560
+      ]
+    },
+    {
+      "parameters": {
+        "source": "database",
+        "workflowId": {
+          "__rl": true,
+          "value": "Y1Vssx9qVZ2hT5np",
+          "mode": "id",
+          "cachedResultName": "GEIVS Tool - Square Publish Invoice"
+        },
+        "mode": "once",
+        "options": {
+          "waitForSubWorkflow": true
+        }
+      },
+      "id": "88415320ee1c",
+      "name": "exec_publish_invoice",
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.1,
+      "position": [
+        560,
+        690
+      ]
+    },
+    {
+      "parameters": {
         "jsCode": "const a = ($json.action||'').toString();\nreturn [{ json: { summary: `Unknown action '${a}'. Check the tool's action list.` } }];"
       },
-      "id": "811a16ebbe1c",
+      "id": "4e007a8fc1d4",
       "name": "Unknown",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
         560,
-        560
+        820
       ]
     }
   ],
@@ -257,28 +353,42 @@
       "main": [
         [
           {
-            "node": "exec_read",
+            "node": "exec_sales",
             "type": "main",
             "index": 0
           }
         ],
         [
           {
-            "node": "exec_draft",
+            "node": "exec_customers",
             "type": "main",
             "index": 0
           }
         ],
         [
           {
-            "node": "exec_list_drafts",
+            "node": "exec_invoices",
             "type": "main",
             "index": 0
           }
         ],
         [
           {
-            "node": "exec_publish",
+            "node": "exec_catalog",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "exec_draft_invoice",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "exec_publish_invoice",
             "type": "main",
             "index": 0
           }

@@ -1,6 +1,6 @@
 {
   "id": "xzLhx3Hoovkdy6Zp",
-  "name": "Jeeves Domain - Google Tasks",
+  "name": "GEIVS Domain - Google Tasks",
   "nodes": [
     {
       "parameters": {
@@ -117,7 +117,7 @@
           "__rl": true,
           "value": "BIYUfcs0TDqWR4Aq",
           "mode": "id",
-          "cachedResultName": "Jeeves Tool - Tasks List"
+          "cachedResultName": "GEIVS Tool - Tasks List"
         },
         "mode": "once",
         "options": {
@@ -140,7 +140,7 @@
           "__rl": true,
           "value": "OOtdthSDoMdjqqkJ",
           "mode": "id",
-          "cachedResultName": "Jeeves Tool - Tasks Add"
+          "cachedResultName": "GEIVS Tool - Tasks Add"
         },
         "mode": "once",
         "options": {
@@ -163,7 +163,7 @@
           "__rl": true,
           "value": "FWeLhp1FK1AeXyEK",
           "mode": "id",
-          "cachedResultName": "Jeeves Tool - Tasks Complete"
+          "cachedResultName": "GEIVS Tool - Tasks Complete"
         },
         "mode": "once",
         "options": {

@@ -1,12 +1,12 @@
 {
-  "id": "jeevestcalget1",
-  "name": "Jeeves Tool - Cal Get",
+  "id": "geivstremind1",
+  "name": "GEIVS Tool - Reminder",
   "nodes": [
     {
       "parameters": {
         "inputSource": "passthrough"
       },
-      "id": "jeevestcalget1-trg",
+      "id": "geivstremind1-trg",
       "name": "Trigger",
       "type": "n8n-nodes-base.executeWorkflowTrigger",
       "typeVersion": 1.1,
@@ -18,13 +18,13 @@
     {
       "parameters": {
         "method": "POST",
-        "url": "http://127.0.0.1:5678/webhook/jeeves-cal-get",
+        "url": "http://127.0.0.1:5678/webhook/geivs-reminder-add",
         "sendBody": true,
         "specifyBody": "json",
         "jsonBody": "={{ JSON.stringify($json) }}",
         "options": {}
       },
-      "id": "jeevestcalget1-fwd",
+      "id": "geivstremind1-fwd",
       "name": "Forward",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,

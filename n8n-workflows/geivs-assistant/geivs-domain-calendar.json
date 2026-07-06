@@ -1,6 +1,6 @@
 {
   "id": "KzWdcShOrjbkZi3k",
-  "name": "Jeeves Domain - Calendar",
+  "name": "GEIVS Domain - Calendar",
   "nodes": [
     {
       "parameters": {
@@ -90,9 +90,9 @@
         "source": "database",
         "workflowId": {
           "__rl": true,
-          "value": "jeevestcalget1",
+          "value": "geivstcalget1",
           "mode": "id",
-          "cachedResultName": "Jeeves Tool - Cal Get"
+          "cachedResultName": "GEIVS Tool - Cal Get"
         },
         "mode": "once",
         "options": {
@@ -113,9 +113,9 @@
         "source": "database",
         "workflowId": {
           "__rl": true,
-          "value": "jeevestcalcr1",
+          "value": "geivstcalcr1",
           "mode": "id",
-          "cachedResultName": "Jeeves Tool - Cal Create"
+          "cachedResultName": "GEIVS Tool - Cal Create"
         },
         "mode": "once",
         "options": {

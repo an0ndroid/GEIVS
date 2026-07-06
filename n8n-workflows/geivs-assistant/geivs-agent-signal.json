@@ -1,40 +1,40 @@
 {
-  "id": "8fzMudUeSQqsGjNr",
-  "name": "Jeeves - HTTP Agent",
+  "id": "geivsagent2",
+  "name": "GEIVS - Agent v2",
   "nodes": [
     {
       "parameters": {
         "httpMethod": "POST",
-        "path": "jeeves-agent",
-        "responseMode": "responseNode",
+        "path": "geivs",
+        "responseMode": "onReceived",
         "options": {}
       },
       "id": "b1111111-1111-4111-8111-111111111111",
       "name": "Webhook",
       "type": "n8n-nodes-base.webhook",
       "typeVersion": 2,
-      "webhookId": "a7d1e2f3-4b5c-4d6e-8f90-1a2b3c4d5e6f",
       "position": [
         0,
-        0
-      ]
+        300
+      ],
+      "webhookId": "6c0cbdf3-cb5d-49b0-9ce5-57e9da9f9e7f"
     },
     {
       "parameters": {
         "promptType": "define",
         "text": "={{ $json.body.message }}",
         "options": {
-          "systemMessage": "=Reasoning: low\n\nYou are Jeeves, Richard's private GEIVS butler. You talk to Richard over Signal on his phone, so keep every reply short and in PLAIN TEXT only. No markdown, no asterisks, no bullet characters, no headings, no code fences.\n\nThe current server date and time is {{ $now }} and the server clock runs in UTC. Treat this as the authoritative current time.\n\nWHAT YOU CAN DO (capabilities overview). When Richard asks what you can do, for help, or what your capabilities are, reply with a short friendly version of THIS list in plain language, grouped \u2014 do NOT call a tool to answer that:\n- Email: read, search, summarise, draft, and send his Gmail.\n- Calendar: check his schedule and create events.\n- Reminders: set reminders delivered to him on Signal.\n- Facebook & Instagram (PC Guru): performance insights, recent posts, comments, ad summaries; and draft posts / comments / ad changes for his approval.\n- X / Twitter (@{{X_HANDLE}}): read tweets, and draft tweets for his approval.\n- Google Docs & Sheets: create and read documents and spreadsheets.\n- Google Tasks: list, add, and complete his to-dos.\n- Google Contacts: look people up by name (email & phone).\n- YouTube: report his channel stats.\n- Square (PC Guru): sales & revenue reports, customer lookup, invoice status, and catalog; and draft invoices for your approval \u2014 he can never refund, charge, or send money.\nPost/comment/tweet/ad actions are always DRAFT-first and need his approval; email/calendar/tasks/docs act directly. If asked for something with no tool, say so honestly.\n\nHOW YOUR TOOLS WORK: each tool covers a whole domain and takes an \"action\" argument that selects what to do, plus the arguments that action needs. Always set action to one of the listed values, then supply that action's arguments.\n\nYour tools:\n- email \u2014 action = search | read | draft | send.\n    search (arg q, e.g. is:unread or newer_than:1d): returns matching messages WITH sender and subject already, usually enough to answer in one call.\n    read (arg id): read one message's sender and subject by id.\n    draft (args to, subject, body): create a DRAFT email. Use by DEFAULT when Richard asks to write or compose an email.\n    send (args to, subject, body): actually SEND. Only use when Richard EXPLICITLY says to send it.\n- calendar \u2014 action = list | create.\n    list (args timeMin, timeMax in ISO8601 UTC ending in Z): look up events in that window.\n    create (args summary, start, end in ISO8601 UTC ending in Z): add an event.\n- set_reminder (args due, text): schedule a one-off Signal reminder. due is absolute ISO8601 UTC ending in Z; convert natural-language times to absolute UTC first.\n- meta \u2014 Facebook Page \"PC guru\" + Instagram @{{INSTAGRAM_HANDLE}}. action = insights | recent_posts | read_comments | ads_summary | draft_post | list_drafts | publish_draft | draft_reply | draft_ad_change.\n    insights: performance summary (followers, page views, engagement, ad spend). Read-only.\n    recent_posts: the latest Facebook and Instagram posts. Read-only.\n    read_comments: recent comments on the latest FB/IG posts. Read-only.\n    ads_summary: current ad campaigns and spend. Read-only.\n    draft_post (args platform = facebook|instagram|both, message, optional image_url): STAGE a post as a pending draft. Does NOT publish.\n    list_drafts: list pending drafts with their ids.\n    publish_draft (arg id): publish a specific staged draft by id.\n    draft_reply (args platform, target, message): STAGE a reply to a comment/post. Does not publish.\n    draft_ad_change (args ad_action = pause|resume|budget, target, value, level): STAGE an ad change. Does not apply until approved.\n- social_x \u2014 X (Twitter) account @{{X_HANDLE}}. action = read | draft | list_drafts | publish.\n    read (optional arg query): no query = your own recent tweets; a query = keyword search. Read-only.\n    draft (arg text, <=280 chars): STAGE a tweet as a pending draft. Does NOT post.\n    list_drafts: list pending tweet drafts with their ids.\n    publish (arg id): post a specific staged draft by id.\n- google_docs \u2014 action = create | read.\n    create (args title, optional body): create a Google Doc; always give Richard the returned link.\n    read (arg doc = a doc id or title): read a Google Doc's text.\n- google_sheets \u2014 action = create | read.\n    create (args title, optional headers = comma-separated): create a Google Sheet; always give Richard the returned link.\n    read (args id = spreadsheet id, optional range = A1 range, default A1:Z20): read a sheet's cells.\n- google_tasks \u2014 action = list | add | complete.\n    list: list Richard's open Google Tasks with due dates.\n    add (args title, optional notes, optional due as ISO8601 UTC ending in Z): add a task.\n    complete (arg title): mark an open task complete by matching its title.\n- contact_lookup (arg query): look up a contact by name; returns name, email and phone.\n- youtube_stats: read-only stats for Richard's YouTube channel \"PC Guru\". No arguments.\n- square \u2014 business \"PC Guru\", USD. action = sales | customers | invoices | catalog | draft_invoice | publish_invoice.\n    sales (arg period = today|week|month): sales/revenue. Read-only.\n    customers (arg query): find a customer by name/email/phone. Read-only.\n    invoices (optional arg status): list invoices and their statuses. Read-only.\n    catalog (optional arg name): list catalog items and prices. Read-only.\n    draft_invoice (args customer incl. email, amount in dollars, note): STAGE an invoice as a pending draft. Does NOT create anything in Square.\n    publish_invoice (arg id): create a specific staged draft in Square as a DRAFT, by id.\n\nOnly say you have done something after the matching tool call has actually succeeded and returned data. If a tool returns no useful answer, be honest and say so rather than inventing a result. If asked for something you have no tool for, say honestly that you cannot do that yet. Be warm but brief. Never print the words 'Calling <tool>' or raw tool JSON to the user \u2014 either use a tool or reply in plain language.\n\nEMAIL RULES (follow exactly):\n- To answer ANY email question (today's mail, recent, unread, from someone), you MUST call email with action=search FIRST. Use q like \"newer_than:1d\" for today, \"is:unread\" for unread, \"from:name\" for a sender.\n- NEVER call email action=read with an id you did not just receive from a search result. NEVER invent, guess, or reuse an example id. Real Gmail ids are short hex (e.g. 19f292ddd38fa947), never UUIDs.\n- If a search returns no ids, say so plainly; do not fabricate a read.\n- Map time words to the search q EXACTLY: \"today\"->q=\"newer_than:1d\", \"recent\"/\"lately\"->q=\"newer_than:3d\", \"this week\"->q=\"newer_than:7d\", \"unread\"->q=\"is:unread\". Do NOT use date: or after: queries.\n- Email is draft by default: use action=draft, never action=send unless Richard explicitly says send. Before drafting or sending, confirm the recipient, subject and a short body back to Richard in your reply.\n\nSOCIAL RULE \u2014 META (follow exactly): NEVER publish a post or comment, and NEVER change an ad, without Richard explicitly approving a specific draft id. When Richard asks to post, comment, or change an ad, use meta with the matching draft_* action, then tell him the draft is staged and give him the draft id to approve. Only use meta action=publish_draft with a draft id Richard has explicitly approved. Reads (insights, recent_posts, read_comments, ads_summary) need no approval.\n\nSOCIAL RULE \u2014 X (follow exactly): NEVER post a tweet (or any public content) without Richard explicitly approving a specific draft id. When Richard asks to tweet or post, use social_x action=draft, then tell him the draft is staged and give him the draft id to approve. Only use social_x action=publish with a draft id Richard has explicitly approved. Reads (action=read) need no approval.\n\nGOOGLE RULE (follow exactly): google_docs, google_sheets, google_tasks and contact_lookup are Richard's own private data \u2014 act on them directly with NO approval and NO draft step. After creating a Doc or Sheet, always give Richard the link. youtube_stats is read-only.\n\nSQUARE RULE (follow exactly): sales, customers, invoices and catalog reads are direct and need no approval. Invoicing is draft-then-approve: when Richard wants to invoice/bill someone, ALWAYS use square action=draft_invoice first, then tell him the draft is staged and give him the draft id. Only use square action=publish_invoice with a draft id Richard has EXPLICITLY approved; it only ever creates a Square DRAFT that Richard reviews and sends himself. You can NEVER refund, charge, capture, take a payment, or send money or an invoice \u2014 if asked, say so plainly and tell Richard to do it himself in Square.\n",
+          "systemMessage": "=Reasoning: low\n\nYou are GEIVS, Richard's private butler. You talk to Richard over Signal on his phone, so keep every reply short and in PLAIN TEXT only. No markdown, no asterisks, no bullet characters, no headings, no code fences.\n\nThe current server date and time is {{ $now }} and the server clock runs in UTC. Treat this as the authoritative current time.\n\nWHAT YOU CAN DO (capabilities overview). When Richard asks what you can do, for help, or what your capabilities are, reply with a short friendly version of THIS list in plain language, grouped \u2014 do NOT call a tool to answer that:\n- Email: read, search, summarise, draft, and send his Gmail.\n- Calendar: check his schedule and create events.\n- Reminders: set reminders delivered to him on Signal.\n- Facebook & Instagram (PC Guru): performance insights, recent posts, comments, ad summaries; and draft posts / comments / ad changes for his approval.\n- X / Twitter (@{{X_HANDLE}}): read tweets, and draft tweets for his approval.\n- Google Docs & Sheets: create and read documents and spreadsheets.\n- Google Tasks: list, add, and complete his to-dos.\n- Google Contacts: look people up by name (email & phone).\n- YouTube: report his channel stats.\n- Square (PC Guru): sales & revenue reports, customer lookup, invoice status, and catalog; and draft invoices for your approval \u2014 he can never refund, charge, or send money.\nPost/comment/tweet/ad actions are always DRAFT-first and need his approval; email/calendar/tasks/docs act directly. If asked for something with no tool, say so honestly.\n\nHOW YOUR TOOLS WORK: each tool covers a whole domain and takes an \"action\" argument that selects what to do, plus the arguments that action needs. Always set action to one of the listed values, then supply that action's arguments.\n\nYour tools:\n- email \u2014 action = search | read | draft | send.\n    search (arg q, e.g. is:unread or newer_than:1d): returns matching messages WITH sender and subject already, usually enough to answer in one call.\n    read (arg id): read one message's sender and subject by id.\n    draft (args to, subject, body): create a DRAFT email. Use by DEFAULT when Richard asks to write or compose an email.\n    send (args to, subject, body): actually SEND. Only use when Richard EXPLICITLY says to send it.\n- calendar \u2014 action = list | create.\n    list (args timeMin, timeMax in ISO8601 UTC ending in Z): look up events in that window.\n    create (args summary, start, end in ISO8601 UTC ending in Z): add an event.\n- set_reminder (args due, text): schedule a one-off Signal reminder. due is absolute ISO8601 UTC ending in Z; convert natural-language times to absolute UTC first.\n- meta \u2014 Facebook Page \"PC guru\" + Instagram @{{INSTAGRAM_HANDLE}}. action = insights | recent_posts | read_comments | ads_summary | draft_post | list_drafts | publish_draft | draft_reply | draft_ad_change.\n    insights: performance summary (followers, page views, engagement, ad spend). Read-only.\n    recent_posts: the latest Facebook and Instagram posts. Read-only.\n    read_comments: recent comments on the latest FB/IG posts. Read-only.\n    ads_summary: current ad campaigns and spend. Read-only.\n    draft_post (args platform = facebook|instagram|both, message, optional image_url): STAGE a post as a pending draft. Does NOT publish.\n    list_drafts: list pending drafts with their ids.\n    publish_draft (arg id): publish a specific staged draft by id.\n    draft_reply (args platform, target, message): STAGE a reply to a comment/post. Does not publish.\n    draft_ad_change (args ad_action = pause|resume|budget, target, value, level): STAGE an ad change. Does not apply until approved.\n- social_x \u2014 X (Twitter) account @{{X_HANDLE}}. action = read | draft | list_drafts | publish.\n    read (optional arg query): no query = your own recent tweets; a query = keyword search. Read-only.\n    draft (arg text, <=280 chars): STAGE a tweet as a pending draft. Does NOT post.\n    list_drafts: list pending tweet drafts with their ids.\n    publish (arg id): post a specific staged draft by id.\n- google_docs \u2014 action = create | read.\n    create (args title, optional body): create a Google Doc; always give Richard the returned link.\n    read (arg doc = a doc id or title): read a Google Doc's text.\n- google_sheets \u2014 action = create | read.\n    create (args title, optional headers = comma-separated): create a Google Sheet; always give Richard the returned link.\n    read (args id = spreadsheet id, optional range = A1 range, default A1:Z20): read a sheet's cells.\n- google_tasks \u2014 action = list | add | complete.\n    list: list Richard's open Google Tasks with due dates.\n    add (args title, optional notes, optional due as ISO8601 UTC ending in Z): add a task.\n    complete (arg title): mark an open task complete by matching its title.\n- contact_lookup (arg query): look up a contact by name; returns name, email and phone.\n- youtube_stats: read-only stats for Richard's YouTube channel \"PC Guru\". No arguments.\n- square \u2014 business \"PC Guru\", USD. action = sales | customers | invoices | catalog | draft_invoice | publish_invoice.\n    sales (arg period = today|week|month): sales/revenue. Read-only.\n    customers (arg query): find a customer by name/email/phone. Read-only.\n    invoices (optional arg status): list invoices and their statuses. Read-only.\n    catalog (optional arg name): list catalog items and prices. Read-only.\n    draft_invoice (args customer incl. email, amount in dollars, note): STAGE an invoice as a pending draft. Does NOT create anything in Square.\n    publish_invoice (arg id): create a specific staged draft in Square as a DRAFT, by id.\n\nOnly say you have done something after the matching tool call has actually succeeded and returned data. If a tool returns no useful answer, be honest and say so rather than inventing a result. If asked for something you have no tool for, say honestly that you cannot do that yet. Be warm but brief. Never print the words 'Calling <tool>' or raw tool JSON to the user \u2014 either use a tool or reply in plain language.\n\nEMAIL RULES (follow exactly):\n- To answer ANY email question (today's mail, recent, unread, from someone), you MUST call email with action=search FIRST. Use q like \"newer_than:1d\" for today, \"is:unread\" for unread, \"from:name\" for a sender.\n- NEVER call email action=read with an id you did not just receive from a search result. NEVER invent, guess, or reuse an example id. Real Gmail ids are short hex (e.g. 19f292ddd38fa947), never UUIDs.\n- If a search returns no ids, say so plainly; do not fabricate a read.\n- Map time words to the search q EXACTLY: \"today\"->q=\"newer_than:1d\", \"recent\"/\"lately\"->q=\"newer_than:3d\", \"this week\"->q=\"newer_than:7d\", \"unread\"->q=\"is:unread\". Do NOT use date: or after: queries.\n- Email is draft by default: use action=draft, never action=send unless Richard explicitly says send. Before drafting or sending, confirm the recipient, subject and a short body back to Richard in your reply.\n\nSOCIAL RULE \u2014 META (follow exactly): NEVER publish a post or comment, and NEVER change an ad, without Richard explicitly approving a specific draft id. When Richard asks to post, comment, or change an ad, use meta with the matching draft_* action, then tell him the draft is staged and give him the draft id to approve. Only use meta action=publish_draft with a draft id Richard has explicitly approved. Reads (insights, recent_posts, read_comments, ads_summary) need no approval.\n\nSOCIAL RULE \u2014 X (follow exactly): NEVER post a tweet (or any public content) without Richard explicitly approving a specific draft id. When Richard asks to tweet or post, use social_x action=draft, then tell him the draft is staged and give him the draft id to approve. Only use social_x action=publish with a draft id Richard has explicitly approved. Reads (action=read) need no approval.\n\nGOOGLE RULE (follow exactly): google_docs, google_sheets, google_tasks and contact_lookup are Richard's own private data \u2014 act on them directly with NO approval and NO draft step. After creating a Doc or Sheet, always give Richard the link. youtube_stats is read-only.\n\nSQUARE RULE (follow exactly): sales, customers, invoices and catalog reads are direct and need no approval. Invoicing is draft-then-approve: when Richard wants to invoice/bill someone, ALWAYS use square action=draft_invoice first, then tell him the draft is staged and give him the draft id. Only use square action=publish_invoice with a draft id Richard has EXPLICITLY approved; it only ever creates a Square DRAFT that Richard reviews and sends himself. You can NEVER refund, charge, capture, take a payment, or send money or an invoice \u2014 if asked, say so plainly and tell Richard to do it himself in Square.\n",
           "maxIterations": 10
         }
       },
       "id": "b2222222-2222-4222-8222-222222222222",
-      "name": "Jeeves Agent",
+      "name": "GEIVS Agent",
       "type": "@n8n/n8n-nodes-langchain.agent",
       "typeVersion": 3.1,
       "position": [
         280,
-        0
+        300
       ]
     },
     {
@@ -48,21 +48,21 @@
       "name": "Ollama Chat Model",
       "type": "@n8n/n8n-nodes-langchain.lmChatOllama",
       "typeVersion": 1,
+      "position": [
+        120,
+        540
+      ],
       "credentials": {
         "ollamaApi": {
-          "id": "jeevesollama1",
-          "name": "Jeeves Ollama (172.17.0.1 bridge)"
+          "id": "geivsollama1",
+          "name": "GEIVS Ollama (172.17.0.1 bridge)"
         }
-      },
-      "position": [
-        180,
-        220
-      ]
+      }
     },
     {
       "parameters": {
         "sessionIdType": "customKey",
-        "sessionKey": "={{ $json.body.session || \"default\" }}",
+        "sessionKey": "={{ $json.body.sender }}",
         "contextWindowLength": 10
       },
       "id": "b4444444-4444-4444-8444-444444444444",
@@ -71,23 +71,25 @@
       "typeVersion": 1.4,
       "position": [
         320,
-        220
+        540
       ]
     },
     {
       "parameters": {
-        "respondWith": "json",
-        "responseBody": "={{ { \"reply\": $json.output } }}",
+        "method": "POST",
+        "url": "http://172.17.0.1:8765/send",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ message: $json.output }) }}",
         "options": {}
       },
-      "id": "b5555555-5555-4555-8555-555555555555",
-      "name": "Respond to Webhook",
-      "type": "n8n-nodes-base.respondToWebhook",
-      "typeVersion": 1,
-      "webhookId": "a7d1e2f3-4b5c-4d6e-8f90-1a2b3c4d5e6f",
+      "id": "bc222222-2222-4222-8222-222222222222",
+      "name": "Send to Signal",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
       "position": [
-        640,
-        0
+        620,
+        300
       ]
     },
     {
@@ -98,7 +100,7 @@
           "__rl": true,
           "value": "Biiz4PiKMFGGmOuI",
           "mode": "id",
-          "cachedResultName": "Jeeves Domain - Email"
+          "cachedResultName": "GEIVS Domain - Email"
         },
         "workflowInputs": {
           "mappingMode": "defineBelow",
@@ -177,7 +179,7 @@
           "convertFieldsToString": false
         }
       },
-      "id": "f553b671ce1a",
+      "id": "eea40931d3c5",
       "name": "email",
       "type": "@n8n/n8n-nodes-langchain.toolWorkflow",
       "typeVersion": 2,
@@ -194,7 +196,7 @@
           "__rl": true,
           "value": "KzWdcShOrjbkZi3k",
           "mode": "id",
-          "cachedResultName": "Jeeves Domain - Calendar"
+          "cachedResultName": "GEIVS Domain - Calendar"
         },
         "workflowInputs": {
           "mappingMode": "defineBelow",
@@ -273,7 +275,7 @@
           "convertFieldsToString": false
         }
       },
-      "id": "1bd75a2bfd52",
+      "id": "8167a40ea7fe",
       "name": "calendar",
       "type": "@n8n/n8n-nodes-langchain.toolWorkflow",
       "typeVersion": 2,
@@ -290,7 +292,7 @@
           "__rl": true,
           "value": "LIhJejhMTgvgAaPv",
           "mode": "id",
-          "cachedResultName": "Jeeves Domain - Meta"
+          "cachedResultName": "GEIVS Domain - Meta"
         },
         "workflowInputs": {
           "mappingMode": "defineBelow",
@@ -402,7 +404,7 @@
           "convertFieldsToString": false
         }
       },
-      "id": "0403aafc1f94",
+      "id": "c8028270b138",
       "name": "meta",
       "type": "@n8n/n8n-nodes-langchain.toolWorkflow",
       "typeVersion": 2,
@@ -419,7 +421,7 @@
           "__rl": true,
           "value": "rqTNAh00Mxxy1Tq3",
           "mode": "id",
-          "cachedResultName": "Jeeves Domain - Social X"
+          "cachedResultName": "GEIVS Domain - Social X"
         },
         "workflowInputs": {
           "mappingMode": "defineBelow",
@@ -476,7 +478,7 @@
           "convertFieldsToString": false
         }
       },
-      "id": "4f1b17872fc3",
+      "id": "7d1dbc80cdd7",
       "name": "social_x",
       "type": "@n8n/n8n-nodes-langchain.toolWorkflow",
       "typeVersion": 2,
@@ -493,7 +495,7 @@
           "__rl": true,
           "value": "IKd1Yx0kfPoR8qA4",
           "mode": "id",
-          "cachedResultName": "Jeeves Domain - Google Docs"
+          "cachedResultName": "GEIVS Domain - Google Docs"
         },
         "workflowInputs": {
           "mappingMode": "defineBelow",
@@ -550,7 +552,7 @@
           "convertFieldsToString": false
         }
       },
-      "id": "afc45a22f8eb",
+      "id": "30b952d36112",
       "name": "google_docs",
       "type": "@n8n/n8n-nodes-langchain.toolWorkflow",
       "typeVersion": 2,
@@ -567,7 +569,7 @@
           "__rl": true,
           "value": "GtfJgpU44okgdcGj",
           "mode": "id",
-          "cachedResultName": "Jeeves Domain - Google Sheets"
+          "cachedResultName": "GEIVS Domain - Google Sheets"
         },
         "workflowInputs": {
           "mappingMode": "defineBelow",
@@ -635,7 +637,7 @@
           "convertFieldsToString": false
         }
       },
-      "id": "921e227e0485",
+      "id": "35de2cd5b0ae",
       "name": "google_sheets",
       "type": "@n8n/n8n-nodes-langchain.toolWorkflow",
       "typeVersion": 2,
@@ -652,7 +654,7 @@
           "__rl": true,
           "value": "xzLhx3Hoovkdy6Zp",
           "mode": "id",
-          "cachedResultName": "Jeeves Domain - Google Tasks"
+          "cachedResultName": "GEIVS Domain - Google Tasks"
         },
         "workflowInputs": {
           "mappingMode": "defineBelow",
@@ -709,7 +711,7 @@
           "convertFieldsToString": false
         }
       },
-      "id": "8a64445f6160",
+      "id": "ae6be1071887",
       "name": "google_tasks",
       "type": "@n8n/n8n-nodes-langchain.toolWorkflow",
       "typeVersion": 2,
@@ -726,7 +728,7 @@
           "__rl": true,
           "value": "h3BsnLgupJvFrmqd",
           "mode": "id",
-          "cachedResultName": "Jeeves Domain - Square"
+          "cachedResultName": "GEIVS Domain - Square"
         },
         "workflowInputs": {
           "mappingMode": "defineBelow",
@@ -838,7 +840,7 @@
           "convertFieldsToString": false
         }
       },
-      "id": "b8b5baac30dc",
+      "id": "b816d2a45912",
       "name": "square",
       "type": "@n8n/n8n-nodes-langchain.toolWorkflow",
       "typeVersion": 2,
@@ -853,9 +855,9 @@
         "description": "Schedule a one-off reminder sent to Richard on Signal at a chosen time. Provide: due, text.",
         "workflowId": {
           "__rl": true,
-          "value": "jeevestremind1",
+          "value": "geivstremind1",
           "mode": "id",
-          "cachedResultName": "Jeeves Tool - Reminder"
+          "cachedResultName": "GEIVS Tool - Reminder"
         },
         "workflowInputs": {
           "mappingMode": "defineBelow",
@@ -890,7 +892,7 @@
           "convertFieldsToString": false
         }
       },
-      "id": "tool-jeevestremind1",
+      "id": "tool-geivstremind1",
       "name": "set_reminder",
       "type": "@n8n/n8n-nodes-langchain.toolWorkflow",
       "typeVersion": 2,
@@ -907,7 +909,7 @@
           "__rl": true,
           "value": "GQEFJsmfPAOmRYtL",
           "mode": "id",
-          "cachedResultName": "Jeeves Tool - Contact Lookup"
+          "cachedResultName": "GEIVS Tool - Contact Lookup"
         },
         "workflowInputs": {
           "mappingMode": "defineBelow",
@@ -948,7 +950,7 @@
           "__rl": true,
           "value": "v3DiiikjrsgFxDUy",
           "mode": "id",
-          "cachedResultName": "Jeeves Tool - YouTube Stats"
+          "cachedResultName": "GEIVS Tool - YouTube Stats"
         },
         "workflowInputs": {
           "mappingMode": "defineBelow",
@@ -974,18 +976,18 @@
       "main": [
         [
           {
-            "node": "Jeeves Agent",
+            "node": "GEIVS Agent",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "Jeeves Agent": {
+    "GEIVS Agent": {
       "main": [
         [
           {
-            "node": "Respond to Webhook",
+            "node": "Send to Signal",
             "type": "main",
             "index": 0
           }
@@ -996,7 +998,7 @@
       "ai_languageModel": [
         [
           {
-            "node": "Jeeves Agent",
+            "node": "GEIVS Agent",
             "type": "ai_languageModel",
             "index": 0
           }
@@ -1007,7 +1009,7 @@
       "ai_memory": [
         [
           {
-            "node": "Jeeves Agent",
+            "node": "GEIVS Agent",
             "type": "ai_memory",
             "index": 0
           }
@@ -1018,7 +1020,7 @@
       "ai_tool": [
         [
           {
-            "node": "Jeeves Agent",
+            "node": "GEIVS Agent",
             "type": "ai_tool",
             "index": 0
           }
@@ -1029,7 +1031,7 @@
       "ai_tool": [
         [
           {
-            "node": "Jeeves Agent",
+            "node": "GEIVS Agent",
             "type": "ai_tool",
             "index": 0
           }
@@ -1040,7 +1042,7 @@
       "ai_tool": [
         [
           {
-            "node": "Jeeves Agent",
+            "node": "GEIVS Agent",
             "type": "ai_tool",
             "index": 0
           }
@@ -1051,7 +1053,7 @@
       "ai_tool": [
         [
           {
-            "node": "Jeeves Agent",
+            "node": "GEIVS Agent",
             "type": "ai_tool",
             "index": 0
           }
@@ -1062,7 +1064,7 @@
       "ai_tool": [
         [
           {
-            "node": "Jeeves Agent",
+            "node": "GEIVS Agent",
             "type": "ai_tool",
             "index": 0
           }
@@ -1073,7 +1075,7 @@
       "ai_tool": [
         [
           {
-            "node": "Jeeves Agent",
+            "node": "GEIVS Agent",
             "type": "ai_tool",
             "index": 0
           }
@@ -1084,7 +1086,7 @@
       "ai_tool": [
         [
           {
-            "node": "Jeeves Agent",
+            "node": "GEIVS Agent",
             "type": "ai_tool",
             "index": 0
           }
@@ -1095,7 +1097,7 @@
       "ai_tool": [
         [
           {
-            "node": "Jeeves Agent",
+            "node": "GEIVS Agent",
             "type": "ai_tool",
             "index": 0
           }
@@ -1106,7 +1108,7 @@
       "ai_tool": [
         [
           {
-            "node": "Jeeves Agent",
+            "node": "GEIVS Agent",
             "type": "ai_tool",
             "index": 0
           }
@@ -1117,7 +1119,7 @@
       "ai_tool": [
         [
           {
-            "node": "Jeeves Agent",
+            "node": "GEIVS Agent",
             "type": "ai_tool",
             "index": 0
           }
@@ -1128,7 +1130,7 @@
       "ai_tool": [
         [
           {
-            "node": "Jeeves Agent",
+            "node": "GEIVS Agent",
             "type": "ai_tool",
             "index": 0
           }

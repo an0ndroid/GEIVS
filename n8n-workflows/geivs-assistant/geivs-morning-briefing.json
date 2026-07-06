@@ -1,6 +1,6 @@
 {
-  "id": "jeevesbrief1",
-  "name": "Jeeves - Morning Briefing",
+  "id": "geivsbrief1",
+  "name": "GEIVS - Morning Briefing",
   "nodes": [
     {
       "parameters": {
@@ -25,7 +25,7 @@
     {
       "parameters": {
         "httpMethod": "POST",
-        "path": "jeeves-brief-test",
+        "path": "geivs-brief-test",
         "responseMode": "onReceived",
         "options": {}
       },
@@ -134,7 +134,7 @@
         "url": "http://172.17.0.1:11434/api/generate",
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "={{ JSON.stringify({ model: \"gpt-oss:20b\", system: \"Reasoning: low\\nYou are Jeeves, Richard's warm British butler. Rewrite the briefing below into a short, friendly good-morning message for Richard, delivered over Signal. Plain text ONLY: no markdown, no asterisks, no bullet characters, no headings, no code fences. Keep it to a few short sentences. Preserve every concrete fact: event times and titles, unread email senders and subjects, and the counts. If there is nothing scheduled or no unread mail, say so briefly and cheerfully.\", prompt: $json.briefing_plain, stream: false }) }}",
+        "jsonBody": "={{ JSON.stringify({ model: \"gpt-oss:20b\", system: \"Reasoning: low\\nYou are GEIVS, Richard's warm British butler. Rewrite the briefing below into a short, friendly good-morning message for Richard, delivered over Signal. Plain text ONLY: no markdown, no asterisks, no bullet characters, no headings, no code fences. Keep it to a few short sentences. Preserve every concrete fact: event times and titles, unread email senders and subjects, and the counts. If there is nothing scheduled or no unread mail, say so briefly and cheerfully.\", prompt: $json.briefing_plain, stream: false }) }}",
         "options": {
           "timeout": 120000
         }

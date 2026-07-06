@@ -1,11 +1,11 @@
 {
-  "id": "jeevesgmailbk1",
-  "name": "Jeeves - Gmail Backend",
+  "id": "geivsgmailbk1",
+  "name": "GEIVS - Gmail Backend",
   "nodes": [
     {
       "parameters": {
         "httpMethod": "POST",
-        "path": "jeeves-gmail-draft",
+        "path": "geivs-gmail-draft",
         "responseMode": "responseNode",
         "options": {}
       },
@@ -76,7 +76,7 @@
     {
       "parameters": {
         "httpMethod": "POST",
-        "path": "jeeves-gmail-send",
+        "path": "geivs-gmail-send",
         "responseMode": "responseNode",
         "options": {}
       },

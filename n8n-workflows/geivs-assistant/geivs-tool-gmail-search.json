@@ -1,12 +1,12 @@
 {
-  "id": "jeevestgsrch1",
-  "name": "Jeeves Tool - Gmail Search",
+  "id": "geivstgsrch1",
+  "name": "GEIVS Tool - Gmail Search",
   "nodes": [
     {
       "parameters": {
         "inputSource": "passthrough"
       },
-      "id": "jeevestgsrch1-trg",
+      "id": "geivstgsrch1-trg",
       "name": "Trigger",
       "type": "n8n-nodes-base.executeWorkflowTrigger",
       "typeVersion": 1.1,
@@ -35,7 +35,7 @@
         },
         "options": {}
       },
-      "id": "jeevestgsrch1-api",
+      "id": "geivstgsrch1-api",
       "name": "Gmail Search",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,

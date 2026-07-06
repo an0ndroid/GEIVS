@@ -1,6 +1,6 @@
 {
-  "id": "jeevesremfire1",
-  "name": "Jeeves - Reminder Fire",
+  "id": "geivsremfire1",
+  "name": "GEIVS - Reminder Fire",
   "nodes": [
     {
       "parameters": {
@@ -26,7 +26,7 @@
       "parameters": {
         "resource": "table",
         "operation": "create",
-        "tableName": "jeeves_reminders",
+        "tableName": "geivs_reminders",
         "columns": {
           "column": [
             {
@@ -67,7 +67,7 @@
         "dataTableId": {
           "__rl": true,
           "mode": "name",
-          "value": "jeeves_reminders"
+          "value": "geivs_reminders"
         },
         "returnAll": true,
         "filters": {
@@ -104,7 +104,7 @@
         "dataTableId": {
           "__rl": true,
           "mode": "name",
-          "value": "jeeves_reminders"
+          "value": "geivs_reminders"
         },
         "filters": {
           "conditions": [

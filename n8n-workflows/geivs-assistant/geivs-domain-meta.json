@@ -1,12 +1,12 @@
 {
-  "id": "h3BsnLgupJvFrmqd",
-  "name": "Jeeves Domain - Square",
+  "id": "LIhJejhMTgvgAaPv",
+  "name": "GEIVS Domain - Meta",
   "nodes": [
     {
       "parameters": {
         "inputSource": "passthrough"
       },
-      "id": "f4def9a64c5e",
+      "id": "72d78ce54ba7",
       "name": "Trigger",
       "type": "n8n-nodes-base.executeWorkflowTrigger",
       "typeVersion": 1.1,
@@ -29,9 +29,9 @@
                 },
                 "conditions": [
                   {
-                    "id": "afbb431d05f7",
+                    "id": "79191b030925",
                     "leftValue": "={{ ($json.action || '').toString().toLowerCase().trim() }}",
-                    "rightValue": "sales",
+                    "rightValue": "insights",
                     "operator": {
                       "type": "string",
                       "operation": "equals",
@@ -42,7 +42,7 @@
                 "combinator": "and"
               },
               "renameOutput": true,
-              "outputKey": "sales"
+              "outputKey": "insights"
             },
             {
               "conditions": {
@@ -54,9 +54,9 @@
                 },
                 "conditions": [
                   {
-                    "id": "e4abb19d610e",
+                    "id": "6ba4844c3232",
                     "leftValue": "={{ ($json.action || '').toString().toLowerCase().trim() }}",
-                    "rightValue": "customers",
+                    "rightValue": "recent_posts",
                     "operator": {
                       "type": "string",
                       "operation": "equals",
@@ -67,7 +67,7 @@
                 "combinator": "and"
               },
               "renameOutput": true,
-              "outputKey": "customers"
+              "outputKey": "recent_posts"
             },
             {
               "conditions": {
@@ -79,9 +79,9 @@
                 },
                 "conditions": [
                   {
-                    "id": "867e4b3190ff",
+                    "id": "23ea2f005c10",
                     "leftValue": "={{ ($json.action || '').toString().toLowerCase().trim() }}",
-                    "rightValue": "invoices",
+                    "rightValue": "read_comments",
                     "operator": {
                       "type": "string",
                       "operation": "equals",
@@ -92,7 +92,7 @@
                 "combinator": "and"
               },
               "renameOutput": true,
-              "outputKey": "invoices"
+              "outputKey": "read_comments"
             },
             {
               "conditions": {
@@ -104,9 +104,9 @@
                 },
                 "conditions": [
                   {
-                    "id": "6c14082e3271",
+                    "id": "84b64b62d25e",
                     "leftValue": "={{ ($json.action || '').toString().toLowerCase().trim() }}",
-                    "rightValue": "catalog",
+                    "rightValue": "ads_summary",
                     "operator": {
                       "type": "string",
                       "operation": "equals",
@@ -117,7 +117,7 @@
                 "combinator": "and"
               },
               "renameOutput": true,
-              "outputKey": "catalog"
+              "outputKey": "ads_summary"
             },
             {
               "conditions": {
@@ -129,9 +129,9 @@
                 },
                 "conditions": [
                   {
-                    "id": "701a2dbb90ba",
+                    "id": "9e53a06c3c0f",
                     "leftValue": "={{ ($json.action || '').toString().toLowerCase().trim() }}",
-                    "rightValue": "draft_invoice",
+                    "rightValue": "draft_post",
                     "operator": {
                       "type": "string",
                       "operation": "equals",
@@ -142,7 +142,7 @@
                 "combinator": "and"
               },
               "renameOutput": true,
-              "outputKey": "draft_invoice"
+              "outputKey": "draft_post"
             },
             {
               "conditions": {
@@ -154,9 +154,9 @@
                 },
                 "conditions": [
                   {
-                    "id": "a93094b972e3",
+                    "id": "43338ed4fc86",
                     "leftValue": "={{ ($json.action || '').toString().toLowerCase().trim() }}",
-                    "rightValue": "publish_invoice",
+                    "rightValue": "list_drafts",
                     "operator": {
                       "type": "string",
                       "operation": "equals",
@@ -167,7 +167,82 @@
                 "combinator": "and"
               },
               "renameOutput": true,
-              "outputKey": "publish_invoice"
+              "outputKey": "list_drafts"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "loose",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "9aff4442198a",
+                    "leftValue": "={{ ($json.action || '').toString().toLowerCase().trim() }}",
+                    "rightValue": "publish_draft",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "publish_draft"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "loose",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "101040cd906c",
+                    "leftValue": "={{ ($json.action || '').toString().toLowerCase().trim() }}",
+                    "rightValue": "draft_reply",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "draft_reply"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "loose",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "9c6ea741c6df",
+                    "leftValue": "={{ ($json.action || '').toString().toLowerCase().trim() }}",
+                    "rightValue": "draft_ad_change",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "draft_ad_change"
             }
           ]
         },
@@ -176,7 +251,7 @@
           "renameFallbackOutput": "unknown"
         }
       },
-      "id": "afd24262e84a",
+      "id": "6a12044bf24d",
       "name": "Route by action",
       "type": "n8n-nodes-base.switch",
       "typeVersion": 3.2,
@@ -190,17 +265,17 @@
         "source": "database",
         "workflowId": {
           "__rl": true,
-          "value": "loTJ1xYsI1dFVINy",
+          "value": "C0JnlGYmPUbJzWv8",
           "mode": "id",
-          "cachedResultName": "Jeeves Tool - Square Sales"
+          "cachedResultName": "GEIVS Tool - Meta Insights"
         },
         "mode": "once",
         "options": {
           "waitForSubWorkflow": true
         }
       },
-      "id": "7cc17b745450",
-      "name": "exec_sales",
+      "id": "e6620018a010",
+      "name": "exec_insights",
       "type": "n8n-nodes-base.executeWorkflow",
       "typeVersion": 1.1,
       "position": [
@@ -213,17 +288,17 @@
         "source": "database",
         "workflowId": {
           "__rl": true,
-          "value": "DkWQLeHyZWBbgD1f",
+          "value": "rfxCXVPvRSgKqUoG",
           "mode": "id",
-          "cachedResultName": "Jeeves Tool - Square Customer Lookup"
+          "cachedResultName": "GEIVS Tool - Meta Recent Posts"
         },
         "mode": "once",
         "options": {
           "waitForSubWorkflow": true
         }
       },
-      "id": "5e3d356710f9",
-      "name": "exec_customers",
+      "id": "8cc0033c5b01",
+      "name": "exec_recent_posts",
       "type": "n8n-nodes-base.executeWorkflow",
       "typeVersion": 1.1,
       "position": [
@@ -236,17 +311,17 @@
         "source": "database",
         "workflowId": {
           "__rl": true,
-          "value": "BPN5vmaBCkG7KRKr",
+          "value": "AoaGvUK4uaox8u9R",
           "mode": "id",
-          "cachedResultName": "Jeeves Tool - Square Invoice Status"
+          "cachedResultName": "GEIVS Tool - Meta Read Comments"
         },
         "mode": "once",
         "options": {
           "waitForSubWorkflow": true
         }
       },
-      "id": "a1f9529c9955",
-      "name": "exec_invoices",
+      "id": "3930711bc079",
+      "name": "exec_read_comments",
       "type": "n8n-nodes-base.executeWorkflow",
       "typeVersion": 1.1,
       "position": [
@@ -259,17 +334,17 @@
         "source": "database",
         "workflowId": {
           "__rl": true,
-          "value": "YdJXuIufiZWatU5T",
+          "value": "TUMCnE6Jtd5GZGpO",
           "mode": "id",
-          "cachedResultName": "Jeeves Tool - Square Catalog Lookup"
+          "cachedResultName": "GEIVS Tool - Meta Ads Summary"
         },
         "mode": "once",
         "options": {
           "waitForSubWorkflow": true
         }
       },
-      "id": "a84efb078f3e",
-      "name": "exec_catalog",
+      "id": "3e8f7ba0c39d",
+      "name": "exec_ads_summary",
       "type": "n8n-nodes-base.executeWorkflow",
       "typeVersion": 1.1,
       "position": [
@@ -282,17 +357,17 @@
         "source": "database",
         "workflowId": {
           "__rl": true,
-          "value": "np4keyUrfFbhAPgt",
+          "value": "Z7w3xteb5GFCBnfS",
           "mode": "id",
-          "cachedResultName": "Jeeves Tool - Square Draft Invoice"
+          "cachedResultName": "GEIVS Tool - Meta Draft Post"
         },
         "mode": "once",
         "options": {
           "waitForSubWorkflow": true
         }
       },
-      "id": "537664d76b7d",
-      "name": "exec_draft_invoice",
+      "id": "52f214438f01",
+      "name": "exec_draft_post",
       "type": "n8n-nodes-base.executeWorkflow",
       "typeVersion": 1.1,
       "position": [
@@ -305,17 +380,17 @@
         "source": "database",
         "workflowId": {
           "__rl": true,
-          "value": "Y1Vssx9qVZ2hT5np",
+          "value": "lNdBzB0oYtvDFeiq",
           "mode": "id",
-          "cachedResultName": "Jeeves Tool - Square Publish Invoice"
+          "cachedResultName": "GEIVS Tool - Meta List Drafts"
         },
         "mode": "once",
         "options": {
           "waitForSubWorkflow": true
         }
       },
-      "id": "88415320ee1c",
-      "name": "exec_publish_invoice",
+      "id": "025c4805f28f",
+      "name": "exec_list_drafts",
       "type": "n8n-nodes-base.executeWorkflow",
       "typeVersion": 1.1,
       "position": [
@@ -325,15 +400,97 @@
     },
     {
       "parameters": {
+        "source": "database",
+        "workflowId": {
+          "__rl": true,
+          "value": "Yx5FHAmI3bIoKmy5",
+          "mode": "id",
+          "cachedResultName": "GEIVS Tool - Meta Publish Draft"
+        },
+        "mode": "once",
+        "options": {
+          "waitForSubWorkflow": true
+        }
+      },
+      "id": "68801abe9fb0",
+      "name": "exec_publish_draft",
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.1,
+      "position": [
+        560,
+        820
+      ]
+    },
+    {
+      "parameters": {
+        "source": "database",
+        "workflowId": {
+          "__rl": true,
+          "value": "jVrN7DbORhY5Pe3m",
+          "mode": "id",
+          "cachedResultName": "GEIVS Tool - Meta Draft Reply"
+        },
+        "mode": "once",
+        "options": {
+          "waitForSubWorkflow": true
+        }
+      },
+      "id": "67f78a30adb0",
+      "name": "exec_draft_reply",
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.1,
+      "position": [
+        560,
+        950
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "return [{ json: { ...$json, action: ($json.ad_action||'') , target: $json.target, value: $json.value, level: $json.level } }];"
+      },
+      "id": "0db310bed0fd",
+      "name": "prep_draft_ad_change",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        560,
+        1080
+      ]
+    },
+    {
+      "parameters": {
+        "source": "database",
+        "workflowId": {
+          "__rl": true,
+          "value": "dOEpjXFNk7ebR5Jn",
+          "mode": "id",
+          "cachedResultName": "GEIVS Tool - Meta Draft Ad Change"
+        },
+        "mode": "once",
+        "options": {
+          "waitForSubWorkflow": true
+        }
+      },
+      "id": "ae093968c57b",
+      "name": "exec_draft_ad_change",
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.1,
+      "position": [
+        820,
+        1080
+      ]
+    },
+    {
+      "parameters": {
         "jsCode": "const a = ($json.action||'').toString();\nreturn [{ json: { summary: `Unknown action '${a}'. Check the tool's action list.` } }];"
       },
-      "id": "4e007a8fc1d4",
+      "id": "62951f41a8c5",
       "name": "Unknown",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
         560,
-        820
+        1210
       ]
     }
   ],
@@ -349,46 +506,78 @@
         ]
       ]
     },
+    "prep_draft_ad_change": {
+      "main": [
+        [
+          {
+            "node": "exec_draft_ad_change",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
     "Route by action": {
       "main": [
         [
           {
-            "node": "exec_sales",
+            "node": "exec_insights",
             "type": "main",
             "index": 0
           }
         ],
         [
           {
-            "node": "exec_customers",
+            "node": "exec_recent_posts",
             "type": "main",
             "index": 0
           }
         ],
         [
           {
-            "node": "exec_invoices",
+            "node": "exec_read_comments",
             "type": "main",
             "index": 0
           }
         ],
         [
           {
-            "node": "exec_catalog",
+            "node": "exec_ads_summary",
             "type": "main",
             "index": 0
           }
         ],
         [
           {
-            "node": "exec_draft_invoice",
+            "node": "exec_draft_post",
             "type": "main",
             "index": 0
           }
         ],
         [
           {
-            "node": "exec_publish_invoice",
+            "node": "exec_list_drafts",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "exec_publish_draft",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "exec_draft_reply",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "prep_draft_ad_change",
             "type": "main",
             "index": 0
           }

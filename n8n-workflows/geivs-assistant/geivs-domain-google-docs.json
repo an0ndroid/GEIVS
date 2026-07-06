@@ -1,6 +1,6 @@
 {
   "id": "IKd1Yx0kfPoR8qA4",
-  "name": "Jeeves Domain - Google Docs",
+  "name": "GEIVS Domain - Google Docs",
   "nodes": [
     {
       "parameters": {
@@ -92,7 +92,7 @@
           "__rl": true,
           "value": "BdW5eaGGgZFpZ2nl",
           "mode": "id",
-          "cachedResultName": "Jeeves Tool - Doc Create"
+          "cachedResultName": "GEIVS Tool - Doc Create"
         },
         "mode": "once",
         "options": {
@@ -115,7 +115,7 @@
           "__rl": true,
           "value": "7joXQBT0ySDoegze",
           "mode": "id",
-          "cachedResultName": "Jeeves Tool - Doc Read"
+          "cachedResultName": "GEIVS Tool - Doc Read"
         },
         "mode": "once",
         "options": {

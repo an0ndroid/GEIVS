@@ -338,7 +338,7 @@ document.getElementById('chat-input').placeholder = 'Ask ' + ASSISTANT_NAME + ' 
 
 // ============================================================
 // CUSTOMIZE PER CLIENT HERE: one entry per dashboard button.
-//   action - must match an action the "Jeeves - Dashboard API"
+//   action - must match an action the "GEIVS - Dashboard API"
 //            n8n workflow's Switch node handles
 //   label / sub - button text shown to the user
 //   icon - inline SVG shown on the button and result card
@@ -376,7 +376,7 @@ async function sendChat() {
   appendChat(ASSISTANT_NAME, '...thinking...');
   const thinkingRe = new RegExp('\\n\\n' + ASSISTANT_NAME + ': \\.\\.\\.thinking\\.\\.\\.$');
   try {
-    const resp = await fetch('api/chat/jeeves-agent', {
+    const resp = await fetch('api/chat/geivs-agent', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ message: msg, session: 'dashboard' })

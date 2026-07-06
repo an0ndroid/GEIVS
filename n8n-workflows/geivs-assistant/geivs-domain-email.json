@@ -1,6 +1,6 @@
 {
   "id": "Biiz4PiKMFGGmOuI",
-  "name": "Jeeves Domain - Email",
+  "name": "GEIVS Domain - Email",
   "nodes": [
     {
       "parameters": {
@@ -140,9 +140,9 @@
         "source": "database",
         "workflowId": {
           "__rl": true,
-          "value": "jeevestgsrch1",
+          "value": "geivstgsrch1",
           "mode": "id",
-          "cachedResultName": "Jeeves Tool - Gmail Search"
+          "cachedResultName": "GEIVS Tool - Gmail Search"
         },
         "mode": "once",
         "options": {
@@ -163,9 +163,9 @@
         "source": "database",
         "workflowId": {
           "__rl": true,
-          "value": "jeevestgread1",
+          "value": "geivstgread1",
           "mode": "id",
-          "cachedResultName": "Jeeves Tool - Gmail Read"
+          "cachedResultName": "GEIVS Tool - Gmail Read"
         },
         "mode": "once",
         "options": {
@@ -186,9 +186,9 @@
         "source": "database",
         "workflowId": {
           "__rl": true,
-          "value": "jeevestgdrft1",
+          "value": "geivstgdrft1",
           "mode": "id",
-          "cachedResultName": "Jeeves Tool - Gmail Draft"
+          "cachedResultName": "GEIVS Tool - Gmail Draft"
         },
         "mode": "once",
         "options": {
@@ -209,9 +209,9 @@
         "source": "database",
         "workflowId": {
           "__rl": true,
-          "value": "jeevestgsend1",
+          "value": "geivstgsend1",
           "mode": "id",
-          "cachedResultName": "Jeeves Tool - Gmail Send"
+          "cachedResultName": "GEIVS Tool - Gmail Send"
         },
         "mode": "once",
         "options": {

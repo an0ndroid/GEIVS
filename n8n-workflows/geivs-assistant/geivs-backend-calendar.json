@@ -1,11 +1,11 @@
 {
-  "id": "jeevescalbk1",
-  "name": "Jeeves - Calendar Backend",
+  "id": "geivscalbk1",
+  "name": "GEIVS - Calendar Backend",
   "nodes": [
     {
       "parameters": {
         "httpMethod": "POST",
-        "path": "jeeves-cal-get",
+        "path": "geivs-cal-get",
         "responseMode": "responseNode",
         "options": {}
       },
@@ -86,7 +86,7 @@
     {
       "parameters": {
         "httpMethod": "POST",
-        "path": "jeeves-cal-create",
+        "path": "geivs-cal-create",
         "responseMode": "responseNode",
         "options": {}
       },

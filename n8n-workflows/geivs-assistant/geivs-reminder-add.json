@@ -1,11 +1,11 @@
 {
-  "id": "jeevesremadd1",
-  "name": "Jeeves - Reminder Add",
+  "id": "geivsremadd1",
+  "name": "GEIVS - Reminder Add",
   "nodes": [
     {
       "parameters": {
         "httpMethod": "POST",
-        "path": "jeeves-reminder-add",
+        "path": "geivs-reminder-add",
         "responseMode": "responseNode",
         "options": {}
       },
@@ -23,7 +23,7 @@
       "parameters": {
         "resource": "table",
         "operation": "create",
-        "tableName": "jeeves_reminders",
+        "tableName": "geivs_reminders",
         "columns": {
           "column": [
             {
@@ -77,7 +77,7 @@
         "dataTableId": {
           "__rl": true,
           "mode": "name",
-          "value": "jeeves_reminders"
+          "value": "geivs_reminders"
         },
         "columns": {
           "mappingMode": "autoMapInputData",

@@ -1,6 +1,6 @@
 {
   "id": "GtfJgpU44okgdcGj",
-  "name": "Jeeves Domain - Google Sheets",
+  "name": "GEIVS Domain - Google Sheets",
   "nodes": [
     {
       "parameters": {
@@ -92,7 +92,7 @@
           "__rl": true,
           "value": "Ing67KnT02W6pe3Q",
           "mode": "id",
-          "cachedResultName": "Jeeves Tool - Sheet Create"
+          "cachedResultName": "GEIVS Tool - Sheet Create"
         },
         "mode": "once",
         "options": {
@@ -115,7 +115,7 @@
           "__rl": true,
           "value": "gdfZrCwv47Y5GmKI",
           "mode": "id",
-          "cachedResultName": "Jeeves Tool - Sheet Read"
+          "cachedResultName": "GEIVS Tool - Sheet Read"
         },
         "mode": "once",
         "options": {

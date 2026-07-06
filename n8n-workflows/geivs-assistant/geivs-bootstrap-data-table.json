@@ -1,6 +1,6 @@
 {
-  "id": "jeevesboot1",
-  "name": "Jeeves - Bootstrap Data Table",
+  "id": "geivsboot1",
+  "name": "GEIVS - Bootstrap Data Table",
   "nodes": [
     {
       "parameters": {},
@@ -17,7 +17,7 @@
       "parameters": {
         "resource": "table",
         "operation": "create",
-        "tableName": "jeeves_reminders",
+        "tableName": "geivs_reminders",
         "columns": {
           "column": [
             {
