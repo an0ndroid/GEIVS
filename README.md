@@ -245,6 +245,10 @@ Each `action` must have a matching branch in `geivs-dashboard-api`'s Switch node
 | gemma3:12b | ~8GB | Balanced quality and speed |
 | qwen2.5:7b | ~4.7GB | Fast, efficient, good reasoning |
 | gemma3:4b | ~3GB | CPU mode / low RAM systems |
+| gemma4:26b | ~18GB | MoE (only ~3.8B active params/token) — strong tool calling, good CPU t/s despite its size; needs ~20GB RAM headroom |
+| gpt-oss:20b | ~13GB | MoE, strong agentic tool calling; needs ~16GB+ RAM headroom |
+
+The last two are opt-in for CPU-only installs with 32GB+ system RAM (select them by number when the installer prompts for a model) — they're not the CPU-mode default since that still targets 16GB-minimum boxes, but on a box with headroom their MoE architecture gets meaningfully better tool-calling quality per token of CPU compute than an equivalent-speed dense model like qwen2.5:7b.
 
 The installer prompts you to choose. Ollama handles quantization automatically.
 

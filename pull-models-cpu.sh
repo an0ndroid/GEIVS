@@ -45,6 +45,14 @@ pull_model() {
 pull_model "gemma3:4b"   "Primary model — ~4GB RAM, runs well on CPU" "~3GB"
 pull_model "qwen2.5:7b"  "Strong reasoning, lightweight"               "~5GB"
 
+# Optional, opt-in only — not pulled by default. Both are MoE models (only a
+# few billion params active per token), so they get noticeably better tool
+# calling than the dense models above at a similar CPU token rate, but need
+# more RAM headroom (~16-20GB+) than this script's default 16GB-minimum target.
+# Uncomment the lines below if your box has 32GB+ RAM:
+# pull_model "gemma4:26b"  "MoE, ~3.8B active params/token — needs ~20GB RAM" "~18GB"
+# pull_model "gpt-oss:20b" "MoE, strong agentic tool calling — needs ~16GB+ RAM" "~13GB"
+
 echo ""
 echo -e "${CYAN}╔══════════════════════════════════════════════════╗${NC}"
 echo -e "${CYAN}║              Installed Models                    ║${NC}"

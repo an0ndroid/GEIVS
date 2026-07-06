@@ -146,11 +146,15 @@ echo "  Primary AI model options:"
 echo "    1) qwen2.5:7b   (fast, 4.7GB)"
 echo "    2) gemma3:12b   (balanced, 8.1GB)"
 echo "    3) llama3.3:70b (powerful, 42GB — needs lots of RAM)"
+echo "    4) gemma4:26b   (MoE, ~3.8B active/token — good CPU t/s despite size, needs ~20GB RAM)"
+echo "    5) gpt-oss:20b  (MoE, strong agentic tool calling, needs ~16GB+ RAM)"
 read -rp "  Choose [default: $DEFAULT_MODEL]: " MODEL_CHOICE < /dev/tty
 case $MODEL_CHOICE in
   1) PRIMARY_MODEL="qwen2.5:7b" ;;
   2) PRIMARY_MODEL="gemma3:12b" ;;
   3) PRIMARY_MODEL="llama3.3:70b" ;;
+  4) PRIMARY_MODEL="gemma4:26b" ;;
+  5) PRIMARY_MODEL="gpt-oss:20b" ;;
   *) PRIMARY_MODEL="$DEFAULT_MODEL" ;;
 esac
 
