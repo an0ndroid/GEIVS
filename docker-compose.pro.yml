@@ -12,7 +12,6 @@ networks:
 volumes:
   ollama_data:
   openwebui_data:
-  qdrant_data:
   n8n_data:
   searxng_data:
   postiz_data:
@@ -97,7 +96,6 @@ services:
     restart: unless-stopped
     depends_on:
       - ollama
-      - qdrant
     volumes:
       - openwebui_data:/app/backend/data
     ports:
@@ -110,8 +108,6 @@ services:
       - ENABLE_RAG_WEB_SEARCH=true
       - RAG_WEB_SEARCH_ENGINE=searxng
       - SEARXNG_QUERY_URL=http://searxng:8080/search?q=<query>&format=json
-      - VECTOR_DB=qdrant
-      - QDRANT_URI=http://qdrant:6333
       - ENABLE_IMAGE_GENERATION=true
       - COMFYUI_BASE_URL=http://comfyui:8188
       - AUDIO_TTS_ENGINE=openai
@@ -121,20 +117,6 @@ services:
       - AUDIO_STT_OPENAI_API_BASE_URL=http://whisper:8000/v1
       - AUDIO_STT_OPENAI_API_KEY=skip
       - DEFAULT_MODELS=${PRIMARY_MODEL}
-
-  # -----------------------------------------------------------
-  # QDRANT — Vector database for RAG / memory
-  # -----------------------------------------------------------
-  qdrant:
-    image: qdrant/qdrant:latest
-    container_name: geivs_qdrant
-    restart: unless-stopped
-    volumes:
-      - qdrant_data:/qdrant/storage
-    ports:
-      - "6333:6333"
-    networks:
-      - geivs-net
 
   # -----------------------------------------------------------
   # SEARXNG — Self-hosted meta search
