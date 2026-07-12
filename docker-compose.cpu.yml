@@ -12,6 +12,7 @@ networks:
 volumes:
   ollama_data:
   openwebui_data:
+  anythingllm_data:
   n8n_data:
   searxng_data:
   postiz_data:
@@ -115,6 +116,36 @@ services:
       - AUDIO_STT_OPENAI_API_BASE_URL=http://whisper:8000/v1
       - AUDIO_STT_OPENAI_API_KEY=skip
       - DEFAULT_MODELS=gemma3:4b
+
+  # -----------------------------------------------------------
+  # ANYTHINGLLM — Knowledge base / RAG + admin LLM
+  # Document workspaces with local (native) embeddings + LanceDB. Chats over a
+  # local Ollama model by default (local-first); can be pointed at the Jeeves
+  # agent later via the OpenAI-compatible shim.
+  # Access: http://localhost:3001
+  # -----------------------------------------------------------
+  anythingllm:
+    image: mintplexlabs/anythingllm:latest
+    container_name: geivs_anythingllm
+    restart: unless-stopped
+    depends_on:
+      - ollama
+    volumes:
+      - anythingllm_data:/app/server/storage
+    ports:
+      - "3001:3001"
+    networks:
+      - geivs-net
+    environment:
+      - STORAGE_DIR=/app/server/storage
+      - SERVER_PORT=3001
+      - JWT_SECRET=${ANYTHINGLLM_JWT_SECRET:-changeme_generate_a_real_secret}
+      - EMBEDDING_ENGINE=native
+      - VECTOR_DB=lancedb
+      - LLM_PROVIDER=ollama
+      - OLLAMA_BASE_PATH=http://ollama:11434
+      - OLLAMA_MODEL_PREF=gemma3:4b
+      - OLLAMA_MODEL_TOKEN_LIMIT=8192
 
   # -----------------------------------------------------------
   # SEARXNG — Self-hosted meta search
