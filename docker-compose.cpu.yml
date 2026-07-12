@@ -22,6 +22,7 @@ volumes:
   nginx_certs:
   portainer_data:
   geivs_state:
+  briefs:            # rendered daily-briefing PNGs (written by geivs-render, served by nginx)
 
 services:
 
@@ -337,11 +338,13 @@ services:
     image: nginx:alpine
     container_name: geivs_nginx
     restart: unless-stopped
-    depends_on:
-      - openwebui
+    extra_hosts:
+      # /api/health proxies to the host-side system_health service (:4090).
+      - "host.docker.internal:host-gateway"
     volumes:
       - ./nginx/geivs.conf:/etc/nginx/conf.d/default.conf:ro
       - ./dashboard:/usr/share/nginx/dashboard:ro
+      - briefs:/usr/share/nginx/briefs:ro
       - nginx_certs:/etc/nginx/certs
     ports:
       - "80:80"

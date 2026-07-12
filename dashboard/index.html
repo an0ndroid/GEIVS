@@ -208,6 +208,11 @@
     gap: 1rem;
   }
 
+  /* The Daily Brief render is a wide report - give it the full row and let
+     the image open full-size in a new tab when clicked. */
+  #result-brief { grid-column: 1 / -1; }
+  #result-brief img { max-width: 100%; }
+
   .result {
     background-color: var(--card-bg);
     border: 1px solid var(--card-border);
@@ -338,7 +343,7 @@ document.getElementById('chat-input').placeholder = 'Ask ' + ASSISTANT_NAME + ' 
 
 // ============================================================
 // CUSTOMIZE PER CLIENT HERE: one entry per dashboard button.
-//   action - must match an action the "GEIVS - Dashboard API"
+//   action - must match an action the "Jeeves - Dashboard API"
 //            n8n workflow's Switch node handles
 //   label / sub - button text shown to the user
 //   icon - inline SVG shown on the button and result card
@@ -346,16 +351,14 @@ document.getElementById('chat-input').placeholder = 'Ask ' + ASSISTANT_NAME + ' 
 // result cards are generated from this list below.
 // ============================================================
 const BUTTONS = [
-  { action: 'calendar', label: 'Calendar', sub: '(this week)', icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>' },
-  { action: 'sales', label: 'Sales', sub: '(this week)', icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"></polyline><polyline points="17 6 23 6 23 12"></polyline></svg>' },
-  { action: 'unread', label: 'Unread', sub: 'email', icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path><polyline points="22,6 12,13 2,6"></polyline></svg>' },
-  { action: 'youtube', label: 'YouTube', sub: 'stats', icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="23 7 16 12 23 17 23 7"></polygon><rect x="1" y="5" width="15" height="14" rx="2" ry="2"></rect></svg>' },
+  { action: 'brief', label: 'Daily Brief', sub: 'visual report', icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="8" y1="13" x2="16" y2="13"></line><line x1="8" y1="17" x2="16" y2="17"></line></svg>' },
+  { action: 'health', label: 'Server Health', sub: 'live', icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="2" width="20" height="8" rx="2" ry="2"></rect><rect x="2" y="14" width="20" height="8" rx="2" ry="2"></rect><line x1="6" y1="6" x2="6.01" y2="6"></line><line x1="6" y1="18" x2="6.01" y2="18"></line></svg>' },
 ];
 
 // Actions whose result is a multi-sentence paragraph (not a short
 // stat/number) get the smaller, readable ".body.text" style instead
 // of the large stat-display font.
-const LONG_TEXT_ACTIONS = ['unread', 'youtube'];
+const LONG_TEXT_ACTIONS = ['unread'];
 
 const chatLog = document.getElementById('chat-log');
 const chatInput = document.getElementById('chat-input');
@@ -376,7 +379,7 @@ async function sendChat() {
   appendChat(ASSISTANT_NAME, '...thinking...');
   const thinkingRe = new RegExp('\\n\\n' + ASSISTANT_NAME + ': \\.\\.\\.thinking\\.\\.\\.$');
   try {
-    const resp = await fetch('api/chat/geivs-agent', {
+    const resp = await fetch('api/chat/jeeves-agent', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ message: msg, session: 'dashboard' })
@@ -404,6 +407,78 @@ BUTTONS.forEach(({ action, label, sub, icon }) => {
   actionsEl.appendChild(btn);
 });
 
+// --- DAILY BRIEF: fire the visual report (bypasses the LLM) and show the image ---
+async function runBrief(bodyEl) {
+  bodyEl.className = 'body text';
+  bodyEl.textContent = 'Generating your briefing... (about 30-60s)';
+  // Note the current image version so we can detect the freshly rendered one.
+  let prevLM = null;
+  try {
+    const r0 = await fetch('briefs/latest.png?probe=' + Date.now(), { method: 'HEAD', cache: 'no-store' });
+    if (r0.ok) prevLM = r0.headers.get('Last-Modified');
+  } catch (e) {}
+  try {
+    await fetch('api/brief', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ source: 'dashboard' }) });
+  } catch (e) {
+    bodyEl.className = 'body';
+    bodyEl.textContent = 'Could not start the briefing: ' + e.message;
+    return;
+  }
+  const deadline = Date.now() + 150000;
+  (function poll() {
+    setTimeout(async () => {
+      let ok = false, lm = null;
+      try {
+        const r = await fetch('briefs/latest.png?probe=' + Date.now(), { method: 'HEAD', cache: 'no-store' });
+        ok = r.ok; lm = r.headers.get('Last-Modified');
+      } catch (e) {}
+      if (ok && lm && lm !== prevLM) {
+        bodyEl.className = 'body';
+        const v = Date.now();
+        bodyEl.innerHTML = '<a href="briefs/latest.png?t=' + v + '" target="_blank" rel="noopener" title="Click to open full size">'
+          + '<img src="briefs/latest.png?t=' + v + '" alt="Daily brief (click to enlarge)" style="width:100%;border-radius:8px;display:block;cursor:zoom-in;"></a>';
+      } else if (Date.now() < deadline) {
+        poll();
+      } else {
+        bodyEl.textContent = 'The briefing is taking longer than expected - it may have arrived on your Signal instead.';
+      }
+    }, 4000);
+  })();
+}
+
+// --- SERVER HEALTH: read the system_health endpoint and render a status tile ---
+async function runHealth(bodyEl) {
+  bodyEl.className = 'body text';
+  bodyEl.textContent = 'Checking server...';
+  let d;
+  try {
+    const r = await fetch('api/health', { cache: 'no-store' });
+    d = await r.json();
+  } catch (e) {
+    bodyEl.className = 'body';
+    bodyEl.textContent = 'Could not reach the health service: ' + e.message;
+    return;
+  }
+  const s = d.system || {}, t = d.temps || {};
+  const num = (v) => (v === null || v === undefined) ? '?' : v;
+  const statusColors = { ok: '#30D158', warn: '#E5C68A', critical: '#FF6B5E' };
+  const col = statusColors[d.status] || '#8E8E93';
+  const row = (label, val) => '<div style="display:flex;justify-content:space-between;gap:8px;padding:3px 0;font-size:0.85rem;"><span style="color:#8E8E93;">' + label + '</span><span style="text-align:right;">' + val + '</span></div>';
+  let html = '<div style="display:inline-block;padding:2px 10px;border-radius:999px;font-size:0.7rem;font-weight:700;letter-spacing:0.08em;color:#000;background:' + col + ';margin-bottom:10px;">' + (d.status || '?').toUpperCase() + '</div>';
+  html += row('CPU', num(s.cpu_percent) + '% busy' + (t.cpu_c ? ' &middot; ' + t.cpu_c + '&deg;C' : ''));
+  html += row('Load', (s.load ? num(s.load[0]) : '?') + ' &middot; ' + num(s.cores) + ' cores');
+  html += row('RAM', num(s.ram_used_gb) + ' / ' + num(s.ram_total_gb) + ' GB (' + num(s.ram_percent) + '%)');
+  html += row('Disk', num(s.disk_percent) + '% used &middot; ' + num(s.disk_free_gb) + ' GB free');
+  if (t.gpu_c) html += row('GPU', t.gpu_c + '&deg;C');
+  (d.disks || []).forEach(function (dk) {
+    html += row(dk.device, (dk.health || '?') + (dk.life_remaining_pct != null ? ' &middot; ' + dk.life_remaining_pct + '% life' : ''));
+  });
+  if (d.containers && d.containers.length) html += row('Containers', d.containers.length + ' up');
+  if (d.alerts && d.alerts.length) html += '<div style="margin-top:8px;color:#FF6B5E;font-size:0.8rem;">&#9888; ' + d.alerts.join('; ') + '</div>';
+  bodyEl.className = 'body';
+  bodyEl.innerHTML = html;
+}
+
 // --- BACKEND API RESPONSE & GRAPHICS BUILDER ---
 async function runAction(action) {
   const btnData = BUTTONS.find(b => b.action === action) || { label: action, sub: '', icon: '' };
@@ -426,6 +501,9 @@ async function runAction(action) {
   const bodyEl = box.querySelector('.body');
   bodyEl.textContent = 'loading...';
   bodyEl.className = 'body loading';
+
+  if (action === 'brief') { runBrief(bodyEl); return; }
+  if (action === 'health') { runHealth(bodyEl); return; }
 
   const chartEl = box.querySelector('.chart');
   chartEl.style.display = 'none';
