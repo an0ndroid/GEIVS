@@ -303,9 +303,15 @@ services:
   # Used by n8n workflows for bulk site ingestion
   # -----------------------------------------------------------
   crawl4ai:
-    image: unclecode/crawl4ai:latest
+    # Pinned, not :latest: unclecode/crawl4ai:latest (as published 2026-07-13)
+    # crash-loops forever on boot -- Playwright's Chromium isn't in that image
+    # and nothing installs it at container start, so gunicorn workers boot-fail
+    # repeatedly and /health never responds. 0.8.6 verified working (starts
+    # clean, /health 200 immediately, reaches "healthy").
+    image: unclecode/crawl4ai:0.8.6
     container_name: geivs_crawl4ai
     restart: unless-stopped
+    shm_size: "1g"
     environment:
       - CRAWL4AI_API_TOKEN=${CRAWL4AI_TOKEN:-changeme}
     networks:
