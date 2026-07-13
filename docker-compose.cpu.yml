@@ -69,8 +69,9 @@ services:
     restart: unless-stopped
     volumes:
       - ollama_data:/root/.ollama
-    ports:
-      - "11434:11434"
+    # No host port: internal-only, reached over geivs-net (nginx /ollama/,
+    # anythingllm, n8n, the gateway). Publishing 11434 to 0.0.0.0 bypassed
+    # both nginx's deny-all ACL and UFW.
     networks:
       - geivs-net
     environment:
@@ -119,8 +120,7 @@ services:
     restart: unless-stopped
     volumes:
       - searxng_data:/etc/searxng
-    ports:
-      - "8080:8080"
+    # No host port: internal-only, reached via nginx /search/.
     networks:
       - geivs-net
     environment:
@@ -206,8 +206,7 @@ services:
     restart: unless-stopped
     volumes:
       - signal_data:/home/.local/share/signal-cli
-    ports:
-      - "8090:8080"
+    # No host port: internal-only, reached via nginx /signal/ and the gateway.
     networks:
       - geivs-net
     environment:
@@ -270,8 +269,7 @@ services:
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
       - portainer_data:/data
-    ports:
-      - "9000:9000"
+    # No host port: internal-only, reached via nginx /portainer/.
     networks:
       - geivs-net
 
