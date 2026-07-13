@@ -122,7 +122,7 @@ All services route through nginx on port 80.
 | `http://your-ip/search/` | SearXNG private search |
 | `http://your-ip/social/` | Postiz social media scheduler |
 | `http://your-ip/portainer/` | Portainer container management |
-| `http://your-ip/knowledge/` | AnythingLLM — knowledge base (RAG) + admin LLM |
+| `http://your-ip/knowledge` → `:3001` | AnythingLLM — knowledge base (RAG) + admin LLM (redirects to its own port) |
 
 ---
 
