@@ -42,7 +42,6 @@ services:
       - ./onboarding-init.sh:/onboarding-init.sh:ro
       - ./geivs-system-prompt.md:/etc/geivs/geivs-system-prompt.md:ro
       - ./geivs-state.json:/etc/geivs/geivs-state.json.default:ro
-      - ./pull-models.sh:/pull-models.sh:ro
     networks:
       - geivs-net
     environment:

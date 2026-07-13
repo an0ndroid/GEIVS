@@ -1,8 +1,9 @@
 #!/bin/bash
 # =============================================================
 # GEIVS Pro — Onboarding Init Script
-# Runs on first boot to initialize the state-tracking file and
-# kick off the background model downloads. The web face is the
+# Runs on first boot to initialize the state-tracking file. Model
+# downloads are handled by geivs-install.sh Step 14 (pulls the user's
+# chosen PRIMARY_MODEL from the host), not here. The web face is the
 # GEIVS dashboard (static, served by nginx) plus AnythingLLM for
 # knowledge/admin — neither needs chat-UI seeding here.
 # Usage: ./onboarding-init.sh
@@ -154,12 +155,12 @@ echo ""
 wait_for_service "Ollama" "${OLLAMA_URL}/api/tags"
 init_state_file
 
-# Kick off model pull in background
-echo -e "${BLUE}Starting model downloads in background...${NC}"
-LOG_DIR="$(dirname "$STATE_FILE")/logs"
-mkdir -p "$LOG_DIR"
-nohup ./pull-models.sh > "$LOG_DIR/model-pull.log" 2>&1 &
-echo -e "${GREEN}✓ Model pull started (check $LOG_DIR/model-pull.log for progress)${NC}"
+# NOTE: model pulling is NOT done here. geivs-install.sh Step 14 already pulls
+# PRIMARY_MODEL (the model the user actually chose, GPU/CPU-appropriate) from
+# the HOST via `docker exec geivs_ollama ollama pull`. This container has no
+# docker socket, so it can't run pull-models-cpu.sh's `docker exec` calls
+# anyway; running pull-models.sh's fixed GPU-sized model list (llama3.3:70b
+# etc.) here was both redundant with Step 14 and wrong on CPU-only installs.
 
 echo ""
 # Mark onboarding complete
