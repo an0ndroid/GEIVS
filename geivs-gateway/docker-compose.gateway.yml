@@ -1,0 +1,95 @@
+# GEIVS gateway — containerized services (pragmatic set: bridge, shim, render, email).
+#
+# This is an OVERLAY for the main GEIVS stack, not a standalone stack. It merges
+# with jeeves-stack's compose so the gateway shares the same project, network
+# (geivs-net) and volumes, and can reach n8n / ollama / signal-cli / whisper /
+# piper by container name. Run it from ~/jeeves-stack:
+#
+#   docker compose \
+#     -f docker-compose.cpu.yml \
+#     -f ../geivs-gateway/docker-compose.gateway.yml \
+#     up -d --build
+#
+# Secrets come from ../geivs-secrets/ (siblings of jeeves-stack): jeeves-bridge.env
+# (JEEVES_OWNERS) and jeeves-email.env (GMAIL_USER, GMAIL_PASS).
+#
+# Deliberately NOT containerized here:
+#   - system_health  -> stays a HOST service (needs host CPU/temps/SMART + docker.sock).
+#   - ollama-bridge  -> unneeded in the product; Ollama is a container at ollama:11434.
+
+x-gateway: &gateway
+  build:
+    context: ../geivs-gateway
+  image: geivs/gateway:latest
+  restart: unless-stopped
+  networks:
+    - geivs-net
+
+services:
+  # Signal <-> n8n bridge + POST /send endpoint. Reads voice-note attachments
+  # from the signal-cli volume (read-only) and shares the render output volume
+  # so it can attach briefing PNGs produced by geivs-render.
+  geivs-bridge:
+    <<: *gateway
+    container_name: geivs_bridge
+    command: ["python3", "services/bridge.py"]
+    depends_on:
+      - geivs-render
+    # JEEVES_OWNERS (Signal allow-list) comes from geivs-secrets — single source
+    # of truth, no plaintext copy in the stack .env. Path is relative to the
+    # project dir (~/jeeves-stack when run as documented).
+    env_file:
+      - ../geivs-secrets/jeeves-bridge.env
+    environment:
+      - SIGNAL_RPC=http://signal-cli:8080/api/v1/rpc
+      - SIGNAL_EVENTS=http://signal-cli:8080/api/v1/events
+      - JEEVES_WEBHOOK=http://n8n:5678/webhook/jeeves
+      - JEEVES_BRIEF_WEBHOOK=http://n8n:5678/webhook/jeeves-brief-test
+      - WHISPER_URL=http://whisper:8000/v1/audio/transcriptions
+      - PIPER_HOST=piper
+      - SIGNAL_ATTACHMENTS_DIR=/signal-data/attachments
+      - JEEVES_RENDER_DIR=/renders
+    volumes:
+      - render_tmp:/renders
+      - signal_data:/signal-data:ro
+
+  # OpenAI-compatible shim so AnythingLLM can use "jeeves" as a model; forwards
+  # to the n8n agent webhook.
+  geivs-shim:
+    <<: *gateway
+    container_name: geivs_shim
+    command: ["python3", "services/openai_shim.py"]
+    environment:
+      - JEEVES_AGENT_URL=http://n8n:5678/webhook/jeeves-agent
+
+  # HTML -> PNG briefing renderer (Chromium). Writes into the shared render
+  # volume (bridge attaches from it) and copies latest.png into the briefs
+  # volume for the dashboard to display.
+  geivs-render:
+    <<: *gateway
+    container_name: geivs_render
+    command: ["python3", "services/render-bridge.py"]
+    environment:
+      - JEEVES_RENDER_DIR=/renders
+      - JEEVES_BRIEF_LATEST=/briefs/latest.png
+    volumes:
+      - render_tmp:/renders
+      - briefs:/briefs
+
+  # Gmail inbox/send service (IMAP/SMTP).
+  geivs-email:
+    <<: *gateway
+    container_name: geivs_email
+    command: ["python3", "services/jeeves-email-server.py"]
+    # GMAIL_USER / GMAIL_PASS come from geivs-secrets (mode 600), not the .env.
+    env_file:
+      - ../geivs-secrets/jeeves-email.env
+    environment:
+      - GEIVS_BIND_HOST=0.0.0.0
+
+volumes:
+  render_tmp:
+  # 'briefs' is also declared in the base stack (nginx serves latest.png from
+  # it). When this overlay is merged with the base compose, the two identical
+  # declarations collapse into one shared project volume.
+  briefs:
