@@ -15,8 +15,6 @@ volumes:
   n8n_data:
   searxng_data:
   postiz_data:
-  comfyui_models:
-  comfyui_output:
   signal_data:
   nginx_certs:
   portainer_data:
@@ -162,23 +160,12 @@ services:
       - GEIVS_STATE_FILE=/etc/geivs/geivs-state.json
 
   # -----------------------------------------------------------
-  # COMFYUI — Local image generation (GPU accelerated)
-  # Access: http://localhost:8188
+  # COMFYUI — intentionally NOT included in the CPU compose set.
+  # Image generation on CPU-only hardware is impractically slow (same class
+  # of problem proven live with heavy LLM inference on this hardware tier) —
+  # shipping it here would be a component that "runs" but is unusable. GPU
+  # installs get it via docker-compose.pro.yml instead.
   # -----------------------------------------------------------
-  comfyui:
-    image: ghcr.io/ai-dock/comfyui:latest-cpu
-    container_name: geivs_comfyui
-    restart: unless-stopped
-    volumes:
-      - comfyui_models:/opt/ComfyUI/models
-      - comfyui_output:/opt/ComfyUI/output
-    ports:
-      - "8188:8188"
-    networks:
-      - geivs-net
-    environment:
-      - DIRECT_ADDRESS=0.0.0.0
-      - DIRECT_ADDRESS_GET_WAN=false
 
   # -----------------------------------------------------------
   # PIPER TTS — Local text-to-speech

@@ -142,21 +142,36 @@ PERSONA_NAME=${PERSONA_NAME:-GEIVS}
 read -rp "  Timezone [$DEFAULT_TZ]: " TZ < /dev/tty
 TZ=${TZ:-$DEFAULT_TZ}
 
-echo "  Primary AI model options:"
-echo "    1) qwen2.5:7b   (fast, 4.7GB)"
-echo "    2) gemma3:12b   (balanced, 8.1GB)"
-echo "    3) llama3.3:70b (powerful, 42GB — needs lots of RAM)"
-echo "    4) gemma4:26b   (MoE, ~3.8B active/token — good CPU t/s despite size, needs ~20GB RAM)"
-echo "    5) gpt-oss:20b  (MoE, strong agentic tool calling, needs ~16GB+ RAM)"
-read -rp "  Choose [default: $DEFAULT_MODEL]: " MODEL_CHOICE < /dev/tty
-case $MODEL_CHOICE in
-  1) PRIMARY_MODEL="qwen2.5:7b" ;;
-  2) PRIMARY_MODEL="gemma3:12b" ;;
-  3) PRIMARY_MODEL="llama3.3:70b" ;;
-  4) PRIMARY_MODEL="gemma4:26b" ;;
-  5) PRIMARY_MODEL="gpt-oss:20b" ;;
-  *) PRIMARY_MODEL="$DEFAULT_MODEL" ;;
-esac
+if [ "$GPU_MODE" = "cpu" ]; then
+  # CPU-only: bigger models are impractically slow for an interactive assistant
+  # regardless of RAM headroom (proven live: a 9.7B model took 10+ minutes per
+  # request on a 32GB CPU box). Only offer options actually proven to run well.
+  echo "  Primary AI model options (CPU-only — larger models are too slow without a GPU):"
+  echo "    1) qwen2.5:7b (fast, 4.7GB)"
+  echo "    2) qwen2.5:3b (fastest/lightest, 1.9GB)"
+  read -rp "  Choose [default: $DEFAULT_MODEL]: " MODEL_CHOICE < /dev/tty
+  case $MODEL_CHOICE in
+    1) PRIMARY_MODEL="qwen2.5:7b" ;;
+    2) PRIMARY_MODEL="qwen2.5:3b" ;;
+    *) PRIMARY_MODEL="$DEFAULT_MODEL" ;;
+  esac
+else
+  echo "  Primary AI model options:"
+  echo "    1) qwen2.5:7b   (fast, 4.7GB)"
+  echo "    2) gemma3:12b   (balanced, 8.1GB)"
+  echo "    3) llama3.3:70b (powerful, 42GB — needs lots of RAM)"
+  echo "    4) gemma4:26b   (MoE, ~3.8B active/token — good CPU t/s despite size, needs ~20GB RAM)"
+  echo "    5) gpt-oss:20b  (MoE, strong agentic tool calling, needs ~16GB+ RAM)"
+  read -rp "  Choose [default: $DEFAULT_MODEL]: " MODEL_CHOICE < /dev/tty
+  case $MODEL_CHOICE in
+    1) PRIMARY_MODEL="qwen2.5:7b" ;;
+    2) PRIMARY_MODEL="gemma3:12b" ;;
+    3) PRIMARY_MODEL="llama3.3:70b" ;;
+    4) PRIMARY_MODEL="gemma4:26b" ;;
+    5) PRIMARY_MODEL="gpt-oss:20b" ;;
+    *) PRIMARY_MODEL="$DEFAULT_MODEL" ;;
+  esac
+fi
 
 read -rp "  Tailscale auth key (leave blank to skip): " TAILSCALE_KEY < /dev/tty
 read -rp "  Timezone [$DEFAULT_TZ]: " TZ_CONFIRM < /dev/tty
@@ -273,9 +288,17 @@ content = re.sub(
 content = content.replace('latest-cuda', 'latest-cpu')
 content = content.replace('WHISPER__MODEL=medium', 'WHISPER__MODEL=tiny')
 content = content.replace('WHISPER__DEVICE=cuda', 'WHISPER__DEVICE=cpu')
+# ComfyUI (image generation) is impractically slow without a GPU (same class of
+# problem as heavy LLMs on CPU) - drop the service and its volumes entirely for
+# CPU-only installs rather than ship something technically-present-but-unusable.
+content = re.sub(
+    r'\n  # -+\n  # COMFYUI[^\n]*\n(?:  #[^\n]*\n)*  comfyui:\n(?:    [^\n]*\n|\n)+',
+    '\n', content)
+content = re.sub(r'\n  comfyui_models:\n', '\n', content)
+content = re.sub(r'\n  comfyui_output:\n', '\n', content)
 open(sys.argv[1], 'w').write(content)
 PYEOF
-  ok "GPU blocks stripped, Whisper set to CPU/tiny (CPU-only mode)"
+  ok "GPU blocks stripped, Whisper set to CPU/tiny, ComfyUI removed (CPU-only mode)"
 fi
 
 # ── Step 8: Download nginx Config ────────────────────────────
