@@ -46,6 +46,7 @@ services:
       - OLLAMA_URL=http://ollama:11434
       - STATE_FILE=/etc/geivs/geivs-state.json
       - GEIVS_STATE_FILE=/etc/geivs/geivs-state.json
+      - PRIMARY_MODEL=${PRIMARY_MODEL:-qwen2.5:7b}
     command: >
       bash -c "
         apt-get update -qq && apt-get install -y -qq curl python3 &&

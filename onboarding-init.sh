@@ -67,7 +67,10 @@ is_first_boot() {
 init_state_file() {
     echo -e "${BLUE}Initializing GEIVS state file...${NC}"
     mkdir -p "$(dirname "$STATE_FILE")"
-    cat > "$STATE_FILE" << 'EOF'
+    # Unquoted heredoc so ${PRIMARY_MODEL:-...} below actually expands --
+    # a quoted 'EOF' here previously wrote the literal, un-expanded string
+    # into the state file regardless of what model the user picked.
+    cat > "$STATE_FILE" << EOF
 {
     "geivs_version": "1.0.0",
     "onboarding_complete": false,
