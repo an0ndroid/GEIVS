@@ -41,8 +41,11 @@ services:
     env_file:
       - ../geivs-secrets/jeeves-bridge.env
     environment:
-      - SIGNAL_RPC=http://signal-cli:8080/api/v1/rpc
-      - SIGNAL_EVENTS=http://signal-cli:8080/api/v1/events
+      # Product Signal container is bbernhard/signal-cli-rest-api, not the
+      # signal-cli daemon Richard's dev box runs — needs the "rest" backend.
+      - SIGNAL_API_MODE=rest
+      - SIGNAL_REST_URL=http://signal-cli:8080
+      - SIGNAL_ACCOUNT=${SIGNAL_PHONE}
       - JEEVES_WEBHOOK=http://n8n:5678/webhook/jeeves
       - JEEVES_BRIEF_WEBHOOK=http://n8n:5678/webhook/jeeves-brief-test
       - WHISPER_URL=http://whisper:8000/v1/audio/transcriptions

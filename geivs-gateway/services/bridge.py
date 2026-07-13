@@ -1,14 +1,20 @@
 #!/usr/bin/env python3
-"""Jeeves bridge: connects the signal-cli daemon (loopback-only) to n8n (docker).
+"""Jeeves bridge: connects Signal to n8n (docker).
 
-- Listens to the signal-cli SSE event stream and forwards the owner's incoming
-  messages to the n8n Jeeves webhook. If the webhook response JSON contains a
-  "reply" field, it is sent back over Signal (supports respond-with-output
-  workflows; respond-immediately workflows reply via /send instead).
+Supports two Signal backends, selected via SIGNAL_API_MODE:
+- "daemon" (default, Richard's dev box): signal-cli daemon mode — JSON-RPC
+  send over SIGNAL_RPC, incoming messages via the /api/v1/events SSE stream.
+- "rest" (product/container path): bbernhard/signal-cli-rest-api — JSON send
+  over POST {SIGNAL_REST_URL}/v2/send, incoming messages via polling GET
+  {SIGNAL_REST_URL}/v1/receive/{account} (stdlib has no websocket client, and
+  this project is stdlib-only, so polling is used instead of the v1 websocket
+  endpoint; functionally equivalent for this use case).
+
 - Serves POST /send on 127.0.0.1:8765 and 172.17.0.1:8765 so host scripts and
   n8n workflows can send Signal messages. Body: {"message": "...",
   "recipient": "+1..."} (recipient optional, defaults to the owner).
 """
+import base64
 import json
 import logging
 import mimetypes
@@ -23,8 +29,11 @@ import uuid
 import wave
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
+SIGNAL_API_MODE = os.environ.get("SIGNAL_API_MODE", "daemon")  # "daemon" or "rest"
 SIGNAL_RPC = os.environ.get("SIGNAL_RPC", "http://127.0.0.1:8080/api/v1/rpc")
 SIGNAL_EVENTS = os.environ.get("SIGNAL_EVENTS", "http://127.0.0.1:8080/api/v1/events")
+SIGNAL_REST_URL = os.environ.get("SIGNAL_REST_URL", "http://signal-cli:8080")
+REST_POLL_INTERVAL = float(os.environ.get("SIGNAL_REST_POLL_INTERVAL", "2"))
 N8N_WEBHOOK = os.environ.get("JEEVES_WEBHOOK", "http://127.0.0.1:5001/webhook/jeeves")
 # Messages matching this go straight to the visual Morning Briefing workflow
 # (rendered PNG report) instead of the conversational agent.
@@ -35,6 +44,9 @@ BRIEF_RE = re.compile(r"\b(daily|morning)\s+brief|^\s*brief\s*$|\bmy\s+brief\b",
 _OWNERS_RAW = os.environ.get("JEEVES_OWNERS") or os.environ.get("JEEVES_OWNER", "+10000000000")
 OWNERS = [n.strip() for n in _OWNERS_RAW.split(",") if n.strip()]
 OWNER = OWNERS[0]  # primary number: default recipient for outgoing sends
+# The bot's own registered Signal number (rest mode only — daemon mode doesn't
+# need it since the daemon is already bound to one account).
+SIGNAL_ACCOUNT = os.environ.get("SIGNAL_ACCOUNT", "")
 SEND_PORT = int(os.environ.get("JEEVES_SEND_PORT", "8765"))
 SEND_BINDS = tuple(a.strip() for a in (os.environ.get("GEIVS_BINDS") or "127.0.0.1,172.17.0.1").split(",") if a.strip())
 ATTACHMENTS_DIR = os.environ.get(
@@ -50,14 +62,52 @@ log = logging.getLogger("jeeves-bridge")
 
 
 def rpc(method, params):
+    """daemon mode: signal-cli's JSON-RPC endpoint."""
     body = json.dumps({"jsonrpc": "2.0", "method": method, "id": 1, "params": params}).encode()
     req = urllib.request.Request(SIGNAL_RPC, data=body, headers={"Content-Type": "application/json"})
     with urllib.request.urlopen(req, timeout=30) as resp:
         return json.loads(resp.read().decode())
 
 
+def rest_request(method, path, body=None, timeout=30):
+    """rest mode: bbernhard/signal-cli-rest-api plain REST endpoint."""
+    url = SIGNAL_REST_URL.rstrip("/") + path
+    data = json.dumps(body).encode() if body is not None else None
+    headers = {"Content-Type": "application/json"} if data is not None else {}
+    req = urllib.request.Request(url, data=data, method=method, headers=headers)
+    with urllib.request.urlopen(req, timeout=timeout) as resp:
+        raw = resp.read()
+    return json.loads(raw.decode()) if raw else None
+
+
+def rest_health():
+    """204 = healthy. Raises on any other status or connection failure."""
+    rest_request("GET", "/v1/health")
+    return True
+
+
+def _file_to_base64_attachment(file_path):
+    """bbernhard's API takes attachments as base64 strings (optionally
+    prefixed with a data: URI so it can infer content-type/filename)."""
+    filename = os.path.basename(file_path)
+    ctype = mimetypes.guess_type(filename)[0] or "application/octet-stream"
+    with open(file_path, "rb") as f:
+        b64 = base64.b64encode(f.read()).decode()
+    return f"data:{ctype};filename={filename};base64,{b64}"
+
+
 def send_signal(message, recipient=None):
     recipient = recipient or OWNER
+    if SIGNAL_API_MODE == "rest":
+        try:
+            rest_request(
+                "POST", "/v2/send",
+                {"message": message, "number": SIGNAL_ACCOUNT, "recipients": [recipient]},
+            )
+            return True
+        except Exception as e:
+            log.error("signal rest send failed: %s", e)
+            return False
     try:
         result = rpc("send", {"recipient": [recipient], "message": message})
     except Exception as e:
@@ -71,6 +121,21 @@ def send_signal(message, recipient=None):
 
 def send_signal_voice(message, wav_path, recipient=None):
     recipient = recipient or OWNER
+    if SIGNAL_API_MODE == "rest":
+        try:
+            rest_request(
+                "POST", "/v2/send",
+                {
+                    "message": message,
+                    "number": SIGNAL_ACCOUNT,
+                    "recipients": [recipient],
+                    "base64_attachments": [_file_to_base64_attachment(wav_path)],
+                },
+            )
+            return True
+        except Exception as e:
+            log.error("signal rest voice send failed: %s", e)
+            return False
     try:
         result = rpc(
             "send",
@@ -94,6 +159,21 @@ def send_signal_attachment(message, file_path, recipient=None):
     """Send a plain file attachment (image, PDF, etc.) - not marked as a
     voice note, so Signal shows it as a regular photo/file attachment."""
     recipient = recipient or OWNER
+    if SIGNAL_API_MODE == "rest":
+        try:
+            rest_request(
+                "POST", "/v2/send",
+                {
+                    "message": message,
+                    "number": SIGNAL_ACCOUNT,
+                    "recipients": [recipient],
+                    "base64_attachments": [_file_to_base64_attachment(file_path)],
+                },
+            )
+            return True
+        except Exception as e:
+            log.error("signal rest attachment send failed: %s", e)
+            return False
     try:
         result = rpc(
             "send",
@@ -291,14 +371,20 @@ def handle_event(data):
     ).start()
 
 
+def _backoff_sleep(attempt, base=1, cap=30):
+    time.sleep(min(cap, base * (2 ** attempt)))
+
+
 def sse_loop():
     # Loopback connection to the daemon: TCP death without FIN can't happen on
     # lo, so no read timeout — a dropped daemon closes the stream cleanly.
+    attempt = 0
     while True:
         try:
             req = urllib.request.Request(SIGNAL_EVENTS, headers={"Accept": "text/event-stream"})
             with urllib.request.urlopen(req) as resp:
                 log.info("SSE connected to signal-cli")
+                attempt = 0
                 for raw in resp:
                     line = raw.decode("utf-8", "replace").strip()
                     if not line.startswith("data:"):
@@ -309,7 +395,33 @@ def sse_loop():
                         log.warning("unparseable SSE data: %.120s", line)
         except Exception as e:
             log.error("SSE stream dropped: %s", e)
-        time.sleep(5)
+        _backoff_sleep(attempt)
+        attempt += 1
+
+
+def rest_poll_loop():
+    """Poll bbernhard/signal-cli-rest-api's GET /v1/receive/{account} instead
+    of a websocket (stdlib has no WS client, and this endpoint returns the
+    same envelope-shaped JSON messages signal-cli itself emits)."""
+    if not SIGNAL_ACCOUNT:
+        log.error("SIGNAL_API_MODE=rest requires SIGNAL_ACCOUNT (the bot's own Signal number)")
+        return
+    attempt = 0
+    while True:
+        try:
+            messages = rest_request("GET", f"/v1/receive/{SIGNAL_ACCOUNT}", timeout=30) or []
+            attempt = 0
+            for item in messages:
+                try:
+                    handle_event(item)
+                except Exception:
+                    log.exception("error handling rest message: %.200s", item)
+        except Exception as e:
+            log.error("rest receive poll failed: %s", e)
+            _backoff_sleep(attempt)
+            attempt += 1
+            continue
+        time.sleep(REST_POLL_INTERVAL)
 
 
 class SendHandler(BaseHTTPRequestHandler):
@@ -368,7 +480,11 @@ def main():
     logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
     for bind in SEND_BINDS:
         threading.Thread(target=serve, args=(bind,), daemon=True).start()
-    sse_loop()
+    log.info("signal API mode: %s", SIGNAL_API_MODE)
+    if SIGNAL_API_MODE == "rest":
+        rest_poll_loop()
+    else:
+        sse_loop()
 
 
 if __name__ == "__main__":
