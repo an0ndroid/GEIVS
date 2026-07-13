@@ -14,6 +14,7 @@ n8n containers, and the dashboard can all reach it):
 Replaces jeeves-health-server.py as the first geivs-gateway service.
 """
 import json
+import os
 import subprocess
 import time
 from http.server import BaseHTTPRequestHandler
@@ -22,9 +23,11 @@ import psutil
 
 import common
 
-PORT = 4090
-BINDS = ("127.0.0.1", "172.17.0.1")
-DISKS = ("sda", "sdb")
+PORT = int(os.environ.get("HEALTH_PORT", "4090"))
+# Comma-separated bind addresses. Host default keeps loopback + docker gateway;
+# in the product the installer sets GEIVS_BINDS=0.0.0.0 so the nginx container
+# can reach it via host.docker.internal.
+BINDS = tuple(a.strip() for a in (os.environ.get("GEIVS_BINDS") or "127.0.0.1,172.17.0.1").split(",") if a.strip())
 SMART_TTL = 300     # SMART reads are slow; cache 5 min
 DOCKER_TTL = 20
 
@@ -40,6 +43,24 @@ _cache = {"smart": (0, None), "docker": (0, None)}
 
 def _run(cmd, timeout=15):
     return subprocess.check_output(cmd, timeout=timeout, text=True, stderr=subprocess.DEVNULL)
+
+
+def _detect_disks():
+    """Physical disks to SMART-check. GEIVS_HEALTH_DISKS overrides (comma-sep);
+    otherwise auto-detect via lsblk so it works on sd*/nvme*/vd* hardware."""
+    env = os.environ.get("GEIVS_HEALTH_DISKS")
+    if env:
+        return tuple(d.strip() for d in env.split(",") if d.strip())
+    try:
+        out = _run(["lsblk", "-dno", "NAME,TYPE"])
+        disks = tuple(p[0] for p in (ln.split() for ln in out.splitlines())
+                      if len(p) >= 2 and p[1] == "disk")
+        return disks or ("sda",)
+    except Exception:
+        return ("sda", "sdb")
+
+
+DISKS = _detect_disks()
 
 
 def cpu_ram_disk():

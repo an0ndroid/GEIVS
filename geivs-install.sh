@@ -359,12 +359,15 @@ download_or_warn "$REPO_RAW/pull-models-cpu.sh" "$GEIVS_DIR/pull-models-cpu.sh" 
 download_or_warn "$REPO_RAW/update-geivs.sh" "$GEIVS_DIR/update-geivs.sh" || true
 # Gateway setup (fetches + starts the containerized gateway services)
 download_or_warn "$REPO_RAW/geivs-gateway-setup.sh" "$GEIVS_DIR/geivs-gateway-setup.sh" || true
+# Host health service setup (backs the dashboard's Server Health tile)
+download_or_warn "$REPO_RAW/geivs-health-setup.sh" "$GEIVS_DIR/geivs-health-setup.sh" || true
 if [ "$DRY_RUN" = false ]; then
   chmod +x "$GEIVS_DIR/onboarding-init.sh" 2>/dev/null || true
   chmod +x "$GEIVS_DIR/pull-models.sh" 2>/dev/null || true
   chmod +x "$GEIVS_DIR/pull-models-cpu.sh" 2>/dev/null || true
   chmod +x "$GEIVS_DIR/update-geivs.sh" 2>/dev/null || true
   chmod +x "$GEIVS_DIR/geivs-gateway-setup.sh" 2>/dev/null || true
+  chmod +x "$GEIVS_DIR/geivs-health-setup.sh" 2>/dev/null || true
 fi
 
 # ── Step 11: Start the Stack ──────────────────────────────────
@@ -731,6 +734,16 @@ elif [ ! -f "$GEIVS_DIR/geivs-gateway-setup.sh" ]; then
   warn "geivs-gateway-setup.sh not found — skipping gateway"
 else
   warn "Skipping gateway — run later: bash $GEIVS_DIR/geivs-gateway-setup.sh"
+fi
+
+# Host-side system_health service (backs the dashboard's Server Health tile).
+# It's the one host component (reads CPU/temps/SMART/docker.sock) and needs root.
+if [[ "$DO_GATEWAY" =~ ^[Yy] ]] && [ "$DRY_RUN" = false ] && [ -f "$GEIVS_DIR/geivs-health-setup.sh" ]; then
+  echo -e "  ${BLUE}Setting up the host health service (needs sudo)...${NC}"
+  sudo REPO_RAW="$REPO_RAW" bash "$GEIVS_DIR/geivs-health-setup.sh" \
+    || warn "Health service setup failed — the Server Health tile won't work until you run: sudo bash $GEIVS_DIR/geivs-health-setup.sh"
+elif [ "$DRY_RUN" = true ]; then
+  echo -e "${BLUE}  [dry-run] sudo bash geivs-health-setup.sh${NC}"
 fi
 
 # ── Step 20: Google Calendar ──────────────────────────────────

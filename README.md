@@ -278,6 +278,7 @@ GEIVS/
 ├── docker-compose.cpu.yml      # CPU-only stack definition
 ├── update-geivs.sh             # Update all images and models
 ├── geivs-gateway-setup.sh      # Fetches + starts the containerized gateway (bridge/shim/render/email)
+├── geivs-health-setup.sh       # Installs the host system_health service (:4090) for the dashboard tile
 ├── onboarding-init.sh          # First-boot: seeds state file + starts model downloads
 ├── geivs-state.json            # Default assistant state template
 ├── geivs-system-prompt.md      # Default assistant persona and instructions
