@@ -179,7 +179,7 @@ ok "All secrets generated"
 step "Creating directory structure"
 
 GEIVS_DIR="$HOME/geivs"
-run mkdir -p "$GEIVS_DIR"/{nginx,n8n-workflows,logs}
+run mkdir -p "$GEIVS_DIR"/{nginx,n8n-workflows,logs,dashboard}
 ok "Directories created at $GEIVS_DIR"
 
 # ── Step 6: Write .env ────────────────────────────────────────
@@ -350,6 +350,10 @@ step "Downloading onboarding and support files"
 
 download_or_warn "$REPO_RAW/onboarding-init.sh" "$GEIVS_DIR/onboarding-init.sh" || true
 download_or_warn "$REPO_RAW/geivs-system-prompt.md" "$GEIVS_DIR/geivs-system-prompt.md" || true
+# Dashboard static files — the web face nginx serves at "/" (mounts ./dashboard).
+# Without these the mount is empty and nginx returns 403 at the root.
+download_or_warn "$REPO_RAW/dashboard/index.html" "$GEIVS_DIR/dashboard/index.html" || true
+download_or_warn "$REPO_RAW/dashboard/geivs-logo.png" "$GEIVS_DIR/dashboard/geivs-logo.png" || true
 # geivs-state.json is bind-mounted into geivs-init container — must exist before compose up
 download_or_warn "$REPO_RAW/geivs-state.json" "$GEIVS_DIR/geivs-state.json" || true
 # Model pull scripts — bind-mounted and available for manual use
