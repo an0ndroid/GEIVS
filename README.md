@@ -89,15 +89,15 @@ The installer will prompt for your business name, assistant persona name, and pr
 |------|--------|
 | GPU detection | Identifies NVIDIA / AMD / CPU-only and configures accordingly |
 | Configuration | Prompts for hostname, admin email/password, business name, persona name, AI model |
-| Secrets | Generates all keys (WebUI, n8n encryption, JWT, API key, etc.) |
+| Secrets | Generates all keys (n8n encryption, JWT, AnythingLLM, API key, etc.) |
 | .env | Writes fully populated environment file (chmod 600) |
 | Compose file | Downloads and patches docker-compose.pro.yml |
 | nginx config | Downloads reverse proxy config |
 | Workflows | Downloads all 13 n8n automation workflows |
 | Support files | Downloads onboarding script, system prompt, model pull scripts |
 | Stack start | `docker compose up -d` |
-| SearXNG patch | Enables JSON format required for Open WebUI web search |
-| Onboarding | Runs first-boot Open WebUI configuration |
+| SearXNG patch | Enables JSON format required for agent web search |
+| Onboarding | Seeds the state file and starts model downloads |
 | Model download | Pulls primary AI model in background |
 | Workflow import | Imports all n8n workflows via API |
 | Tailscale | Configures remote access (if key provided) |
@@ -115,14 +115,14 @@ All services route through nginx on port 80.
 
 | URL | Service |
 |-----|---------|
-| `http://your-ip/` | Open WebUI — chat with your AI assistant |
+| `http://your-ip/` | GEIVS Dashboard — your AI assistant's web face (chat + quick actions) |
 | `http://your-ip/automation/` | n8n workflow automation |
 | `http://your-ip/monitor/` | Uptime Kuma monitoring |
 | `http://your-ip/imagine/` | ComfyUI image generation |
 | `http://your-ip/search/` | SearXNG private search |
 | `http://your-ip/social/` | Postiz social media scheduler |
 | `http://your-ip/portainer/` | Portainer container management |
-| `http://your-ip/dashboard/` | GEIVS Dashboard — quick-access GUI (optional, see GEIVS Assistant Layer below) |
+| `http://your-ip/knowledge/` | AnythingLLM — knowledge base (RAG) + admin LLM |
 
 ---
 
@@ -131,7 +131,7 @@ All services route through nginx on port 80.
 | Container | Purpose |
 |-----------|---------|
 | ollama | Local LLM inference |
-| openwebui | Primary chat interface |
+| anythingllm | Knowledge base (RAG) + admin LLM |
 | n8n | Automation workflows |
 | comfyui | Stable Diffusion image generation |
 | piper | Text-to-speech |
@@ -277,7 +277,7 @@ GEIVS/
 ├── docker-compose.pro.yml      # GPU stack definition
 ├── docker-compose.cpu.yml      # CPU-only stack definition
 ├── update-geivs.sh             # Update all images and models
-├── onboarding-init.sh          # First-boot Open WebUI configuration
+├── onboarding-init.sh          # First-boot: seeds state file + starts model downloads
 ├── geivs-state.json            # Default assistant state template
 ├── geivs-system-prompt.md      # Default assistant persona and instructions
 ├── pull-models.sh              # GPU model download script
@@ -377,7 +377,7 @@ GPU passthrough is not available in most VM configurations — use the CPU stack
 nvidia-smi          # verify driver is loaded — if this fails, reboot
 ```
 
-**SearXNG web search not working in Open WebUI:**
+**SearXNG not returning JSON (breaks agent web search):**
 ```bash
 docker exec geivs_searxng grep -A5 'formats:' /etc/searxng/settings.yml
 # should show both: - html and - json

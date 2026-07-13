@@ -167,10 +167,10 @@ ok "Configuration collected"
 # ── Step 4: Generate Secrets ──────────────────────────────────
 step "Generating secrets"
 
-WEBUI_SECRET_KEY=$(openssl rand -hex 32)
 N8N_ENCRYPTION_KEY=$(openssl rand -hex 32)
 N8N_API_KEY=$(openssl rand -hex 32)
 JWT_SECRET=$(openssl rand -hex 32)
+ANYTHINGLLM_JWT_SECRET=$(openssl rand -hex 32)
 CRAWL4AI_TOKEN=$(openssl rand -hex 16)
 DB_PASSWORD=$(openssl rand -hex 16)
 ok "All secrets generated"
@@ -202,9 +202,9 @@ ADMIN_EMAIL=${ADMIN_EMAIL}
 ADMIN_PASSWORD=${ADMIN_PASSWORD}
 
 # Secrets
-WEBUI_SECRET_KEY=${WEBUI_SECRET_KEY}
 N8N_ENCRYPTION_KEY=${N8N_ENCRYPTION_KEY}
 JWT_SECRET=${JWT_SECRET}
+ANYTHINGLLM_JWT_SECRET=${ANYTHINGLLM_JWT_SECRET}
 CRAWL4AI_TOKEN=${CRAWL4AI_TOKEN}
 DB_PASSWORD=${DB_PASSWORD}
 
@@ -214,9 +214,6 @@ N8N_PORT=5678
 N8N_PROTOCOL=http
 WEBHOOK_URL=http://${GEIVS_HOST}/automation/
 N8N_PUBLIC_API_KEY=${N8N_API_KEY}
-
-# Open WebUI
-OPENWEBUI_API_KEY=$(openssl rand -hex 24)
 
 # Postiz DB
 POSTGRES_PASSWORD=${DB_PASSWORD}
@@ -294,13 +291,8 @@ server {
     resolver 127.0.0.11 valid=30s;
     client_max_body_size 100M;
     location / {
-        set $upstream http://openwebui:8080;
-        proxy_pass $upstream;
-        proxy_set_header Host $host;
-        proxy_set_header Upgrade $http_upgrade;
-        proxy_set_header Connection "upgrade";
-        proxy_http_version 1.1;
-        proxy_read_timeout 300s;
+        root /usr/share/nginx/dashboard;
+        index index.html;
     }
     location /automation/ {
         set $upstream http://n8n:5678;
@@ -400,7 +392,7 @@ if [ "$DRY_RUN" = false ]; then
   docker start geivs_searxng >/dev/null 2>&1 || true
   ok "SearXNG permissions fixed"
 
-  # Enable JSON format in SearXNG (required for Open WebUI web search)
+  # Enable JSON format in SearXNG (required for n8n / agent web search)
   # Wait for SearXNG to write settings.yml on first boot, then patch via docker cp
   echo -e "  ${BLUE}Waiting for SearXNG to initialise...${NC}"
   sleep 8  # let SearXNG write settings.yml before we try to patch it
@@ -426,7 +418,7 @@ if [ "$DRY_RUN" = false ]; then
         docker cp /tmp/searxng-settings-$$.yml geivs_searxng:/etc/searxng/settings.yml >/dev/null 2>&1 || true
         rm -f /tmp/searxng-settings-$$.yml
         docker restart geivs_searxng >/dev/null 2>&1 || true
-        ok "SearXNG JSON format enabled (Open WebUI web search will work)"
+        ok "SearXNG JSON format enabled (agent web search will work)"
         SEARXNG_PATCHED=true
         break
       fi
@@ -440,22 +432,22 @@ else
   echo -e "${BLUE}  [dry-run] patch SearXNG JSON format${NC}"
 fi
 
-# ── Step 12: Wait for Open WebUI ──────────────────────────────
-step "Waiting for Open WebUI to be ready"
+# ── Step 12: Wait for the web dashboard ───────────────────────
+step "Waiting for the web dashboard to be ready"
 
 if [ "$DRY_RUN" = false ]; then
   echo -n "  Waiting"
   for i in $(seq 1 400); do
-    if curl -sf http://localhost:3000/health &>/dev/null; then
+    if curl -sf http://localhost/ &>/dev/null; then
       echo ""
-      ok "Open WebUI is ready"
+      ok "Dashboard is ready"
       break
     fi
     echo -n "."
     sleep 3
     if [ "$i" = "400" ]; then
       echo ""
-      warn "Open WebUI did not become ready in 20 minutes — continuing anyway"
+      warn "Dashboard did not become ready in 20 minutes — continuing anyway"
     fi
   done
 fi
@@ -464,13 +456,8 @@ fi
 step "Running first-boot onboarding"
 
 if [ "$DRY_RUN" = false ] && [ -f "$GEIVS_DIR/onboarding-init.sh" ]; then
-  OPENWEBUI_URL=http://localhost:3000 \
   OLLAMA_URL=http://localhost:11434 \
   STATE_FILE="$GEIVS_DIR/geivs-state.json" \
-  SYSTEM_PROMPT_FILE="$GEIVS_DIR/geivs-system-prompt.md" \
-  ADMIN_EMAIL="$ADMIN_EMAIL" \
-  ADMIN_PASSWORD="$ADMIN_PASSWORD" \
-  ADMIN_NAME="$BUSINESS_NAME Admin" \
   bash "$GEIVS_DIR/onboarding-init.sh" || warn "Onboarding had errors — check logs"
 else
   [ "$DRY_RUN" = true ] && echo -e "${BLUE}  [dry-run] run onboarding-init.sh${NC}"

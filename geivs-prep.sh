@@ -309,7 +309,7 @@ vm.swappiness = 10
 # Better dirty page handling for bulk writes (model downloads etc.)
 vm.dirty_ratio = 15
 vm.dirty_background_ratio = 5
-# More inotify watches (n8n, Open WebUI use many)
+# More inotify watches (n8n, AnythingLLM use many)
 fs.inotify.max_user_watches = 524288
 fs.inotify.max_user_instances = 512
 # Higher file descriptor limits
@@ -415,7 +415,7 @@ ufw allow 41641/udp comment 'Tailscale VPN' >/dev/null
 # Docker uses its own iptables rules for inter-container networking.
 # UFW does not block Docker container-to-container or host-to-container traffic
 # on bridge networks, so no extra rules are needed for internal services
-# (Ollama 11434, n8n 5678, Open WebUI 3000, SearXNG 8080, etc.).
+# (Ollama 11434, n8n 5678, AnythingLLM 3001, SearXNG 8080, etc.).
 # They are only accessible externally via nginx on port 80.
 
 # Enable UFW

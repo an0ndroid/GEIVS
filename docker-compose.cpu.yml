@@ -11,7 +11,6 @@ networks:
 
 volumes:
   ollama_data:
-  openwebui_data:
   anythingllm_data:
   n8n_data:
   searxng_data:
@@ -28,7 +27,7 @@ services:
 
   # -----------------------------------------------------------
   # GEIVS ONBOARDING — Runs once on first boot
-  # Configures Open WebUI with butler persona and seeds welcome
+  # Seeds the state-tracking file and kicks off model downloads.
   # -----------------------------------------------------------
   geivs-init:
     image: ubuntu:24.04
@@ -36,7 +35,6 @@ services:
     restart: "no"
     depends_on:
       - ollama
-      - openwebui
     volumes:
       - geivs_state:/etc/geivs
       - ./onboarding-init.sh:/onboarding-init.sh:ro
@@ -46,13 +44,8 @@ services:
     networks:
       - geivs-net
     environment:
-      - OPENWEBUI_URL=http://openwebui:8080
       - OLLAMA_URL=http://ollama:11434
       - STATE_FILE=/etc/geivs/geivs-state.json
-      - SYSTEM_PROMPT_FILE=/etc/geivs/geivs-system-prompt.md
-      - ADMIN_EMAIL=${ADMIN_EMAIL:-admin@geivs.local}
-      - ADMIN_PASSWORD=${ADMIN_PASSWORD:-changeme}
-      - ADMIN_NAME=${ADMIN_NAME:-Admin}
       - GEIVS_STATE_FILE=/etc/geivs/geivs-state.json
     command: >
       bash -c "
@@ -85,38 +78,6 @@ services:
       - OLLAMA_KEEP_ALIVE=24h
       - OLLAMA_NUM_PARALLEL=2
       - OLLAMA_MAX_LOADED_MODELS=2
-
-  # -----------------------------------------------------------
-  # OPEN WEBUI — Primary chat interface
-  # Access: http://localhost:3000
-  # -----------------------------------------------------------
-  openwebui:
-    image: ghcr.io/open-webui/open-webui:main
-    container_name: geivs_openwebui
-    restart: unless-stopped
-    depends_on:
-      - ollama
-    volumes:
-      - openwebui_data:/app/backend/data
-    ports:
-      - "3000:8080"
-    networks:
-      - geivs-net
-    environment:
-      - OLLAMA_BASE_URL=http://ollama:11434
-      - WEBUI_SECRET_KEY=${WEBUI_SECRET_KEY:-changeme_generate_a_real_secret}
-      - ENABLE_RAG_WEB_SEARCH=true
-      - RAG_WEB_SEARCH_ENGINE=searxng
-      - SEARXNG_QUERY_URL=http://searxng:8080/search?q=<query>&format=json
-      - ENABLE_IMAGE_GENERATION=true
-      - COMFYUI_BASE_URL=http://comfyui:8188
-      - AUDIO_TTS_ENGINE=openai
-      - AUDIO_TTS_OPENAI_API_BASE_URL=http://piper:5000/v1
-      - AUDIO_TTS_OPENAI_API_KEY=skip
-      - AUDIO_STT_ENGINE=openai
-      - AUDIO_STT_OPENAI_API_BASE_URL=http://whisper:8000/v1
-      - AUDIO_STT_OPENAI_API_KEY=skip
-      - DEFAULT_MODELS=gemma3:4b
 
   # -----------------------------------------------------------
   # ANYTHINGLLM — Knowledge base / RAG + admin LLM
@@ -317,7 +278,7 @@ services:
 
   # -----------------------------------------------------------
   # WHISPER — Local speech-to-text (OpenAI-compatible API)
-  # Used by Open WebUI for voice input and n8n for transcription
+  # Used by n8n and the gateway bridge to transcribe Signal voice notes
   # Endpoint: http://whisper:8000/v1/audio/transcriptions
   # CPU mode: tiny model (~150MB, ~10s/minute of audio)
   # -----------------------------------------------------------
