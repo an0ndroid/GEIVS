@@ -277,6 +277,7 @@ GEIVS/
 ├── docker-compose.pro.yml      # GPU stack definition
 ├── docker-compose.cpu.yml      # CPU-only stack definition
 ├── update-geivs.sh             # Update all images and models
+├── geivs-gateway-setup.sh      # Fetches + starts the containerized gateway (bridge/shim/render/email)
 ├── onboarding-init.sh          # First-boot: seeds state file + starts model downloads
 ├── geivs-state.json            # Default assistant state template
 ├── geivs-system-prompt.md      # Default assistant persona and instructions

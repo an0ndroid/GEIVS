@@ -13,7 +13,7 @@ BLUE='\033[0;34m'; CYAN='\033[0;36m'; BOLD='\033[1m'; NC='\033[0m'
 
 DRY_RUN=false
 STEP=0
-TOTAL_STEPS=21
+TOTAL_STEPS=22
 
 # ── Flags ─────────────────────────────────────────────────────
 for arg in "$@"; do
@@ -357,11 +357,14 @@ download_or_warn "$REPO_RAW/pull-models.sh" "$GEIVS_DIR/pull-models.sh" || true
 download_or_warn "$REPO_RAW/pull-models-cpu.sh" "$GEIVS_DIR/pull-models-cpu.sh" || true
 # Update script
 download_or_warn "$REPO_RAW/update-geivs.sh" "$GEIVS_DIR/update-geivs.sh" || true
+# Gateway setup (fetches + starts the containerized gateway services)
+download_or_warn "$REPO_RAW/geivs-gateway-setup.sh" "$GEIVS_DIR/geivs-gateway-setup.sh" || true
 if [ "$DRY_RUN" = false ]; then
   chmod +x "$GEIVS_DIR/onboarding-init.sh" 2>/dev/null || true
   chmod +x "$GEIVS_DIR/pull-models.sh" 2>/dev/null || true
   chmod +x "$GEIVS_DIR/pull-models-cpu.sh" 2>/dev/null || true
   chmod +x "$GEIVS_DIR/update-geivs.sh" 2>/dev/null || true
+  chmod +x "$GEIVS_DIR/geivs-gateway-setup.sh" 2>/dev/null || true
 fi
 
 # ── Step 11: Start the Stack ──────────────────────────────────
@@ -705,7 +708,32 @@ else
   warn "Skipping Signal — register later: docker exec geivs_signal signal-cli -a +1NXXNXXXXXX register"
 fi
 
-# ── Step 19: Google Calendar ──────────────────────────────────
+# ── Step 19: Gateway Services ─────────────────────────────────
+step "Setting up the containerized gateway (Signal bridge, agent shim, briefing renderer)"
+
+echo ""
+echo -e "  ${BOLD}The gateway adds the Signal chat bridge, the agent API shim (so AnythingLLM${NC}"
+echo -e "  ${BOLD}can chat with Jeeves), and the visual daily-briefing renderer.${NC}"
+echo -e "  ${YELLOW}First build downloads Chromium — allow a few extra minutes.${NC}"
+read -rp "  Set up gateway services now? [Y/n]: " DO_GATEWAY < /dev/tty
+DO_GATEWAY=${DO_GATEWAY:-Y}
+
+if [[ "$DO_GATEWAY" =~ ^[Yy] ]] && [ "$DRY_RUN" = false ] && [ -f "$GEIVS_DIR/geivs-gateway-setup.sh" ]; then
+  # The setup script prompts for the owner's Signal number + Gmail, fetches the
+  # gateway source to ~/geivs-gateway, writes ~/geivs-secrets, and brings the
+  # gateway containers up alongside the stack.
+  REPO_RAW="$REPO_RAW" GEIVS_DIR="$GEIVS_DIR" COMPOSE_FILE="docker-compose.pro.yml" \
+    bash "$GEIVS_DIR/geivs-gateway-setup.sh" \
+    || warn "Gateway setup had errors — re-run any time: bash $GEIVS_DIR/geivs-gateway-setup.sh"
+elif [ "$DRY_RUN" = true ]; then
+  echo -e "${BLUE}  [dry-run] run geivs-gateway-setup.sh${NC}"
+elif [ ! -f "$GEIVS_DIR/geivs-gateway-setup.sh" ]; then
+  warn "geivs-gateway-setup.sh not found — skipping gateway"
+else
+  warn "Skipping gateway — run later: bash $GEIVS_DIR/geivs-gateway-setup.sh"
+fi
+
+# ── Step 20: Google Calendar ──────────────────────────────────
 step "Configuring Google Calendar integration"
 
 GCAL_CONFIGURED=false
@@ -741,7 +769,7 @@ else
   warn "Skipping Google Calendar — set up OAuth at http://$GEIVS_HOST/automation/ later"
 fi
 
-# ── Step 20: Social Media / Postiz ───────────────────────────
+# ── Step 21: Social Media / Postiz ───────────────────────────
 step "Configuring social media integration (Postiz)"
 
 POSTIZ_CONFIGURED=false
@@ -777,7 +805,7 @@ else
   warn "Skipping Postiz — connect social accounts later at http://$GEIVS_HOST/social/"
 fi
 
-# ── Step 21: Final Summary ────────────────────────────────────
+# ── Step 22: Final Summary ────────────────────────────────────
 step "Installation complete"
 
 TS_IP=""
